@@ -266,6 +266,7 @@ G.endTurn = () => {
     const staffMatch = G.staffMatches(a);
     let rec = 20 - G.traitRank(a, 'frail') * 3 + (likedHere ? 5 : 0) + (staffMatch ? 5 : 0);
     if (a.flags.earlyCast) { rec = 100; a.flags.earlyCast = false; }
+    if (a.flags.linger > 0) { rec = Math.round(rec / 2); a.flags.linger--; }
     a.stress = G.clamp(a.stress - rec + (dislikedHere ? 3 : 0), 0, 100);
     if (G.traitRank(a, 'temper') && !a.castrated && a.sex === 'M' && G.chance(0.1 * G.traitRank(a, 'temper'))) a.stress = Math.min(100, a.stress + 10);
     // 幸福度

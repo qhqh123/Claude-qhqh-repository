@@ -29,36 +29,38 @@ G.C = {
 
   castDirect: { ring: 300, burdizzo: 1000, surgical: 3000, traditional: 1000 },
   burdizzoToolCost: 20000,
+  surgicalToolCost: 50000,   // 観血法の手術器具・麻酔一式（初回のみ）
+  traditionalLinger: 2,      // 旧来手法：ストレスが残りやすいターン数（回復量が半分）
   castOutsource: { ring: 5000, burdizzo: 8000, surgical: 25000 },
   horseCastOutsource: 25000,
   castStress: { early: 20, standard: 35, late: 50, mature: 65 },
   castWeightLoss: { early: 0, standard: 0.02, late: 0.05, mature: 0.07 },
   // 時期に適した術式
   castSuitable: {
-    early: ['ring', 'burdizzo', 'surgical'],
-    standard: ['burdizzo', 'surgical'],
-    late: ['surgical'],
-    mature: ['surgical'],
+    early: ['ring', 'burdizzo', 'surgical', 'traditional'],
+    standard: ['burdizzo', 'surgical', 'traditional'],
+    late: ['surgical', 'traditional'],
+    mature: ['surgical', 'traditional'],
   },
   // 不完全率・感染率・ストレス追加（適さない場合を含む）
   castRisk: {
     ring:     { early: [0, 0, 0],      standard: [0.10, 0, 15], late: [0.30, 0.15, 30], mature: [0.30, 0.15, 30] },
     burdizzo: { early: [0.05, 0, 0],   standard: [0.05, 0, 0],  late: [0.25, 0, 20],    mature: [0.25, 0, 20] },
     surgical: { early: [0, 0.03, 0],   standard: [0, 0.03, 0],  late: [0, 0.03, 0],     mature: [0, 0.03, 0] },
-    traditional: { early: [0.10, 0.10, 10], standard: [0.10, 0.10, 15], late: [0.12, 0.12, 20], mature: [0.15, 0.15, 25] },
+    traditional: { early: [0.02, 0.05, 15], standard: [0.02, 0.05, 15], late: [0.02, 0.05, 20], mature: [0.03, 0.05, 25] },
   },
   // 馬（四手法×時期。仮）
   horseCastSuitable: {
     early: ['surgical', 'traditional'],
     standard: ['surgical', 'traditional'],
     late: ['surgical', 'traditional'],
-    mature: ['surgical'],
+    mature: ['surgical', 'traditional'],
   },
   horseCastRisk: {
     ring:        { early: [0.30, 0.20, 30], standard: [0.35, 0.20, 30], late: [0.40, 0.25, 35], mature: [0.40, 0.25, 35] },
     burdizzo:    { early: [0.20, 0.05, 20], standard: [0.25, 0.05, 20], late: [0.30, 0.05, 25], mature: [0.30, 0.05, 25] },
     surgical:    { early: [0, 0.03, 0],     standard: [0, 0.03, 0],     late: [0, 0.03, 0],     mature: [0, 0.03, 0] },
-    traditional: { early: [0.02, 0.05, 0],  standard: [0.02, 0.05, 0],  late: [0.03, 0.05, 5],  mature: [0.15, 0.10, 20] },
+    traditional: { early: [0.02, 0.05, 15], standard: [0.02, 0.05, 15], late: [0.02, 0.05, 20], mature: [0.03, 0.05, 25] },
   },
   infectionStress: 30,
   infectionTurns: 2,

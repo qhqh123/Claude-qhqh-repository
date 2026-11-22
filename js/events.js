@@ -12,7 +12,8 @@ G.castCost = (a, method, mode) => {
     const m = OUTSOURCE_METHOD[period];
     return { method: m, cost: G.C.castOutsource[m], tool: 0 };
   }
-  const tool = method === 'burdizzo' && !G.S.tools.burdizzo ? G.C.burdizzoToolCost : 0;
+  const tool = method === 'burdizzo' && !G.S.tools.burdizzo ? G.C.burdizzoToolCost
+    : method === 'surgical' && !G.S.tools.surgical ? G.C.surgicalToolCost : 0;
   return { method, cost: G.C.castDirect[method], tool };
 };
 
@@ -30,9 +31,10 @@ G.castrate = (a, methodSel, mode) => {
   const suitable = (horse ? G.C.horseCastSuitable : G.C.castSuitable)[period].includes(method);
 
   if (tool) {
-    S.tools.burdizzo = true;
-    G.pay(tool, `器具 購入　去勢鉗子　${G.yen(tool)}`);
+    S.tools[method] = true;
+    G.pay(tool, `器具 購入　${method === 'burdizzo' ? '去勢鉗子' : '手術器具・麻酔'}　${G.yen(tool)}`);
   }
+  if (method === 'traditional' && mode === 'direct') a.flags.linger = G.C.traditionalLinger;
   a.stress = G.clamp(a.stress + G.C.castStress[period] + extra + G.traitRank(a, 'frail') * 5, 0, 100);
   a.weight *= 1 - G.C.castWeightLoss[period];
   a.castrated = true;

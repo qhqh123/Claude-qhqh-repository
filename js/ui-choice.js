@@ -48,13 +48,13 @@ Object.assign(G.ui, {
         ${this.choiceGrid('mode', [
           { value: 'direct', icon: G.ICONS.direct, title: '直接対応' },
           { value: 'outsource', icon: G.ICONS.outsource, title: '外部委託', sub: `委託費 ${G.yen(out.cost)}` },
-        ], 'two')}
+        ], 'slim')}
       </div>
       <div class="sheet-sec methods collapsed"><div class="sec-label">術式</div>
         ${this.choiceGrid('method', methods.map((m) => {
           const c = G.castCost(a, m, 'direct');
           return { value: m, icon: G.ICONS[m], title: G.METHOD_NAMES[m], sub: `資材費 ${G.yen(c.cost)}`, extra: c.tool ? `器具 ${G.yen(c.tool)}` : '' };
-        }), 'four')}
+        }), 'quad')}
       </div>
       <div class="sheet-foot"><div class="total"><span>合計</span><b class="sum">—</b></div>
         <div class="actions"><button class="btn cancel">やめる</button><button class="btn primary ok" disabled>決定</button></div></div>`, { size: 'medium', cls: 'sheet' });

@@ -402,3 +402,25 @@ body.dev .dev-only { display: block; }
   .ch-title { font-size: 13px; }
   .sheet-head, .sheet-sec, .sheet-foot { padding-left: 14px; padding-right: 14px; }
 }
+
+/* 対応：細長い横並び／術式：大きめの 2×2 */
+.choice-grid.slim { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.choice-grid.slim .choice { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 8px 14px; border-radius: 999px; text-align: left; }
+.choice-grid.slim .ch-icon { width: 34px; height: 34px; flex: none; }
+.choice-grid.slim .ch-icon svg { width: 26px; height: 26px; }
+.choice-grid.slim .ch-title { font-size: 14px; }
+.choice-grid.slim .ch-sub { margin-left: auto; }
+.choice-grid.slim .check { top: -6px; right: -4px; width: 22px; height: 22px; font-size: 12px; }
+.choice-grid.quad { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.choice-grid.quad .choice { padding: 20px 12px 16px; border-radius: 26px; gap: 6px; min-height: 150px; justify-content: center; }
+.choice-grid.quad .ch-icon { width: 72px; height: 72px; }
+.choice-grid.quad .ch-icon svg { width: 54px; height: 54px; }
+.choice-grid.quad .ch-title { font-size: 17px; }
+.choice-grid.quad .ch-sub { font-size: 13px; }
+@media (max-width: 640px) {
+  .choice-grid.quad .choice { min-height: 120px; padding: 14px 8px 12px; }
+  .choice-grid.quad .ch-icon { width: 56px; height: 56px; }
+  .choice-grid.quad .ch-icon svg { width: 42px; height: 42px; }
+  .choice-grid.slim .ch-sub { display: none; }
+  .choice-grid.slim .choice.on .ch-sub, .choice-grid.slim .choice[data-value=outsource] .ch-sub { display: inline; font-size: 11px; }
+}
