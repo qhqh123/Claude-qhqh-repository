@@ -43,7 +43,7 @@ G.castrate = (a, methodSel, mode) => {
 
   const short = G.METHOD_SHORT[method];
   const modeName = mode === 'outsource' ? '委託' : '直接';
-  const costName = mode === 'outsource' ? '委託費' : (method === 'surgical' ? '獣医' : '資材費');
+  const costName = mode === 'outsource' ? '委託費' : '資材費';
   const line1 = `去勢（${short}・${modeName}）　${a.name}　${costName} ${G.yen(cost)}` + (mode === 'direct' ? `　作業 ${WORK_MIN[method]}分` : '');
   const line2 = `　増体予測 −${GAIN_PRED[period]}kg/日（1ターン）${period !== 'early' ? '※月齢による' : ''}　格付予測 肉質 ${period === 'mature' ? '→' : '↑'}`;
   G.pay(cost, [line1, line2]);

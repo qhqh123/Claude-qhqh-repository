@@ -338,7 +338,7 @@ G.ui = {
     const methods = G.castMethods(a);
     const directCost = (m) => {
       const c = G.castCost(a, m, 'direct');
-      const lbl = m === 'surgical' ? '獣医' : '資材費';
+      const lbl = '資材費';
       return `${lbl} ${G.yen(c.cost)}${c.tool ? `＋器具 ${G.yen(c.tool)}` : ''}`;
     };
     const out = G.castCost(a, null, 'outsource');
