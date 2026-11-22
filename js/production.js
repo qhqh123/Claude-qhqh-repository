@@ -12,8 +12,7 @@ G.milk = {
   // 出産予定の直前1ターンは乾乳
   isDry(a) { return !!(a.pregnancy && a.pregnancy.due === G.S.turn + 1); },
   ageMult(a) {
-    if (a.age <= G.C.milkAgeStart) return 1;
-    return Math.max(G.C.milkAgeMin, 1 - (a.age - G.C.milkAgeStart) * G.C.milkAgePerTurn);
+    return Math.max(0, 1 - G.C.milkDeclinePerRank * G.acqRank(a, 'milkDecline'));
   },
   depthMult(a) { return 1 + (a.genes.depth | 0) * G.C.milkDepthPerRank; },
   calc(a) {
@@ -109,6 +108,8 @@ G.fieldHorseAbility = (h) => {
   let k = st <= 1 ? 0 : st === 2 ? 1 : st <= 4 ? 2 : 3;
   if ((h.trained || 0) >= 60) k++;
   if (G.condition(h) < 0.85) k--;
+  const wd = G.acqRank(h, 'workDecline');
+  if (wd) k -= wd >= 3 ? 2 : 1;
   return G.clamp(k, 0, 3);
 };
 G.FIELD_ABILITY_NAMES = { none: '未配置', 0: '平凡', 1: 'やや優秀', 2: '優秀', 3: '最高水準' };

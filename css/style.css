@@ -641,4 +641,4 @@ body.dev .dev-only { display: block; }
 .pill.idle { background: #e9e4ef; color: #6d5f7e; }
 .trend { font-size: 11px; font-weight: 800; color: var(--ink-l); }
 .trend.t1 { color: #3f9f6a; } .trend.t-1 { color: #c9708a; }
-.badge.r1[data-tip^="受胎"] { background: #efe6dc; color: #8a6a52; }
+.badge[data-tip^="受胎"], .badge[data-tip^="繁殖"] { background: #efe6dc; color: #8a6a52; }

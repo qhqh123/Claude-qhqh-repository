@@ -44,7 +44,7 @@ G.race = {
     const spread = 0.1 + fickle * 0.05;
     let dev = 1 - spread + Math.random() * spread * 2;
     dev *= 1 - G.traitRank(a, 'timid') * 0.04;
-    return (fit + cond + base + racer) * dev;
+    return (fit + cond + base + racer - G.C.speedDeclinePerRank * G.acqRank(a, 'speedDecline')) * dev;
   },
   // ターン終了時に結果を出す
   resolve() {

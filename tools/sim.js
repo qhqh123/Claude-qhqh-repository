@@ -23,7 +23,7 @@ const shipReady = (a) => a.species === 'cattle' && a.castrated && a.age >= 6;
 // 種牛が年を取ってきたら、雄の仔牛を1頭だけ後継ぎとして残す
 const successor = () => {
   const bull = bullOf();
-  if (bull && bull.age < G.C.agingAge.cattle[0] - 6) return null;
+  if (bull && bull.age < G.AGING.cattle.fert.M[0] - 6) return null;
   const intactYoung = G.alive().filter((a) => a.species === 'cattle' && a.sex === 'M' && !a.castrated && !G.isMature(a));
   return intactYoung.sort((x, y) => x.age - y.age)[0] || null;
 };

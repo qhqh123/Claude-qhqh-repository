@@ -313,7 +313,6 @@ G.endTurn = () => {
     if (a.lactation && G.milk.slotOf(a) >= 0) {
       const k = S.turn + 1 - a.lactation.start + 1;
       if (k === G.C.milkLowAt && !a.pregnancy) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
-      else if (a.age === G.C.milkAgeStart + 1) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
     }
     else if (a.flags.postpartum) { a.flags.postpartum = false; G.notify('breedable', a.id, `${G.spIcon(a)} ${a.name}が交配できるようになりました！`); }
   }

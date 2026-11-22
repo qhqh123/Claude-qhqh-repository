@@ -164,7 +164,7 @@ G.meatEval = (a) => {
   if (a.sex === 'F') v += 0.2;
   if (a.castrated) v += a.castBonus;
   v += Math.min(0.6, Math.max(0, a.age - 2) * 0.15);
-  if (a.age > 16) v -= Math.min(1.5, (a.age - 16) * 0.1);
+  v -= G.C.meatDeclinePerRank * G.acqRank(a, 'meatDecline');
   if (a.stress > 70) v -= 0.3;
   if (a.health < 60) v -= 0.3;
   return v;

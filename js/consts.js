@@ -87,10 +87,12 @@ G.C = {
 
   carePerTurn: 5,
 
-  // 後天バッジ（年齢。[受胎率半減, 受胎不可]）とけが（仮）
-  agingAge: { cattle: [20, 24], horse: [60, 72] },
-  injuryRate: 0.05,   // 後天バッジがあるときの基本率（半減 ×2、不可 ×3）
+  // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
+  injuryRate: 0.02,        // 【けがしやすい】1ランクあたりのけがの確率
   injuryCost: 10000,
+  milkDeclinePerRank: 0.10, // 【乳量低下】1ランクあたり
+  meatDeclinePerRank: 0.3,  // 【肉質低下】1ランクあたりの肉質評価
+  speedDeclinePerRank: 4,   // 【走力低下】1ランクあたりのレース評価点
 
   // 倉庫とメモリアルアイテム（仮）
   storageCap: 20,
@@ -133,9 +135,6 @@ G.C = {
   milkPrice: [90, 100, 110, 125, 150, 190],
   milkDilute1: 2500,
   milkDilute2: 3000,
-  milkAgeStart: 32,
-  milkAgePerTurn: 0.03,
-  milkAgeMin: 0.4,
   milkLowAt: 5, // 泌乳5ターン目（25%）で通知
   startMilkSlots: 1,
   milkSlotCost: 800000,
@@ -186,8 +185,15 @@ G.TRAITS = {
   timid:   { name: '臆病', tip: 'レースで力を出しにくい', demerit: true },
   fickle:  { name: '気まぐれ', tip: 'レース成績がばらつく', demerit: true },
   racer:   { name: '競走馬', tip: 'レース評価点 +5', noRank: true },
-  fertHalf:  { name: '受胎率半減', tip: '受胎率 ×0.5　けがの確率 ×2', noRank: true, acquired: true },
-  infertile: { name: '受胎不可', tip: '受胎しない　けがの確率 ×3', noRank: true, acquired: true },
+  fertDownF:  { name: '受胎率低下', tip: '受胎率 ×0.5', noRank: true, acquired: true },
+  infertileF: { name: '受胎不可', tip: '受胎しない', noRank: true, acquired: true },
+  fertDownM:  { name: '繁殖力低下', tip: '交配相手の受胎率 ×0.5', noRank: true, acquired: true },
+  infertileM: { name: '繁殖不能', tip: '交配できない', noRank: true, acquired: true },
+  milkDecline:  { name: '乳量低下', tip: '乳量が減る　1ランクごとに −10%', demerit: true, acquired: true },
+  meatDecline:  { name: '肉質低下', tip: '肉質が下がる', demerit: true, acquired: true },
+  injuryProne:  { name: 'けがしやすい', tip: 'けが・事故が起きやすい', demerit: true, acquired: true },
+  speedDecline: { name: '走力低下', tip: 'レースで力が落ちる', demerit: true, acquired: true },
+  workDecline:  { name: '足腰の衰え', tip: '農耕の能力が下がる', demerit: true, acquired: true },
 };
 G.HORSE_FREE_TRAITS = ['speed', 'stamina', 'meat', 'growth', 'charm'];
 G.HORSE_DEMERITS = ['temper', 'frail', 'timid', 'fickle'];

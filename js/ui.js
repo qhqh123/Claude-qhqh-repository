@@ -169,7 +169,7 @@ G.ui = {
     return this.badge(a, 'length', genes.length, small) + this.badge(a, 'depth', genes.depth, small);
   },
   badgesAcq(a, small) {
-    return (a && a.acquired || []).map((k) => this.badge(a, k, 1, small)).join('');
+    return a && a.species ? G.acqList(a).map((t) => this.badge(a, t.k, t.r, small)).join('') : '';
   },
   badgesTraits(a, genes, small) {
     genes = genes || a.genes;
@@ -254,7 +254,7 @@ G.ui = {
         ${alive ? this.bar('健康', a.health, 'health') + this.bar('幸福度', a.happiness, 'happy') + this.bar('ストレス', a.stress, 'stress') + this.bar('なつき度', a.affinity.player, 'aff') + (G.isHorse(a) ? this.bar('当代能力', a.trained || 0, 'train') : '') : ''}
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(a)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(a)}</div>
-        ${(a.acquired || []).length ? `<div class="badge-row"><span class="lbl">後天</span>${this.badgesAcq(a)}</div>` : ''}
+        ${a.status === 'alive' && G.acqList(a).length ? `<div class="badge-row"><span class="lbl">後天</span>${this.badgesAcq(a)}</div>` : ''}
         <div class="kv"><span>繁殖状態</span><b>${this.breedStatus(a)}</b></div>
         ${rec ? `<div class="kv"><span>レース</span><b>${rec.n}戦 ${rec.win}勝 入賞${rec.place}</b></div>` : ''}
         ${alive && G.isHorse(a) ? `<div class="kv"><span>畑</span><b>${fieldIdx >= 0 ? `畑スロット${G.field.label(fieldIdx)}` : '—'}</b></div>` : ''}
