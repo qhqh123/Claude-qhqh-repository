@@ -473,8 +473,7 @@ G.ui = {
         <h3>搾乳施設</h3>
         <div class="kv"><span>スロット</span><b>${S.milkSlots.filter((x) => x.aid).length}/${S.milkSlots.length}　<button class="btn small" data-go="milk">開く</button></b></div>
         <h3>畑</h3>
-        <ul class="facility">${S.fields.map((f, i) => `<li><b>畑スロット${G.field.label(i)}</b><span>${f.open ? (f.use === 'crop' ? '商業作物' : '牧草') : '荒れ地'}</span><button class="btn small" data-field="${i}">開く</button></li>`).join('')}</ul>
-        <h3>器具</h3><div class="kv"><span>去勢鉗子</span><b>${S.tools.burdizzo ? 'あり' : 'なし'}</b></div><div class="kv"><span>手術器具・麻酔</span><b>${S.tools.surgical ? 'あり' : 'なし'}</b></div>`;
+        <ul class="facility">${S.fields.map((f, i) => `<li><b>畑スロット${G.field.label(i)}</b><span>${f.open ? (f.use === 'crop' ? '商業作物' : '牧草') : '荒れ地'}</span><button class="btn small" data-field="${i}">開く</button></li>`).join('')}</ul>`;
       $$('[data-open]', body).forEach((b) => b.onclick = () => this.openExpand(b.dataset.open));
       $$('[data-go]', body).forEach((b) => b.onclick = () => this.openMilk());
       $$('[data-field]', body).forEach((b) => b.onclick = () => this.openField(+b.dataset.field));

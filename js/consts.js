@@ -27,9 +27,7 @@ G.C = {
   strawPrice: { 3: 8000, 4: 30000 },
   strawDemeritRate: { 3: 0.30, 4: 0.70 },
 
-  castDirect: { ring: 300, burdizzo: 1000, surgical: 3000, traditional: 1000 },
-  burdizzoToolCost: 20000,
-  surgicalToolCost: 50000,   // 観血法の手術器具・麻酔一式（初回のみ）
+  castDirect: { ring: 300, burdizzo: 1500, surgical: 5000, traditional: 500 }, // 毎回の資材費（器具の消耗・破損分を含む）
   traditionalLinger: 2,      // 旧来手法：ストレスが残りやすいターン数（回復量が半分）
   castOutsource: { ring: 5000, burdizzo: 8000, surgical: 25000 },
   horseCastOutsource: 25000,
