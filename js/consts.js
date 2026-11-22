@@ -88,6 +88,7 @@ G.C = {
   carePerTurn: 5,
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
+  fertDownMult: 0.7,       // 【受胎率低下】【繁殖力低下】
   injuryRate: 0.02,        // 【けがしやすい】1ランクあたりのけがの確率
   injuryCost: 10000,
   milkDeclinePerRank: 0.10, // 【乳量低下】1ランクあたり
@@ -185,9 +186,9 @@ G.TRAITS = {
   timid:   { name: '臆病', tip: 'レースで力を出しにくい', demerit: true },
   fickle:  { name: '気まぐれ', tip: 'レース成績がばらつく', demerit: true },
   racer:   { name: '競走馬', tip: 'レース評価点 +5', noRank: true },
-  fertDownF:  { name: '受胎率低下', tip: '受胎率 ×0.5', noRank: true, acquired: true },
+  fertDownF:  { name: '受胎率低下', tip: '受胎率 ×0.7', noRank: true, acquired: true },
   infertileF: { name: '受胎不可', tip: '受胎しない', noRank: true, acquired: true },
-  fertDownM:  { name: '繁殖力低下', tip: '交配相手の受胎率 ×0.5', noRank: true, acquired: true },
+  fertDownM:  { name: '繁殖力低下', tip: '交配相手の受胎率 ×0.7', noRank: true, acquired: true },
   infertileM: { name: '繁殖不能', tip: '交配できない', noRank: true, acquired: true },
   milkDecline:  { name: '乳量低下', tip: '乳量が減る　1ランクごとに −10%', demerit: true, acquired: true },
   meatDecline:  { name: '肉質低下', tip: '肉質が下がる', demerit: true, acquired: true },

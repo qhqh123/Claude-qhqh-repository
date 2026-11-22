@@ -5,7 +5,7 @@
 
 G.AGING = {
   cattle: {
-    fert: { F: [20, 24], M: [28, 36] },
+    fert: { F: [24, 32], M: [28, 36] },
     ranked: [['milkDecline', 12, 'F'], ['meatDecline', 16], ['injuryProne', 32]],
   },
   horse: {
@@ -37,7 +37,7 @@ G.hasAcq = (a, k) => G.acqRank(a, k) > 0;
 G.fertMult = (a) => {
   if (!a) return 1;
   if (G.hasAcq(a, 'infertileF') || G.hasAcq(a, 'infertileM')) return 0;
-  if (G.hasAcq(a, 'fertDownF') || G.hasAcq(a, 'fertDownM')) return 0.5;
+  if (G.hasAcq(a, 'fertDownF') || G.hasAcq(a, 'fertDownM')) return G.C.fertDownMult;
   return 1;
 };
 // けが・事故の倍率
