@@ -87,6 +87,11 @@ G.C = {
 
   carePerTurn: 5,
 
+  // 後天バッジ（年齢。[受胎率半減, 受胎不可]）とけが（仮）
+  agingAge: { cattle: [20, 24], horse: [60, 72] },
+  injuryRate: 0.05,   // 後天バッジがあるときの基本率（半減 ×2、不可 ×3）
+  injuryCost: 10000,
+
   // 倉庫とメモリアルアイテム（仮）
   storageCap: 20,
   storageExpandCost: 200000,
@@ -181,6 +186,8 @@ G.TRAITS = {
   timid:   { name: '臆病', tip: 'レースで力を出しにくい', demerit: true },
   fickle:  { name: '気まぐれ', tip: 'レース成績がばらつく', demerit: true },
   racer:   { name: '競走馬', tip: 'レース評価点 +5', noRank: true },
+  fertHalf:  { name: '受胎率半減', tip: '受胎率 ×0.5　けがの確率 ×2', noRank: true, acquired: true },
+  infertile: { name: '受胎不可', tip: '受胎しない　けがの確率 ×3', noRank: true, acquired: true },
 };
 G.HORSE_FREE_TRAITS = ['speed', 'stamina', 'meat', 'growth', 'charm'];
 G.HORSE_DEMERITS = ['temper', 'frail', 'timid', 'fickle'];

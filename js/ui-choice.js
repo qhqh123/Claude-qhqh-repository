@@ -85,7 +85,7 @@ Object.assign(G.ui, {
     if (!G.canBreed(dam)) return;
     const S = G.S;
     const horse = G.isHorse(dam);
-    const bulls = G.alive().filter((b) => G.isIntactMature(b) && b.species === dam.species);
+    const bulls = G.alive().filter((b) => G.isIntactMature(b) && b.species === dam.species && G.fertMult(b) > 0);
     const opts = bulls.map((b) => ({ key: 'b' + b.id, type: 'bull', label: b.name, tag: '牧場', genes: b.genes, partner: { type: 'bull', id: b.id }, a: b, fee: 0 }))
       .concat((horse ? [] : S.straws).map((s, i) => ({ key: 's' + i, type: 'straw', label: s.name, tag: '精液ストロー', sub: `${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}`, genes: s.genes, partner: { type: 'straw', index: i }, a: null, fee: 0 })))
       .concat((horse ? S.stallions : []).map((s, i) => ({ key: 'h' + i, type: 'stallion', label: s.name, tag: '外部種牡馬', sub: s.type === 'farm' ? '農耕' : '競走', genes: s.genes, partner: { type: 'stallion', index: i }, a: null, fee: s.fee })));
@@ -152,7 +152,7 @@ Object.assign(G.ui, {
     return `<div class="a-row ${a.status !== 'alive' ? 'gone' : ''}" data-id="${a.id}" ${attrs || ''}>
       <canvas class="a-face" data-face="${a.id}" width="96" height="96"></canvas>
       <div class="a-main"><div class="a-name">${G.esc(a.name)} <small>${a.sex === 'M' ? '♂' : '♀'}　${G.spName(a)}　${G.ageText(a.age)}</small></div>
-        <div class="bs">${this.badgesFrame(a, null, true)}${this.badgesTraits(a, null, true)}</div></div>
+        <div class="bs">${this.badgesFrame(a, null, true)}${this.badgesTraits(a, null, true)}${this.badgesAcq(a, true)}</div></div>
       <div class="a-right">${right || ''}</div></div>`;
   },
   drawFaces(root) {

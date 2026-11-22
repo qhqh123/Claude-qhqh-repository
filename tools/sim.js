@@ -8,7 +8,7 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 global.window = global;
 global.G = {};
-const files = ['consts', 'util', 'text-data', 'text', 'animals', 'game', 'events', 'production', 'race', 'relations', 'storage', 'senior', 'save', 'map'];
+const files = ['consts', 'util', 'text-data', 'text', 'animals', 'game', 'events', 'production', 'race', 'relations', 'storage', 'senior', 'aging', 'save', 'map'];
 for (const f of files) vm.runInThisContext(fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8'), { filename: f + '.js' });
 G.text.setFromBundle(window.TEXT_DATA);
 // 調整案を試す: TUNE='{"staffWage":50000}' node tools/sim.js
@@ -20,13 +20,21 @@ const YEARS = +process.argv[3] || 10;
 
 // ---------- 方針 ----------
 const shipReady = (a) => a.species === 'cattle' && a.castrated && a.age >= 6;
+// 種牛が年を取ってきたら、雄の仔牛を1頭だけ後継ぎとして残す
+const successor = () => {
+  const bull = bullOf();
+  if (bull && bull.age < G.C.agingAge.cattle[0] - 6) return null;
+  const intactYoung = G.alive().filter((a) => a.species === 'cattle' && a.sex === 'M' && !a.castrated && !G.isMature(a));
+  return intactYoung.sort((x, y) => x.age - y.age)[0] || null;
+};
 const castrateCalves = (method, mode) => {
+  const keep = successor();
   for (const a of G.alive()) {
-    if (a.sex !== 'M' || a.castrated || a === bullOf()) continue;
+    if (a.species !== 'cattle' || a.sex !== 'M' || a.castrated || a === bullOf() || a === keep) continue;
     if (G.castPeriod(a) === 'standard') G.castrate(a, method, mode);
   }
 };
-const bullOf = () => G.alive().find((a) => a.species === 'cattle' && G.isIntactMature(a));
+const bullOf = () => G.alive().filter((a) => a.species === 'cattle' && G.isIntactMature(a) && G.fertMult(a) > 0).sort((x, y) => x.age - y.age)[0];
 const fillMilk = () => {
   const S = G.S;
   for (let i = 0; i < S.milkSlots.length; i++) {
@@ -57,18 +65,20 @@ const breedAI = () => {
 const strawScore = (s) => s.genes.length + s.genes.depth + s.genes.traits.reduce((t, x) => t + (G.TRAITS[x.k].demerit ? -x.r : x.r), 0);
 const shipAll = () => { for (const a of G.alive()) if (shipReady(a)) G.ship(a); };
 const sellExtraBulls = () => {
-  // 未去勢のまま成熟した雄（種牛1頭を除く）は出荷
-  const bulls = G.alive().filter((a) => a.species === 'cattle' && G.isIntactMature(a));
-  for (const b of bulls.slice(1)) G.ship(b);
+  // 受胎できない種牛と、2頭目以降の種牛は出荷
+  const best = bullOf();
+  for (const b of G.alive().filter((a) => a.species === 'cattle' && G.isIntactMature(a))) if (b !== best) G.ship(b);
 };
 // 繁殖用の雌牛は5頭まで。余った若い雌は売る（普通のプレーヤーがすること）
 const manageHerd = () => {
   const cows = G.alive().filter((a) => a.species === 'cattle' && a.sex === 'F');
   const score = (a) => a.genes.length + a.genes.depth + a.genes.traits.reduce((t, x) => t + (G.TRAITS[x.k].demerit ? -x.r : x.r), 0);
-  const keep = cows.slice().sort((x, y) => score(y) - score(x) || x.age - y.age).slice(0, 6);
+  const fertile = (a) => G.fertMult(a) > 0;
+  const keep = cows.filter(fertile).sort((x, y) => score(y) - score(x) || x.age - y.age).slice(0, 6);
   for (const a of cows) if (!keep.includes(a) && a.age >= 2 && !a.flags.simHeifer && !a.pregnancy) G.sell(a);
 };
-const cullOldCows = () => { for (const a of G.alive()) if (a.species === 'cattle' && a.sex === 'F' && a.age > 36 && !a.pregnancy) G.ship(a); };
+// 「生産なし」の通知が出た個体は出荷する（牛）
+const cullOldCows = () => { for (const a of G.alive()) if (a.species === 'cattle' && G.isMature(a) && ['idle', 'peak'].includes(G.prodState(a))) G.ship(a); };
 const keepUnderCap = () => {
   const over = G.herdCount('cattle') - G.S.cattleSlots;
   if (over > 0) G.alive().filter((a) => a.species === 'cattle' && a.sex === 'M' && a.castrated).sort((x, y) => y.age - x.age).slice(0, over).forEach((a) => (a.age >= 3 ? G.ship(a) : G.sell(a)));

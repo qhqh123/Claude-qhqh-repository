@@ -296,6 +296,8 @@ G.endTurn = () => {
     // 空胎
     if (a.sex === 'F' && G.isMature(a) && !a.pregnancy) a.openTurns++;
     // 成熟
+    G.applyAging(a);
+    G.rollInjury(a);
     // 当代能力は少しずつ落ちる
     if (a.trained) a.trained = Math.max(0, a.trained - G.C.trainDecay);
     if (a.age === G.SPECIES[a.species || 'cattle'].mature) {
@@ -331,7 +333,7 @@ G.endTurn = () => {
     if (newborns.includes(a)) continue;
     let dead = false;
     if (a.age > a.lifespan && G.chance(G.C.oldAgeDeathRate)) dead = 'old';
-    else if (G.chance(G.C.accidentRate)) dead = 'accident';
+    else if (G.chance(G.C.accidentRate * G.injuryMult(a))) dead = 'accident';
     if (dead) {
       a.status = 'dead';
       a.endTurn = S.turn + 1;
@@ -406,6 +408,7 @@ G.endTurn = () => {
   G.refreshCatalog();
   G.refreshStallions();
   G.race.makeCard();
+  for (const a of G.alive()) G.checkProdState(a);
   G.checkRecords();
   G.senior.check();
   S.lastSummary = summary;

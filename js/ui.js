@@ -168,6 +168,9 @@ G.ui = {
     genes = genes || a.genes;
     return this.badge(a, 'length', genes.length, small) + this.badge(a, 'depth', genes.depth, small);
   },
+  badgesAcq(a, small) {
+    return (a && a.acquired || []).map((k) => this.badge(a, k, 1, small)).join('');
+  },
   badgesTraits(a, genes, small) {
     genes = genes || a.genes;
     const t = (genes.traits || []).filter((x) => x.r > 0);
@@ -251,6 +254,7 @@ G.ui = {
         ${alive ? this.bar('健康', a.health, 'health') + this.bar('幸福度', a.happiness, 'happy') + this.bar('ストレス', a.stress, 'stress') + this.bar('なつき度', a.affinity.player, 'aff') + (G.isHorse(a) ? this.bar('当代能力', a.trained || 0, 'train') : '') : ''}
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(a)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(a)}</div>
+        ${(a.acquired || []).length ? `<div class="badge-row"><span class="lbl">後天</span>${this.badgesAcq(a)}</div>` : ''}
         <div class="kv"><span>繁殖状態</span><b>${this.breedStatus(a)}</b></div>
         ${rec ? `<div class="kv"><span>レース</span><b>${rec.n}戦 ${rec.win}勝 入賞${rec.place}</b></div>` : ''}
         ${alive && G.isHorse(a) ? `<div class="kv"><span>畑</span><b>${fieldIdx >= 0 ? `畑スロット${G.field.label(fieldIdx)}` : '—'}</b></div>` : ''}
@@ -259,6 +263,8 @@ G.ui = {
         ${alive ? `<div class="kv"><span>体重</span><b>${Math.round(a.weight)}kg</b></div>
         <div class="kv"><span>枝肉（予測）</span><b>${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}</b></div>
         <div class="kv"><span>売上（予測）</span><b>${G.yen(v.sales)}${v.pen > 0 ? `　<small>未去勢 −${Math.round(v.pen * 100)}%</small>` : ''}</b></div>
+        <div class="kv"><span>見込み売上（次のターン）</span><b>${G.yen(G.nextShipValue(a))} ${['↓', '→', '↑'][G.valueTrend(a) + 1]}</b></div>
+        <div class="kv"><span>維持費（1ターン）</span><b>${G.yen(G.upkeepOf(a))}</b></div>
         <div class="kv"><span>放牧地</span><b>${pastures.length > 1 ? '' : G.MAP_LABEL[a.pasture]}</b></div>${pastures.length > 1 ? this.pickChips(pastures.map((p) => ({ value: p, label: G.MAP_LABEL[p], on: p === a.pasture })), 'data-move') : ''}` : ''}
       </div></div>
       ${alive ? `<div class="actions">
@@ -431,9 +437,10 @@ G.ui = {
     if (tab === 'list') {
       const ps = Object.keys(S.pastures).filter((p) => S.pastures[p].open);
       const filt = pid && S.pastures[pid] ? pid : '';
-      const list = G.alive().filter((a) => !filt || a.pasture === filt).sort((x, y) => x.pasture.localeCompare(y.pasture) || y.age - x.age);
-      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt ? 'on' : ''}" data-p="${p}">${p ? G.MAP_LABEL[p] : 'すべて'}</button>`).join('')}<span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
-        <div class="a-list">${list.map((a) => this.animalRow(a, `<span class="st">${this.breedStatus(a)}</span>${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '<span class="pill">出荷適期</span>' : ''}`)).join('') || '<div class="muted">—</div>'}</div>`;
+      const idleOnly = pid === 'idle';
+      const list = G.alive().filter((a) => (idleOnly ? ['idle', 'peak'].includes(G.prodState(a)) : (!filt || a.pasture === filt))).sort((x, y) => x.pasture.localeCompare(y.pasture) || y.age - x.age);
+      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt && !idleOnly ? 'on' : ''}" data-p="${p}">${p ? G.MAP_LABEL[p] : 'すべて'}</button>`).join('')}<button class="chip ${idleOnly ? 'on' : ''}" data-p="idle">生産なし</button><span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
+        <div class="a-list">${list.map((a) => { const ps = G.prodState(a); return this.animalRow(a, `<span class="st">${this.breedStatus(a)}</span><span class="row-pills">${ps === 'idle' || ps === 'peak' ? '<span class="pill idle">生産なし</span>' : ''}${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '<span class="pill">出荷適期</span>' : ''}<span class="trend t${G.valueTrend(a)}">見込み ${['↓', '→', '↑'][G.valueTrend(a) + 1]}</span></span>`); }).join('') || '<div class="muted">—</div>'}</div>`;
       this.drawFaces(body);
       $$('.a-row', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
       $$('[data-p]', body).forEach((b) => b.onclick = () => this.renderOffice(w, 'list', b.dataset.p));
@@ -654,7 +661,7 @@ G.ui = {
   noticeAction(n) {
     if (n.done) return n.type === 'diary' ? '読む' : (n.aid && G.S.animals[n.aid] ? '詳細' : '');
     if (n.type === 'rescue') return n.done ? '' : '町へ';
-    return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け' }[n.type] || '';
+    return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け', idle: '詳細', peak: '詳細', aging: '詳細' }[n.type] || '';
   },
   queueNotice(n) {
     this.noticeQueue.push(n);
@@ -713,7 +720,7 @@ G.ui = {
       n.done = true;
       this.openBreed(a);
     } else if (a) {
-      n.done = n.done || n.type === 'ship' || n.type === 'birth' || n.type === 'death';
+      n.done = n.done || ['ship', 'birth', 'death', 'idle', 'peak', 'aging'].includes(n.type);
       this.openDetail(a.id);
     }
     this.refreshHud();

@@ -111,7 +111,7 @@ G.deliverCourse = (c) => {
 };
 
 // ---------- 交配 ----------
-G.canBreed = (a) => a.status === 'alive' && a.sex === 'F' && G.isMature(a) && !a.pregnancy && a.bredTurn !== G.S.turn;
+G.canBreed = (a) => a.status === 'alive' && a.sex === 'F' && G.isMature(a) && !a.pregnancy && a.bredTurn !== G.S.turn && G.fertMult(a) > 0;
 
 G.partnerNear = (dam) => G.alive().some((b) => G.isIntactMature(b) && b.species === dam.species && b.pasture === dam.pasture && G.likesAnimal(dam, b));
 // 当て馬に使える牡馬
@@ -128,7 +128,7 @@ G.breed = (dam, partner) => {
   if (partner.type === 'bull') {
     const bull = S.animals[partner.id];
     sire = { id: bull.id };
-    ok = G.chance(G.C.naturalConception);
+    ok = G.chance(G.C.naturalConception * G.fertMult(dam) * G.fertMult(bull));
     line = `自然交配　${dam.name} × ${bull.name}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = bull.name;
     const ctx = { species: dam.species, personality: dam.personality, partner_liked: G.likesAnimal(dam, bull) };
@@ -139,7 +139,7 @@ G.breed = (dam, partner) => {
     const st = S.stallions[partner.index];
     const teaser = partner.teaser && S.animals[partner.teaser];
     sire = { external: true, name: st.name, genes: st.genes };
-    ok = G.chance(G.C.naturalConception + (teaser ? G.C.teaserBonus : 0));
+    ok = G.chance((G.C.naturalConception + (teaser ? G.C.teaserBonus : 0)) * G.fertMult(dam));
     G.pay(st.fee, `種付け料　${st.name}（外部）　${G.yen(st.fee)}`);
     line = `種付け　${dam.name} × ${st.name}（外部）${teaser ? `　当て馬 ${teaser.name}` : ''}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = st.name;
@@ -156,7 +156,7 @@ G.breed = (dam, partner) => {
   } else {
     const straw = S.straws.splice(partner.index, 1)[0];
     sire = { external: true, name: straw.name, genes: straw.genes };
-    ok = G.chance(G.C.aiConception);
+    ok = G.chance(G.C.aiConception * G.fertMult(dam));
     line = `人工授精　${dam.name}　精液ストロー ${straw.name}（${G.TRAITS[straw.main].name}期待${G.rankName(straw.rank)}）${G.yen(straw.price)}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     const near = G.partnerNear(dam);
     const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near };
