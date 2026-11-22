@@ -16,6 +16,7 @@ G.newGame = () => {
     readTexts: {},
     notices: [],
     nextNotice: 1,
+    storage: { cap: G.C.storageCap, items: [], next: 1 },
     market: [],
     straws: [],
     strawCatalog: [],

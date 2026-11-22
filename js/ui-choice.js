@@ -166,3 +166,36 @@ Object.assign(G.ui, {
     return `<div class="pick-chips">${items.map((it) => `<button type="button" class="pick ${it.on ? 'on' : ''}" ${attr}="${G.esc(it.value)}" ${it.disabled ? 'disabled' : ''}>${it.face ? `<canvas class="pick-face" data-face="${it.face}" width="48" height="48"></canvas>` : ''}<span>${it.label}</span>${it.sub ? `<small>${it.sub}</small>` : ''}</button>`).join('')}</div>`;
   },
 });
+
+// ---------- 倉庫 ----------
+Object.assign(G.ICONS, {
+  nameplate: '<svg viewBox="0 0 48 48"><path d="M16 14 L24 6 L32 14" fill="none" stroke="#b98b5e" stroke-width="2.5" stroke-linecap="round"/><rect x="6" y="14" width="36" height="22" rx="6" fill="#f3d9b1" stroke="#c99a66" stroke-width="2.5"/><rect x="12" y="22" width="24" height="3" rx="1.5" fill="#a8774a"/><rect x="16" y="28" width="16" height="2.5" rx="1.25" fill="#c99a66"/><circle cx="24" cy="6" r="2" fill="#b98b5e"/></svg>',
+  horseshoe: '<svg viewBox="0 0 48 48"><path d="M12 10 V24 a12 12 0 0 0 24 0 V10" fill="none" stroke="#9aa7b8" stroke-width="8" stroke-linecap="round"/><path d="M12 10 V24 a12 12 0 0 0 24 0 V10" fill="none" stroke="#d6dee8" stroke-width="3" stroke-linecap="round"/><g fill="#7d8899"><circle cx="12" cy="16" r="1.6"/><circle cx="13" cy="25" r="1.6"/><circle cx="36" cy="16" r="1.6"/><circle cx="35" cy="25" r="1.6"/></g></svg>',
+  testes: '<svg viewBox="0 0 48 48"><rect x="11" y="10" width="26" height="30" rx="7" fill="#e6f4ff" stroke="#8fc7ff" stroke-width="2.5"/><rect x="15" y="6" width="18" height="7" rx="3" fill="#bfe1ff"/><rect x="15" y="20" width="18" height="10" rx="3" fill="#fff" stroke="#c9dff2" stroke-width="1.5"/><path d="M24 32 v6 M21 34 l6 2 M27 34 l-6 2" stroke="#8fc7ff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+});
+
+Object.assign(G.ui, {
+  itemLabel(it) {
+    const sp = G.SPECIES[it.species || 'cattle'];
+    return `<div class="item-label"><b>${G.esc(it.name)}</b><span>${sp.name} ${it.sex === 'M' ? '♂' : '♀'}</span>
+      <span class="mono">${it.idNo}</span><span>${G.dateText(it.turn)}${it.method ? `　${G.METHOD_SHORT[it.method]}` : ''}</span></div>`;
+  },
+  renderStorage(w, body) {
+    const S = G.S;
+    const items = S.storage.items.slice().reverse();
+    body.innerHTML = `<div class="stat-strip"><div><span>保管</span><b>${G.store.used()}/${S.storage.cap}</b></div>
+      <div class="expand"><span>${G.yen(G.C.storageExpandCost)}　+${G.C.storageExpandSlots}</span><button class="btn small primary" data-expand ${S.money < G.C.storageExpandCost ? 'disabled' : ''}>増設</button></div></div>
+      <div class="item-grid">${items.map((it) => {
+        const mem = G.store.price(it, 'memorial'), food = G.store.price(it, 'food');
+        return `<div class="item-card ${it.kind}"><div class="item-icon">${G.ICONS[G.ITEMS[it.kind].icon]}</div>
+          <div class="item-name">${G.ITEMS[it.kind].name}</div>${this.itemLabel(it)}
+          <div class="item-btns">${mem ? `<button class="btn small" data-sell="${it.id}|memorial">記念品 ${G.yen(mem)}</button>` : ''}${food ? `<button class="btn small" data-sell="${it.id}|food">食用 ${G.yen(food)}</button>` : ''}</div></div>`;
+      }).join('') || '<div class="muted">—</div>'}</div>`;
+    $$('[data-sell]', body).forEach((b) => b.onclick = () => {
+      const [id, use] = b.dataset.sell.split('|');
+      if (G.store.sell(id, use)) { this.renderOffice(w, 'storage'); this.refreshHud(); }
+    });
+    const ex = $('[data-expand]', body);
+    if (ex) ex.onclick = () => { if (G.store.expand()) { G.audio.sfx('fanfare'); this.renderOffice(w, 'storage'); this.refreshHud(); } };
+  },
+});

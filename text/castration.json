@@ -446,5 +446,9 @@
   "cond": {
    "method": "traditional"
   }
+ },
+ "cas.keep_testes_01": {
+  "text": "［cas.keep_testes_01｜精巣の冷凍保存］",
+  "speaker": "narration"
  }
 }

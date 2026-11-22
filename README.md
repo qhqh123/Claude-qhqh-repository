@@ -31,6 +31,8 @@ python3 tools/build-text.py
 | `js/production.js` / `js/ui-production.js` | 搾乳施設・畑と牧草・飼料の自給・農耕馬・レース画面 |
 | `js/race.js` | レースの出走登録と判定 |
 | `js/relations.js` | 個体関係（親密度）と厩務員の性格相性 |
+| `js/storage.js` | 倉庫とメモリアルアイテム（ネームプレート・蹄鉄・精巣） |
+| `js/ui-choice.js` | 選択カード・一覧の行・去勢と交配・倉庫の画面 |
 | `js/draw-horse.js` | 馬の描画 |
 | `js/text.js` / `js/novel.js` | 文章JSON・ノベル表示・既読スキップ・出荷画面 |
 | `js/map.js` / `js/draw.js` | マップ・カメラ・ミニマップ・描画 |

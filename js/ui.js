@@ -236,7 +236,9 @@ G.ui = {
     const archive = !alive ? `<div class="kv"><span>個体識別番号</span><b>${a.idNo}</b></div>
       <div class="kv"><span>状態</span><b>${this.breedStatus(a)}　${G.dateText(a.endTurn || G.S.turn)}</b></div>
       ${a.shipped ? `<div class="kv"><span>売上</span><b>${G.yen(a.shipped.sales)}</b></div>` : ''}
-      ${a.soldPrice ? `<div class="kv"><span>売上</span><b>${G.yen(a.soldPrice)}</b></div>` : ''}` : '';
+      ${a.soldPrice ? `<div class="kv"><span>売上</span><b>${G.yen(a.soldPrice)}</b></div>` : ''}
+      ${G.store.keepable(a).length ? `<div class="keep-row"><span class="sec-label">残す</span>${G.store.keepable(a).map((k) => `<button class="btn small keep" data-keep="${k}" ${G.store.full() ? 'disabled' : ''}>${G.ICONS[G.ITEMS[k].icon]}${G.ITEMS[k].name}</button>`).join('')}</div>` : ''}
+      ${a.memorials && Object.keys(a.memorials).length ? `<div class="kv"><span>保管</span><b>${Object.keys(a.memorials).map((k) => G.ITEMS[k].name).join('・')}</b></div>` : ''}` : '';
     body.innerHTML = `<div class="basic">
       <div class="portrait-col"><canvas class="portrait" width="240" height="240"></canvas>
         ${alive ? '<button class="btn small rename">✏ 名前</button>' : ''}</div>
@@ -265,6 +267,13 @@ G.ui = {
         <button class="btn" data-act="sell">🏷 売却</button>
       </div>` : ''}`;
     G.draw.portrait($('.portrait', body), a);
+    $$('[data-keep]', body).forEach((b) => b.onclick = () => {
+      const r = G.store.keep(a, b.dataset.keep);
+      if (!r) return;
+      G.audio.sfx('care');
+      this.renderDetail(w, a, 'basic');
+      G.novel.play(r.ev);
+    });
     const rn = $('.rename', body);
     if (rn) rn.onclick = () => this.rename(a, () => this.renderDetail(w, a, 'basic'));
     $$('[data-move]', body).forEach((b) => b.onclick = () => {
@@ -405,7 +414,7 @@ G.ui = {
     w.dataset.office = tab;
     w.dataset.pid = pid || '';
     const pending = G.S.notices.filter((n) => !n.done).length;
-    const tabs = [['notice', '🔔', '通知', pending], ['list', '🐮', '個体一覧'], ['breed', '💞', '繁殖'], ['race', '🏇', 'レース'], ['ledger', '📒', '帳簿'], ['money', '💰', '収支'], ['facility', '🏡', '施設'], ['staff', '🧑‍🌾', '厩務員'], ['archive', '📚', 'アーカイブ'], ['records', '🏅', '牧場の記録']];
+    const tabs = [['notice', '🔔', '通知', pending], ['list', '🐮', '個体一覧'], ['breed', '💞', '繁殖'], ['race', '🏇', 'レース'], ['ledger', '📒', '帳簿'], ['money', '💰', '収支'], ['facility', '🏡', '施設'], ['staff', '🧑‍🌾', '厩務員'], ['storage', '📦', '倉庫'], ['archive', '📚', 'アーカイブ'], ['records', '🏅', '牧場の記録']];
     $('.office-nav', w).innerHTML = tabs.map(([k, ic, n, c]) => `<button class="nav-item ${k === tab ? 'on' : ''}" data-tab="${k}"><span class="ni">${ic}</span><span class="nt">${n}</span>${c ? `<i class="nb">${c}</i>` : ''}</button>`).join('');
     $$('.office-nav .nav-item', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderOffice(w, b.dataset.tab); });
     const on = $('.office-nav .nav-item.on', w);
@@ -488,6 +497,7 @@ G.ui = {
       $$('[data-name]', body).forEach((i) => i.onchange = () => { const v = i.value.trim(); if (v) S.staff[i.dataset.name].name = v; });
       $$('[data-sp]', body).forEach((b) => b.onclick = () => { const [k, p] = b.getAttribute('data-sp').split('|'); S.staff[k].pasture = p; G.audio.sfx('click'); this.renderOffice(w, 'staff'); });
     }
+    if (tab === 'storage') this.renderStorage(w, body);
     if (tab === 'archive') {
       const list = Object.values(S.animals).filter((a) => a.status !== 'alive').sort((x, y) => (y.endTurn || 0) - (x.endTurn || 0));
       body.innerHTML = `<div class="a-list">${list.map((a) => this.animalRow(a, `<span class="st">${this.breedStatus(a)}　${G.dateText(a.endTurn)}</span><small>${a.idNo}　${a.castration ? `${G.PERIOD_NAMES[a.castration.period]}・${G.METHOD_SHORT[a.castration.method]}` : '—'}</small><b>${a.shipped ? G.yen(a.shipped.sales) : a.soldPrice ? G.yen(a.soldPrice) : ''}</b>`)).join('') || '<div class="muted">—</div>'}</div>`;

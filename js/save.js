@@ -60,6 +60,7 @@ G.save = {
     if (!Array.isArray(obj.fields)) obj.fields = [];
     while (obj.fields.length < G.FIELD_SLOTS) obj.fields.push({ open: false, use: 'pasture', horse: null });
     obj.noticeTurn = null;
+    if (!obj.storage || !Array.isArray(obj.storage.items)) obj.storage = { cap: G.C.storageCap, items: [], next: 1 };
     if (!obj.staff) obj.staff = { girl: { name: 'ミナミ', pasture: 'p1' }, boy: { name: 'ソウスケ', pasture: 'p1' } };
     let maxSeq = 0;
     for (const a of Object.values(obj.animals)) {

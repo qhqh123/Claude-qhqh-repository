@@ -86,6 +86,16 @@ G.C = {
 
   carePerTurn: 5,
 
+  // 倉庫とメモリアルアイテム（仮）
+  storageCap: 20,
+  storageExpandCost: 200000,
+  storageExpandSlots: 10,
+  itemPrice: {
+    nameplate: { memorial: 3000 },
+    horseshoe: { memorial: 5000 },       // 勝利数に応じて ×(1+勝利数)
+    testes: { food: 3000, memorial: 5000 },
+  },
+
   // 馬（No.13・付録C。賞金・種付け料・価格などは仮）
   horseMatureAge: 6,
   horseLifeMin: 80,

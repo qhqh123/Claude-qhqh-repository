@@ -46,6 +46,8 @@ G.castrate = (a, methodSel, mode) => {
   G.pay(cost, [line1, line2]);
   G.addHistory(a, `去勢（${short}・${modeName}）　${G.PERIOD_NAMES[period]}`);
   S.pendingCourses.push({ aid: a.id, method, mode, incomplete, infection, turn: S.turn });
+  // 成熟雄を観血法・旧来手法で直接去勢したときは精巣を冷凍保存
+  const keep = mode === 'direct' && period === 'mature' && !incomplete && (method === 'surgical' || method === 'traditional') ? G.store.addTestes(a, method) : null;
 
   if (mode !== 'direct') return null;
   const ctx = { species: a.species, method, personality: a.personality };
@@ -66,8 +68,9 @@ G.castrate = (a, methodSel, mode) => {
     { pick: `cas.staff_${staff}_`, p: 0.3 },
     `cas.${method}.after`,
   );
+  if (keep && keep.kept) steps.push({ pick: 'cas.keep_testes_' });
   const vars = G.textVars(a);
-  const ev = { title: '去勢', paras: G.buildParas(steps, ctx), vars, ledger: [line1, line2], aid: a.id };
+  const ev = { title: '去勢', paras: G.buildParas(steps, ctx), vars, ledger: [line1, line2].concat(keep ? [keep.line] : []), aid: a.id };
   G.storeDiary(a, ev);
   return ev;
 };

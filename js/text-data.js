@@ -633,6 +633,10 @@ window.TEXT_DATA = {
    "cond": {
     "method": "traditional"
    }
+  },
+  "cas.keep_testes_01": {
+   "text": "［cas.keep_testes_01｜精巣の冷凍保存］",
+   "speaker": "narration"
   }
  },
  "daily-events.json": {
@@ -746,6 +750,17 @@ window.TEXT_DATA = {
   "vet.advice.horse": {
    "text": "［vet.advice.horse｜アドバイス］",
    "speaker": "narration"
+  },
+  "memo.nameplate_01": {
+   "text": "［memo.nameplate_01｜ネームプレートを残す］",
+   "speaker": "narration"
+  },
+  "memo.horseshoe_01": {
+   "text": "［memo.horseshoe_01｜蹄鉄を残す］",
+   "speaker": "narration",
+   "cond": {
+    "species": "horse"
+   }
   }
  }
 };

@@ -603,3 +603,21 @@ body.dev .dev-only { display: block; }
   .pill-box.loan, .pill-box.herd { display: none !important; }
   .hud-left { flex-wrap: nowrap; }
 }
+
+/* ---------- 倉庫 ---------- */
+.stat-strip .expand { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.item-card { background: #fff; border-radius: 22px; padding: 14px 12px 12px; box-shadow: 0 4px 0 #f3dce5; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.item-card.testes { background: linear-gradient(180deg, #f3faff, #fff); box-shadow: 0 4px 0 #d6eaf8; }
+.item-card.horseshoe { background: linear-gradient(180deg, #f6f7fa, #fff); }
+.item-icon { width: 64px; height: 64px; border-radius: 50%; background: #fff7fb; display: flex; align-items: center; justify-content: center; }
+.item-card.testes .item-icon { background: #e9f5ff; }
+.item-icon svg { width: 48px; height: 48px; }
+.item-name { font-weight: 800; font-size: 14px; }
+.item-label { width: 100%; background: #fffdf6; border: 2px solid #efe3c8; border-radius: 10px; padding: 6px 8px; display: flex; flex-direction: column; gap: 1px; font-size: 11px; color: var(--ink-l); }
+.item-label b { color: var(--ink); font-size: 14px; }
+.item-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 2px; }
+.keep-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.keep-row .sec-label { flex-basis: 100%; margin: 0; }
+.btn.keep { display: inline-flex; align-items: center; gap: 6px; }
+.btn.keep svg { width: 22px; height: 22px; }

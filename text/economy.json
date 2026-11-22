@@ -49,5 +49,16 @@
  "vet.advice.horse": {
   "text": "［vet.advice.horse｜アドバイス］",
   "speaker": "narration"
+ },
+ "memo.nameplate_01": {
+  "text": "［memo.nameplate_01｜ネームプレートを残す］",
+  "speaker": "narration"
+ },
+ "memo.horseshoe_01": {
+  "text": "［memo.horseshoe_01｜蹄鉄を残す］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
  }
 }
