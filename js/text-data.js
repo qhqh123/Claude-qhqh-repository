@@ -697,6 +697,22 @@ window.TEXT_DATA = {
      "頑固"
     ]
    }
+  },
+  "senior.advice_01": {
+   "text": "［senior.advice_01｜先輩牧場主のアドバイス］",
+   "speaker": "senior"
+  },
+  "senior.advice_02": {
+   "text": "［senior.advice_02｜先輩牧場主のアドバイス］",
+   "speaker": "senior"
+  },
+  "senior.advice_03": {
+   "text": "［senior.advice_03｜先輩牧場主のアドバイス］",
+   "speaker": "senior"
+  },
+  "senior.rescue_01": {
+   "text": "［senior.rescue_01｜再建支援］",
+   "speaker": "senior"
   }
  },
  "economy.json": {

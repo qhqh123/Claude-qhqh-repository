@@ -8,7 +8,7 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 global.window = global;
 global.G = {};
-const files = ['consts', 'util', 'text-data', 'text', 'animals', 'game', 'events', 'production', 'race', 'relations', 'storage', 'save', 'map'];
+const files = ['consts', 'util', 'text-data', 'text', 'animals', 'game', 'events', 'production', 'race', 'relations', 'storage', 'senior', 'save', 'map'];
 for (const f of files) vm.runInThisContext(fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8'), { filename: f + '.js' });
 G.text.setFromBundle(window.TEXT_DATA);
 // 調整案を試す: TUNE='{"staffWage":50000}' node tools/sim.js
@@ -61,6 +61,13 @@ const sellExtraBulls = () => {
   const bulls = G.alive().filter((a) => a.species === 'cattle' && G.isIntactMature(a));
   for (const b of bulls.slice(1)) G.ship(b);
 };
+// 繁殖用の雌牛は5頭まで。余った若い雌は売る（普通のプレーヤーがすること）
+const manageHerd = () => {
+  const cows = G.alive().filter((a) => a.species === 'cattle' && a.sex === 'F');
+  const score = (a) => a.genes.length + a.genes.depth + a.genes.traits.reduce((t, x) => t + (G.TRAITS[x.k].demerit ? -x.r : x.r), 0);
+  const keep = cows.slice().sort((x, y) => score(y) - score(x) || x.age - y.age).slice(0, 6);
+  for (const a of cows) if (!keep.includes(a) && a.age >= 2 && !a.flags.simHeifer && !a.pregnancy) G.sell(a);
+};
 const cullOldCows = () => { for (const a of G.alive()) if (a.species === 'cattle' && a.sex === 'F' && a.age > 36 && !a.pregnancy) G.ship(a); };
 const keepUnderCap = () => {
   const over = G.herdCount('cattle') - G.S.cattleSlots;
@@ -70,11 +77,11 @@ const keepUnderCap = () => {
 const STRATEGIES = {
   '何もしない': () => {},
   '基本（自然交配・標準去勢・出荷）': () => {
-    castrateCalves('burdizzo', 'outsource'); breedNatural(); fillMilk(); shipAll(); sellExtraBulls(); cullOldCows(); keepUnderCap();
+    castrateCalves('burdizzo', 'outsource'); breedNatural(); fillMilk(); shipAll(); sellExtraBulls(); cullOldCows(); manageHerd(); keepUnderCap();
   },
   '改良と搾乳（人工授精・増設）': () => {
     const S = G.S;
-    castrateCalves('burdizzo', 'direct'); breedAI(); fillMilk(); shipAll(); sellExtraBulls(); cullOldCows();
+    castrateCalves('burdizzo', 'direct'); breedAI(); fillMilk(); shipAll(); sellExtraBulls(); cullOldCows(); manageHerd();
     const lact = G.alive().filter((a) => G.milk.canPlace(a) && G.milk.calc(a).income > 100000).length;
     if (lact > 0 && S.money > G.C.milkSlotCost + 1500000) G.milk.addSlot();
     const closed = S.fields.findIndex((f) => !f.open);
@@ -82,6 +89,28 @@ const STRATEGIES = {
     const hill = ['p2', 'p3', 'p4', 'p5'].find((p) => !S.pastures[p].open);
     if (hill && S.money > 5000000 && G.herdCount('cattle') >= S.cattleSlots - 1) G.openPasture(hill);
     keepUnderCap();
+  },
+  '育成牛を買って育てて売る': () => {
+    const S = G.S;
+    STRATEGIES['基本（自然交配・標準去勢・出荷）']();
+    for (const m of S.market.filter((x) => x.basic)) {
+      if (S.money > m.price + 800000 && G.hasRoom('cattle')) { const a = G.buy(m); if (a) { a.flags.simHeifer = m.price; SIM.heiferBought += m.price; SIM.heiferN++; } }
+    }
+    for (const a of G.alive()) if (a.flags.simHeifer && G.isMature(a)) { SIM.heiferSold += G.sell(a); SIM.heiferDone++; }
+  },
+  '農耕馬で商業作物': () => {
+    const S = G.S;
+    STRATEGIES['基本（自然交配・標準去勢・出荷）']();
+    if (!S.pastures.h1.open && S.money > G.C.horsePastureCost + 1000000) G.openPasture('h1');
+    if (!S.pastures.h1.open) return;
+    for (const m of S.market.filter((x) => x.species === 'horse' && x.age >= 6)) if (S.money > m.price + 800000 && G.hasRoom('horse') && G.herdCount('horse') < 3) G.buy(m);
+    for (const h of G.alive().filter((a) => G.isHorse(a) && G.isMature(a))) {
+      if (h.sex === 'M' && !h.castrated) G.castrate(h, 'surgical', 'direct');
+      if (S.fields.some((f) => f.horse === h.id)) continue;
+      let i = S.fields.findIndex((f) => f.open && !f.horse);
+      if (i < 0 && S.money > G.C.fieldOpenCost + 500000) { i = S.fields.findIndex((f) => !f.open); if (i >= 0) G.field.open(i); }
+      if (i >= 0 && S.fields[i].open) { G.field.setUse(i, 'crop'); G.field.assign(i, h); }
+    }
   },
   '競馬（2年目から）': () => {
     const S = G.S;
@@ -109,14 +138,20 @@ const STRATEGIES = {
 const pct = (arr, p) => { const s = arr.slice().sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(p * s.length))]; };
 const man = (v) => (v / 10000).toFixed(0) + '万';
 const results = {};
+const SIM = { heiferBought: 0, heiferSold: 0, heiferN: 0, heiferDone: 0 };
 for (const [name, play] of Object.entries(STRATEGIES)) {
-  const r = { y1short: [], y1ok: 0, paidYear: [], money: [], loan: [], firstS: [], borrowed: [], herd: [], raceIncome: [], shipped: [], milkIncome: [] };
+  const r = { y1short: [], y1ok: 0, paidYear: [], money: [], loan: [], firstS: [], borrowed: [], herd: [], raceIncome: [], shipped: [], milkIncome: [], milkSlotTurns: 0, milkTotal: 0, cropTurns: 0, cropTotal: 0, horseTurns: 0 };
+  Object.assign(SIM, { heiferBought: 0, heiferSold: 0, heiferN: 0, heiferDone: 0 });
   for (let run = 0; run < RUNS; run++) {
     G.newGame();
     let borrowed = 0, raceInc = 0, milkInc = 0, paid = null;
     for (let t = 0; t < YEARS * 4; t++) {
       play();
+      r.milkSlotTurns += G.S.milkSlots.filter((x) => x.aid).length;
+      const cropF = G.S.fields.filter((f) => f.open && f.use === 'crop' && f.horse).length;
+      r.cropTurns += cropF;
       const s = G.endTurn();
+      for (const e of s.entries) { if (e.lines[0].startsWith('搾乳')) r.milkTotal += e.amount; if (e.lines[0].startsWith('畑')) r.cropTotal += e.amount; }
       borrowed += s.borrowed || 0;
       for (const e of s.entries) { if (e.lines[0].startsWith('レース')) raceInc += e.amount; if (e.lines[0].startsWith('搾乳')) milkInc += e.amount; }
       if (s.settlement && t === 3) { r.y1short.push(s.settlement.unpaid); if (!s.settlement.unpaid) r.y1ok++; }
@@ -128,6 +163,7 @@ for (const [name, play] of Object.entries(STRATEGIES)) {
     r.herd.push(G.alive().length); r.raceIncome.push(raceInc); r.milkIncome.push(milkInc);
     r.shipped.push(Object.values(G.S.animals).filter((a) => a.status === 'shipped').length);
   }
+  r.heifer = Object.assign({}, SIM);
   results[name] = r;
 }
 
@@ -140,6 +176,27 @@ for (const [name, r] of Object.entries(results)) {
   const fs_ = pct(r.firstS, 0.5);
   console.log(`| ${name} | ${Math.round(r.y1ok / RUNS * 100)}% | ${man(pct(r.y1short, 0.5))} | ${py > YEARS ? '—' : py + '年目'} | ${Math.round(paidRate * 100)}% | ${man(pct(r.money, 0.5))} | ${man(pct(r.loan, 0.5))} | ${man(pct(r.borrowed, 0.5))} | ${pct(r.shipped, 0.5)} | ${man(pct(r.milkIncome, 0.5))} | ${man(pct(r.raceIncome, 0.5))} | ${fs_ > YEARS ? '—' : fs_ + '年目'} |`);
 }
+
+// ---------- 施設の元が取れるまで ----------
+console.log('\n# 施設の収支（1枠・1ターンあたりの平均）\n');
+const C = G.C;
+for (const [name, r] of Object.entries(results)) {
+  if (r.milkSlotTurns) {
+    const per = r.milkTotal / r.milkSlotTurns;
+    console.log(`- ${name}：搾乳1枠 ${man(per)}／ターン（維持費 ${man(C.milkSlotUpkeep)}）→ 増設費 ${man(C.milkSlotCost)} の回収 ${(C.milkSlotCost / Math.max(1, per - C.milkSlotUpkeep) / 4).toFixed(1)}年`);
+  }
+  if (r.cropTurns) {
+    const per = r.cropTotal / r.cropTurns;
+    const horseFeed = C.feedUnitsAdult * C.feedUnitPrice;
+    console.log(`- ${name}：商業作物1区画 ${man(per)}／ターン（馬の飼料 ${man(horseFeed)}・維持費 ${man(C.fieldUpkeep)}）→ 差し引き ${man(per - horseFeed - C.fieldUpkeep)}／ターン`);
+  }
+  if (r.heifer.heiferDone) {
+    const buy = r.heifer.heiferBought / r.heifer.heiferN, sell = r.heifer.heiferSold / r.heifer.heiferDone;
+    console.log(`- ${name}：育成牛 平均購入 ${man(buy)} → 平均売却 ${man(sell)}（${r.heifer.heiferDone}頭。飼料は別）`);
+  }
+}
+const pastureSave = C.fieldPastureBase * 0.5 * C.feedUnitPrice;
+console.log(`- 畑（馬なしの牧草）：1区画 ${man(pastureSave)}／ターン分の飼料を自給、維持費 ${man(C.fieldUpkeep)} → 開拓費 ${man(C.fieldOpenCost)} の回収 ${(C.fieldOpenCost / Math.max(1, pastureSave - C.fieldUpkeep) / 4).toFixed(1)}年`);
 
 // ---------- 去勢時期と出荷時期の比較 ----------
 if (process.env.SKIP_CAST) process.exit(0);

@@ -89,6 +89,7 @@ G.ui = {
     $('#hud-horse').parentElement.classList.toggle('hidden', !S.horseSlots && !nh);
     $('#hud-horse').parentElement.classList.toggle('over', nh > S.horseSlots);
     const pending = S.notices.filter((x) => !x.done).length;
+    $('#btn-town').classList.toggle('alert', G.senior.needed());
     const badge = $('#office-badge');
     badge.textContent = pending; badge.classList.toggle('hidden', !pending);
     $('#btn-sound').textContent = G.audio.muted ? '🔇' : '🔊';
@@ -538,8 +539,8 @@ G.ui = {
   },
   renderTown(w, tab) {
     const S = G.S;
-    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医']];
-    $('.town-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('');
+    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医'], ['senior', '先輩牧場主' + (G.senior.needed() ? ' ❗' : '')]];
+    $('.town-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''} ${k === 'senior' && G.senior.needed() ? 'alert' : ''}" data-tab="${k}">${n}</button>`).join('');
     $$('.town-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderTown(w, b.dataset.tab); });
     const body = $('.town-body', w);
     if (tab === 'market') {
@@ -569,6 +570,22 @@ G.ui = {
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, s.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, s.genes, true)}</div>
         <div class="card-f"><span class="muted">種付け料</span><b>${G.yen(s.fee)}</b></div></div>`).join('')}</div>`;
+    }
+    if (tab === 'senior') {
+      const need = G.senior.needed();
+      body.innerHTML = `<div class="senior ${need ? 'alert' : ''}"><div class="senior-avatar">🧓</div>
+        <div class="senior-main"><div class="senior-name">先輩牧場主</div>
+        <div class="senior-btns"><button class="btn" data-sr="advice">💬 話を聞く</button>
+        ${need ? '<button class="btn primary rescue" data-sr="rescue">❗ 再建を手伝ってもらう</button>' : ''}</div></div></div>`;
+      $$('[data-sr]', body).forEach((b) => b.onclick = () => {
+        if (b.dataset.sr === 'advice') { const ev = G.senior.advice(); if (ev.paras.length) G.novel.play(ev); return; }
+        const ev = G.senior.rescue();
+        if (!ev) return;
+        G.audio.sfx('fanfare');
+        this.renderTown(w, 'senior');
+        this.refreshHud();
+        G.novel.play(ev);
+      });
     }
     if (tab === 'vet') {
       const items = [['early', '早期'], ['standard', '標準'], ['late', '晩期'], ['mature', '高齢'], ['ring', 'ゴムリング法'], ['burdizzo', '去勢鉗子法'], ['surgical', '観血法'], ['traditional', '旧来手法'], ['horse', '馬']];
@@ -636,6 +653,7 @@ G.ui = {
   // ---------- 通知 ----------
   noticeAction(n) {
     if (n.done) return n.type === 'diary' ? '読む' : (n.aid && G.S.animals[n.aid] ? '詳細' : '');
+    if (n.type === 'rescue') return n.done ? '' : '町へ';
     return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け' }[n.type] || '';
   },
   queueNotice(n) {
@@ -687,6 +705,8 @@ G.ui = {
       this.openCastrate(a);
     } else if (n.type === 'breedable' && !n.done && a && G.canBreed(a)) {
       this.openBreed(a);
+    } else if (n.type === 'rescue') {
+      this.openTown('senior');
     } else if (n.type === 'milkable' && !n.done) {
       this.openMilk();
     } else if (n.type === 'milklow' && !n.done && a && G.canBreed(a)) {

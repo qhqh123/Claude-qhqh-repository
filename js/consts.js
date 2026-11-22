@@ -79,6 +79,7 @@ G.C = {
 
   // 市場
   marketCalf: [300000, 600000],
+  marketBasic: [150000, 250000], // 基礎的な若い雌牛（C / B）
   marketAdult: [500000, 900000],
   marketSellRate: 0.7,
   marketTraitDist: [0.50, 0.35, 0.15], // なし, C, B
@@ -140,8 +141,8 @@ G.C = {
   feedUnitsAdult: 10,
   feedUnitsYoung: 5,
   feedSurplusPrice: 1500,
-  fieldPastureBase: 10,
-  fieldCropBase: 30000,
+  fieldPastureBase: 25,
+  fieldCropBase: 100000,
   fieldOpenCost: 300000,
   fieldUpkeep: 10000,
   // 農耕馬の能力 → [商業作物, 牧草]（null は配置不可）

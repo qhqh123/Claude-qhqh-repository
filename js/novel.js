@@ -95,6 +95,7 @@ G.novel = {
     let name = '';
     if (sp === 'staff_girl') name = G.S.staff.girl.name;
     if (sp === 'staff_boy') name = G.S.staff.boy.name;
+    if (sp === 'senior') name = G.senior.NAME;
     if (sp === 'animal') name = this.vars.name || '';
     this.speakerEl.textContent = name;
     this.speakerEl.classList.toggle('hidden', !name);

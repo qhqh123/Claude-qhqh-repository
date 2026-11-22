@@ -178,6 +178,16 @@ G.refreshMarket = () => {
     const tmp = { genes: m.genes, age: m.age, species: m.species };
     m.price = G.marketValue(tmp);
   }
+  // 基礎的な若い雌牛（特筆は肉質・伸び/骨格・深み/肉付きのどれか1つだけ。安い）
+  const nb = G.ri(1, 2);
+  for (let i = 0; i < nb; i++) {
+    const genes = { length: 0, depth: 0, traits: [] };
+    const k = G.pick(['meat', 'length', 'depth']);
+    const r = G.chance(0.7) ? 1 : 2;
+    if (k === 'meat') genes.traits.push({ k, r }); else genes[k] = r;
+    const [lo, hi] = G.C.marketBasic;
+    list.push({ key: 'b' + G.S.turn + '_' + i, species: 'cattle', sex: 'F', age: G.ri(1, 3), genes, personality: G.pick(G.PERSONALITIES), price: Math.round((lo + (hi - lo) * (r - 1)) / 10000) * 10000, basic: true });
+  }
   G.S.market = list;
 };
 G.makeStraw = (rank, i) => {
@@ -397,6 +407,7 @@ G.endTurn = () => {
   G.refreshStallions();
   G.race.makeCard();
   G.checkRecords();
+  G.senior.check();
   S.lastSummary = summary;
   G.save.auto();
   return summary;

@@ -11,7 +11,7 @@ python3 tools/check-text.py
 import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal'}
+SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal', 'senior'}
 COND_KEYS = {'species', 'method', 'personality', 'partner_in_pasture', 'partner_liked', 'meat_grade_min'}
 PLACEHOLDERS = {'name', 'sex', 'age', 'species', 'staff', 'partner', 'date', 'id_number'}
 PERSONALITIES = ['おっとり', '甘えん坊', '活発', '好奇心旺盛', 'マイペース', '頑固']
@@ -31,7 +31,8 @@ REQUIRED += ['breed.ai.head', 'breed.ai.estrus_*', 'breed.ai.partner_near_*', 'b
              'breed.stallion.head', 'breed.stallion.act_*', 'breed.stallion.after_*', 'breed.teaser.act_*', 'breed.teaser.after_*',
              'ship.farewell_*', 'ship.buyer_marbling_*', 'memo.nameplate_*', 'memo.horseshoe_*',
              'rel.mother_01', 'rel.child_01', 'rel.like_01', 'rel.like_02', 'rel.dislike_01', 'rel.match_01',
-             'daily.staff_girl_*', 'daily.staff_boy_*', 'daily.animal_*', 'staff.match_girl_*', 'staff.match_boy_*']
+             'daily.staff_girl_*', 'daily.staff_boy_*', 'daily.animal_*', 'staff.match_girl_*', 'staff.match_boy_*',
+             'senior.advice_*', 'senior.rescue_*']
 for k in ['early', 'standard', 'late', 'mature', 'ring', 'burdizzo', 'surgical', 'traditional', 'horse']:
     REQUIRED.append(f'vet.advice.{k}')
 for c in ['brush', 'pet', 'exercise']:

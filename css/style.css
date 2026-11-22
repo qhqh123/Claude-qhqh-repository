@@ -621,3 +621,17 @@ body.dev .dev-only { display: block; }
 .keep-row .sec-label { flex-basis: 100%; margin: 0; }
 .btn.keep { display: inline-flex; align-items: center; gap: 6px; }
 .btn.keep svg { width: 22px; height: 22px; }
+
+/* ---------- 先輩牧場主 ---------- */
+.notice.rescue { border: 3px solid transparent; background: linear-gradient(#fffdf2, #fffdf2) padding-box, linear-gradient(120deg, #ffb347, #ff6f91, #ffd166) border-box; box-shadow: 0 0 0 4px rgba(255, 179, 71, .25), var(--shadow); }
+.notice.rescue .n-title { font-size: 20px; color: #ff6f61; }
+.tab.alert { background: #fff3d6; color: #d9822b; box-shadow: 0 2px 0 #f2c46b; }
+.tab.alert.on { background: #ffb347; color: #fff; }
+.hud-btn.alert::after { content: '❗'; position: absolute; top: -6px; right: -6px; font-size: 14px; }
+.senior { display: flex; gap: 18px; align-items: center; background: #fff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 0 #f3dce5; }
+.senior.alert { background: linear-gradient(#fffdf2, #fffdf2) padding-box, linear-gradient(120deg, #ffb347, #ff6f91, #ffd166) border-box; border: 3px solid transparent; }
+.senior-avatar { font-size: 56px; width: 86px; height: 86px; border-radius: 50%; background: #fff4e0; display: flex; align-items: center; justify-content: center; flex: none; }
+.senior-name { font-weight: 800; font-size: 18px; margin-bottom: 10px; }
+.senior-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.rescue { background: linear-gradient(90deg, #ffb347, #ff6f91); box-shadow: 0 3px 0 #e0566f; }
+.novel-win .speaker.senior { background: #d9a066; box-shadow: 0 3px 0 #b77f45; }

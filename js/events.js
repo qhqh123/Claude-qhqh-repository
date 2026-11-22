@@ -184,6 +184,7 @@ G.ship = (a) => {
   G.addHistory(a, '出荷');
   G.earn(v.sales, `出荷　個体識別番号 ${a.idNo}　枝肉 ${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}　売上 ${G.yen(v.sales)}`);
   G.record('firstShip');
+  G.senior && G.senior.check();
   if (v.q >= 3) G.record('meatA');
   return v;
 };
@@ -198,6 +199,7 @@ G.sell = (a) => {
   a.soldPrice = price;
   G.addHistory(a, '売却');
   G.earn(price, `売却　${a.name}　個体識別番号 ${a.idNo}　${G.yen(price)}`);
+  G.senior && G.senior.check();
   return price;
 };
 

@@ -12,7 +12,7 @@ spec = importlib.util.spec_from_file_location('check', os.path.join(ROOT, 'tools
 chk = importlib.util.module_from_spec(spec); spec.loader.exec_module(chk)
 data, errors, dummy = chk.check()
 
-SPEAKER = {'narration': '地の文', 'staff_girl': '厩務員ガール', 'staff_boy': '厩務員ボーイ', 'animal': '家畜'}
+SPEAKER = {'narration': '地の文', 'staff_girl': '厩務員ガール', 'staff_boy': '厩務員ボーイ', 'animal': '家畜', 'senior': '先輩牧場主'}
 
 # イベントの表示順（コードの組み立てと同じ）。(文章ID or 接頭辞*, いつ・条件)
 EVENTS = [
@@ -73,6 +73,8 @@ EVENTS = [
         ('daily.staff_<girl/boy>_*', '厩務員に話しかけたとき'),
         ('staff.match_<girl/boy>_*', '担当放牧地に相性の良い個体がいるとき（40%）。{name} はその個体'),
         ('rel.*', '関係タブの内訳の一文。{partner} は相手の名前'),
+        ('senior.advice_*', '町の先輩牧場主に「話を聞く」'),
+        ('senior.rescue_*', '再建支援を受けたとき。{partner} は母牛の名前'),
     ]),
 ]
 
