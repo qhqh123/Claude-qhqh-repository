@@ -315,3 +315,10 @@ body.dev .dev-only { display: block; }
   .notice { padding: 10px 12px; }
   .money-pop { font-size: 30px; }
 }
+
+/* ---------- 搾乳施設・畑 ---------- */
+.card.slot.empty { background: #fbf8f9; border: 2px dashed #f0d5df; box-shadow: none; }
+.card.slot.focus { border: 3px solid var(--pink); }
+.card.slot select { width: 100%; margin: 6px 0; }
+.card.slot .kv { font-size: 13px; padding: 4px 2px; }
+.actions .muted { margin-right: auto; align-self: center; font-size: 13px; }

@@ -21,6 +21,8 @@ G.newGame = () => {
     tools: { burdizzo: false },
     staff: { girl: { name: 'ミナミ', pasture: 'p1' }, boy: { name: 'ソウスケ', pasture: 'p1' } },
     pendingCourses: [],
+    milkSlots: Array.from({ length: G.C.startMilkSlots }, () => ({ aid: null })),
+    fields: ['A', 'B', 'C'].map(() => ({ open: false, use: 'pasture', horse: null })),
     yearSales: 0,
     lastSummary: null,
     devMode: false,
@@ -63,6 +65,9 @@ G.setupHerd = () => {
   child('タロウ', 'M', c4, 0);
   child('ミルク', 'F', c1, 0);
   c2.pregnancy = { sire: { id: bull.id }, due: G.S.turn + 2, conceived: G.S.turn - 1 };
+  // 仔牛を産んだばかりの母牛は泌乳1ターン目
+  for (const m of [c1, c3, c4]) m.lactation = { start: G.S.turn };
+  G.S.milkSlots[0].aid = c3.id;
   for (const a of G.alive()) if (G.isMature(a)) G.assignRelations(a);
   for (const a of G.alive()) a.origin = 'initial';
 };
@@ -92,7 +97,7 @@ G.earn = (amount, lines, opt) => {
 
 // ---------- 通知 ----------
 G.notify = (type, aid, text, extra) => {
-  const n = Object.assign({ id: G.S.nextNotice++, turn: G.S.turn, type, aid, text, done: false }, extra || {});
+  const n = Object.assign({ id: G.S.nextNotice++, turn: G.S.noticeTurn || G.S.turn, type, aid, text, done: false }, extra || {});
   G.S.notices.push(n);
   if (G.ui) G.ui.queueNotice(n);
   return n;
@@ -193,8 +198,11 @@ G.openPasture = (pid) => {
 G.endTurn = () => {
   const S = G.S;
   const season = (S.turn - 1) % 4;
-  const startLedger = S.ledger.length;
   const births = [];
+  S.noticeTurn = S.turn + 1;
+
+  // 生産（今季の状態で計算）
+  G.runProduction();
 
   for (const a of G.alive()) {
     a.age++;
@@ -232,6 +240,12 @@ G.endTurn = () => {
     if (a.age === G.C.cattleShipAgeMin) G.notify('ship', a.id, `🐮 ${a.name}が出荷適期になりました！`);
     // 出産
     if (a.pregnancy && a.pregnancy.due <= S.turn + 1) births.push(a);
+    // 泌乳の低下（次のターンの状態で判定）
+    if (a.lactation && G.milk.slotOf(a) >= 0) {
+      const k = S.turn + 1 - a.lactation.start + 1;
+      if (k === G.C.milkLowAt && !a.pregnancy) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
+      else if (a.age === G.C.milkAgeStart + 1) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
+    }
     else if (a.flags.postpartum) { a.flags.postpartum = false; G.notify('breedable', a.id, `🐮 ${a.name}が交配できるようになりました！`); }
   }
 
@@ -241,6 +255,8 @@ G.endTurn = () => {
     const calf = G.birth(dam);
     calf.bornTurn = S.turn + 1;
     newborns.push(calf);
+    dam.lactation = { start: S.turn + 1 };
+    if (G.milk.slotOf(dam) < 0) G.notify('milkable', dam.id, `🐮 ${dam.name}が搾乳できるようになりました！`);
   }
 
   // 死亡
@@ -252,6 +268,7 @@ G.endTurn = () => {
     if (dead) {
       a.status = 'dead';
       a.endTurn = S.turn + 1;
+      G.removeFromSlots(a);
       G.addHistory(a, '死亡');
       G.ledger(`死亡　${a.name}　個体識別番号 ${a.idNo}`, 0, 'note');
       G.notify('death', a.id, `🐮 ${a.name}が死亡しました`);
@@ -259,24 +276,18 @@ G.endTurn = () => {
   }
 
   // 維持費
-  const herd = G.alive().filter((a) => !newborns.includes(a));
-  const adults = herd.filter((a) => G.isMature(a)).length;
-  const young = herd.length - adults;
-  const sm = G.C.feedSeason[season];
-  const feed = Math.round((adults * G.C.feedAdult + young * G.C.feedYoung) * sm);
-  if (feed) G.pay(feed, `飼料費　成牛 ${adults}頭・育成 ${young}頭　${G.yen(feed)}`);
-  const openP = Object.values(S.pastures).filter((p) => p.open).length;
-  G.pay(openP * G.C.pastureUpkeep, `施設維持費　放牧地・畜舎 ${openP}区画　${G.yen(openP * G.C.pastureUpkeep)}`);
+  // 生まれたばかりの仔は今季の飼料に数えない
+  for (const c of newborns) c.status = 'newborn';
+  const fb = G.feedBalance();
+  for (const c of newborns) c.status = 'alive';
+  if (fb.cost) G.pay(fb.cost, `飼料費　必要 ${fb.need}単位　自給 ${fb.self}単位　購入 ${fb.buy}単位　${G.yen(fb.cost)}`);
+  else G.ledger(`飼料　必要 ${fb.need}単位　自給 ${fb.self}単位`, 0, 'note');
+  if (fb.surplusIncome) G.earn(fb.surplusIncome, `飼料 売却　${fb.surplus}単位　${G.yen(fb.surplusIncome)}`, { silent: true });
+  const up = G.upkeepBreakdown();
+  G.pay(up.total, `施設維持費　放牧地・畜舎 ${up.pastures}区画　搾乳 ${up.milk}枠${up.fields ? `　畑 ${up.fields}区画` : ''}　${G.yen(up.total)}`);
   G.pay(G.C.staffWage, `人件費　厩務員 2名　${G.yen(G.C.staffWage)}`);
-  // 空胎の記録
-  for (const a of herd) {
-    if (a.sex === 'F' && G.isMature(a) && !a.pregnancy && a.bredTurn === S.turn) {
-      // 交配したが不受胎だった個体は交配時に記録済み
-    }
-  }
 
   // 季節の収支
-  const lines = S.ledger.slice(startLedger);
   const allThisTurn = S.ledger.filter((e) => e.turn === S.turn);
   const income = allThisTurn.filter((e) => e.amount > 0).reduce((s, e) => s + e.amount, 0);
   const expense = -allThisTurn.filter((e) => e.amount < 0).reduce((s, e) => s + e.amount, 0);
@@ -314,6 +325,7 @@ G.endTurn = () => {
 
   // 次のターンへ
   S.turn++;
+  S.noticeTurn = null;
   S.careLeft = G.C.carePerTurn;
   for (const a of newborns) {
     G.notify('birth', a.id, `${a.name}（${a.sex === 'M' ? '♂' : '♀'}）`, { title: '新しい家族が生まれました！' });

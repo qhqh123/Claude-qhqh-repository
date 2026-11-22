@@ -56,8 +56,6 @@ G.C = {
   carcassRatio: 0.62,
 
   // 維持費
-  feedAdult: 40000,
-  feedYoung: 20000,
   feedSeason: [0.9, 0.8, 1.0, 1.3],
   pastureUpkeep: 50000,
   staffWage: 100000,
@@ -72,6 +70,34 @@ G.C = {
   marketDemeritRate: 0.30,
 
   carePerTurn: 5,
+
+  // 搾乳（No.11）
+  milkBase: [1200, 1500, 1800, 2100, 2400, 2700],
+  milkDepthPerRank: 0.05,
+  lactation: [1.0, 1.0, 0.75, 0.5, 0.25, 0.10],
+  milkSeason: [1.3, 1.0, 1.2, 1.1],
+  milkPrice: [90, 100, 110, 125, 150, 190],
+  milkDilute1: 2500,
+  milkDilute2: 3000,
+  milkAgeStart: 32,
+  milkAgePerTurn: 0.03,
+  milkAgeMin: 0.4,
+  milkLowAt: 5, // 泌乳5ターン目（25%）で通知
+  startMilkSlots: 1,
+  milkSlotCost: 800000,
+  milkSlotUpkeep: 20000,
+
+  // 畑と牧草（No.04）
+  feedUnitPrice: 4000,  // 飼料1単位（成牛1頭1ターンの1/10）
+  feedUnitsAdult: 10,
+  feedUnitsYoung: 5,
+  feedSurplusPrice: 1500,
+  fieldPastureBase: 10,
+  fieldCropBase: 30000,
+  fieldOpenCost: 300000,
+  fieldUpkeep: 10000,
+  // 農耕馬の能力 → [商業作物, 牧草]（null は配置不可）
+  fieldMult: { none: [null, 0.5], 0: [1.0, 1.0], 1: [1.5, 1.2], 2: [2.5, 1.5], 3: [4.0, 2.0] },
 };
 
 G.SEASONS = ['春', '夏', '秋', '冬'];

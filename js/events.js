@@ -115,7 +115,7 @@ G.breed = (dam, partner) => {
   const S = G.S;
   dam.bredTurn = S.turn;
   const season = (S.turn - 1) % 4;
-  const feed = Math.round(G.C.feedAdult * G.C.feedSeason[(season + 1) % 4]);
+  const feed = Math.round(G.C.feedUnitsAdult * G.C.feedUnitPrice * G.C.feedSeason[(season + 1) % 4]);
   let sire, ok, line, ev;
   const vars = G.textVars(dam);
   if (partner.type === 'bull') {
@@ -154,6 +154,7 @@ G.ship = (a) => {
   const v = G.shipValue(a);
   a.status = 'shipped';
   a.endTurn = S.turn;
+  G.removeFromSlots(a);
   a.shipped = { turn: S.turn, carcass: v.carcass, q: v.q, yieldRank: v.yieldRank, sales: v.sales };
   G.addHistory(a, '出荷');
   G.earn(v.sales, `出荷　個体識別番号 ${a.idNo}　枝肉 ${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}　売上 ${G.yen(v.sales)}`);
@@ -168,6 +169,7 @@ G.sell = (a) => {
   const price = G.sellPrice(a);
   a.status = 'sold';
   a.endTurn = G.S.turn;
+  G.removeFromSlots(a);
   a.soldPrice = price;
   G.addHistory(a, '売却');
   G.earn(price, `売却　${a.name}　個体識別番号 ${a.idNo}　${G.yen(price)}`);

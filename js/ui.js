@@ -241,6 +241,8 @@ G.ui = {
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(a)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(a)}</div>
         <div class="kv"><span>繁殖状態</span><b>${this.breedStatus(a)}</b></div>
+        ${alive && a.lactation ? `<div class="kv"><span>泌乳</span><b>${G.milk.isDry(a) ? '乾乳' : `${G.milk.lactTurn(a)}ターン目　${Math.round(G.milk.lactMult(a) * 100)}%`}</b></div>
+        <div class="kv"><span>搾乳施設</span><b>${G.milk.slotOf(a) >= 0 ? `スロット${G.milk.slotOf(a) + 1}` : '—'}</b></div>` : ''}
         ${alive ? `<div class="kv"><span>体重</span><b>${Math.round(a.weight)}kg</b></div>
         <div class="kv"><span>枝肉（予測）</span><b>${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}</b></div>
         <div class="kv"><span>売上（予測）</span><b>${G.yen(v.sales)}${v.pen > 0 ? `　<small>未去勢 −${Math.round(v.pen * 100)}%</small>` : ''}</b></div>
@@ -425,6 +427,8 @@ G.ui = {
   refreshOpenDetail() {
     const w = this.modals.find((m) => m.dataset.detail);
     if (w) { const a = G.S.animals[w.dataset.detail]; if (a) this.renderDetail(w, a, w.dataset.tab || 'basic'); }
+    const mk = this.modals.find((m) => m.dataset.milk);
+    if (mk) this.renderMilk(mk);
     const o = this.modals.find((m) => m.dataset.office);
     if (o) this.renderOffice(o, o.dataset.office, o.dataset.pid);
   },
@@ -475,11 +479,11 @@ G.ui = {
       body.innerHTML = turns.length ? turns.map((t) => `<div class="ledger-group"><h4>${G.dateText(t)}</h4>${groups[t].slice().reverse().map((e) => `<div class="ledger-line ${e.amount > 0 ? 'in' : e.amount < 0 ? 'out' : ''}">${e.lines.map((l) => `<div>${G.esc(l)}</div>`).join('')}</div>`).join('')}</div>`).join('') : '<div class="muted">—</div>';
     }
     if (tab === 'money') {
-      const season = (S.turn - 1) % 4;
-      const herd = G.alive();
-      const adults = herd.filter((a) => G.isMature(a)).length;
-      const feed = Math.round((adults * G.C.feedAdult + (herd.length - adults) * G.C.feedYoung) * G.C.feedSeason[season]);
-      const openP = Object.values(S.pastures).filter((p) => p.open).length;
+      const fb = G.feedBalance();
+      const feed = fb.cost;
+      const up = G.upkeepBreakdown();
+      const milkInc = S.milkSlots.reduce((s, x) => s + (x.aid && S.animals[x.aid] ? G.milk.calc(S.animals[x.aid]).income : 0), 0);
+      const cropInc = S.fields.reduce((s, f) => s + G.field.produce(f).money, 0);
       const thisTurn = S.ledger.filter((e) => e.turn === S.turn);
       const inc = thisTurn.filter((e) => e.amount > 0).reduce((s, e) => s + e.amount, 0);
       const exp = -thisTurn.filter((e) => e.amount < 0).reduce((s, e) => s + e.amount, 0);
@@ -490,19 +494,29 @@ G.ui = {
         <div class="kv"><span>今年の売上</span><b>${G.yen(S.yearSales)}</b></div>
         <div class="kv"><span>今季の収入</span><b>${G.yen(inc)}</b></div>
         <div class="kv"><span>今季の支出</span><b>${G.yen(exp)}</b></div>
+        <h3>今季の生産（見込み）</h3>
+        <div class="kv"><span>搾乳</span><b>${G.yen(milkInc)}</b></div>
+        <div class="kv"><span>畑</span><b>${G.yen(cropInc)}</b></div>
+        ${fb.surplusIncome ? `<div class="kv"><span>飼料 売却</span><b>${G.yen(fb.surplusIncome)}</b></div>` : ''}
         <h3>今季の維持費（見込み）</h3>
-        <div class="kv"><span>飼料費</span><b>${G.yen(feed)}</b></div>
-        <div class="kv"><span>施設維持費</span><b>${G.yen(openP * G.C.pastureUpkeep)}</b></div>
+        <div class="kv"><span>飼料費</span><b>${G.yen(feed)}　<small>必要 ${fb.need}・自給 ${fb.self}単位</small></b></div>
+        <div class="kv"><span>施設維持費</span><b>${G.yen(up.total)}</b></div>
         <div class="kv"><span>人件費</span><b>${G.yen(G.C.staffWage)}</b></div>
-        <div class="kv total"><span>合計</span><b>${G.yen(feed + openP * G.C.pastureUpkeep + G.C.staffWage)}</b></div>
+        <div class="kv total"><span>合計</span><b>${G.yen(feed + up.total + G.C.staffWage)}</b></div>
       </div>`;
     }
     if (tab === 'facility') {
       body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.alive().length}/${S.cattleSlots}</b></div>
         <h3>放牧地・畜舎</h3>
         <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span>${G.alive().filter((a) => a.pasture === p).length}頭</span>` : `<span>${G.yen(G.C.pastureOpenCost)}　飼育枠 +${G.C.pastureOpenSlots}</span><button class="btn small primary" data-open="${p}" ${S.money < G.C.pastureOpenCost ? 'disabled' : ''}>開拓</button>`}</li>`).join('')}</ul>
+        <h3>搾乳施設</h3>
+        <div class="kv"><span>スロット</span><b>${S.milkSlots.filter((x) => x.aid).length}/${S.milkSlots.length}　<button class="btn small" data-go="milk">開く</button></b></div>
+        <h3>畑</h3>
+        <ul class="facility">${S.fields.map((f, i) => `<li><b>畑スロット${G.field.label(i)}</b><span>${f.open ? (f.use === 'crop' ? '商業作物' : '牧草') : '荒れ地'}</span><button class="btn small" data-field="${i}">開く</button></li>`).join('')}</ul>
         <h3>器具</h3><div class="kv"><span>去勢鉗子</span><b>${S.tools.burdizzo ? 'あり' : 'なし'}</b></div>`;
       $$('[data-open]', body).forEach((b) => b.onclick = () => this.openExpand(b.dataset.open));
+      $$('[data-go]', body).forEach((b) => b.onclick = () => this.openMilk());
+      $$('[data-field]', body).forEach((b) => b.onclick = () => this.openField(+b.dataset.field));
     }
     if (tab === 'staff') {
       const ps = Object.keys(S.pastures).filter((p) => S.pastures[p].open);
@@ -593,7 +607,8 @@ G.ui = {
     const dests = [
       ['🏠 事務所', M.office.x + M.office.w / 2, M.office.y + M.office.h + 40],
       ...Object.keys(M.pastures).map((p) => [`${G.S.pastures[p].open ? '🐮' : '⛰'} ${G.pastureLabel(p)}`, G.gateOf(p).out.x, G.gateOf(p).out.y]),
-      ['🌾 荒れ地', M.field.x - 40, M.field.y + M.field.h / 2],
+      ['🥛 搾乳施設', M.milk.x + M.milk.w / 2, M.milk.y + M.milk.h + 40],
+      [G.S.fields.some((f) => f.open) ? '🌾 畑' : '🌾 荒れ地', M.field.x - 40, M.field.y + M.field.h / 2],
       ['🏪 町への道', M.town.x + M.town.w + 50, M.town.y + M.town.h - 20],
     ];
     const w = this.open(`<h2>🪧 案内看板</h2><div class="warp">${dests.map((d, i) => `<button class="btn" data-w="${i}">${d[0]}</button>`).join('')}</div>`, { size: 'small' });
@@ -642,7 +657,7 @@ G.ui = {
   // ---------- 通知 ----------
   noticeAction(n) {
     if (n.done) return n.type === 'diary' ? '読む' : (n.aid && G.S.animals[n.aid] ? '詳細' : '');
-    return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細' }[n.type] || '';
+    return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け' }[n.type] || '';
   },
   queueNotice(n) {
     this.noticeQueue.push(n);
@@ -663,14 +678,24 @@ G.ui = {
     el.className = 'notice ' + n.type;
     const act = this.noticeAction(n);
     const second = n.type === 'birth' || n.type === 'death' ? 'OK' : 'あとで';
+    const extra = n.type === 'milklow' ? '<button class="btn small c">外す</button>' : '';
+    const secondLabel = n.type === 'milklow' ? 'このまま' : second;
     el.innerHTML = `${n.title ? `<div class="n-title">${G.esc(n.title)}</div>` : ''}<div class="n-text">${G.esc(n.text)}</div>
-      <div class="n-btns">${act && n.type !== 'death' ? `<button class="btn small primary a">${act}</button>` : ''}<button class="btn small b">${second}</button></div>`;
+      <div class="n-btns">${act && n.type !== 'death' ? `<button class="btn small primary a">${act}</button>` : ''}${extra}<button class="btn small b">${secondLabel}</button></div>`;
     box.appendChild(el);
     if (n.type === 'birth') G.audio.sfx('fanfare'); else G.audio.sfx('notice');
     const remove = () => { el.classList.add('out'); setTimeout(() => { el.remove(); this.flushNotices(); }, 250); };
     const a = $('.a', el);
     if (a) a.onclick = () => { remove(); this.doNotice(n); };
-    $('.b', el).onclick = () => { if (n.type === 'birth' || n.type === 'death') n.done = true; remove(); this.refreshHud(); };
+    $('.b', el).onclick = () => { if (n.type === 'birth' || n.type === 'death' || n.type === 'milklow') n.done = true; remove(); this.refreshHud(); };
+    const c = $('.c', el);
+    if (c) c.onclick = () => {
+      n.done = true;
+      const a = G.S.animals[n.aid];
+      const i = a ? G.milk.slotOf(a) : -1;
+      if (i >= 0) G.milk.remove(i);
+      remove(); this.refreshHud();
+    };
   },
   doNotice(n) {
     if (!n) return;
@@ -682,6 +707,11 @@ G.ui = {
     } else if (n.type === 'castrate' && !n.done && a && a.status === 'alive' && !a.castrated) {
       this.openCastrate(a);
     } else if (n.type === 'breedable' && !n.done && a && G.canBreed(a)) {
+      this.openBreed(a);
+    } else if (n.type === 'milkable' && !n.done) {
+      this.openMilk();
+    } else if (n.type === 'milklow' && !n.done && a && G.canBreed(a)) {
+      n.done = true;
       this.openBreed(a);
     } else if (a) {
       n.done = n.done || n.type === 'ship' || n.type === 'birth' || n.type === 'death';

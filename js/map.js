@@ -10,12 +10,17 @@ G.MAP = {
     p3: { x: 760, y: 1090, w: 620, h: 430, gate: 'top', barn: { x: 1410, y: 1360, w: 170, h: 150 } },
   },
   field: { x: 1640, y: 1090, w: 600, h: 430 },
+  milk: { x: 560, y: 1050, w: 180, h: 170 },
   signs: [
     { x: 600, y: 880 }, { x: 1500, y: 900 }, { x: 1500, y: 1640 }, { x: 260, y: 1250 }, { x: 1500, y: 250 },
   ],
 };
 G.MAP_LABEL = { p1: '第1放牧地', p2: '第2放牧地', p3: '第3放牧地' };
 G.HILL_LABEL = { p2: '丘（北東）', p3: '丘（南）' };
+G.fieldRect = (i) => {
+  const f = G.MAP.field, n = 3, w = f.w / n;
+  return { x: f.x + i * w, y: f.y, w, h: f.h };
+};
 G.pastureLabel = (pid) => (G.S.pastures[pid].open ? G.MAP_LABEL[pid] : G.HILL_LABEL[pid]);
 
 G.gateOf = (pid) => {
@@ -72,7 +77,7 @@ G.map = {
     let seed = 12345;
     const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
     const inside = (x, y, pad) => {
-      const r = [M.office, M.town, M.field].concat(Object.values(M.pastures)).concat(Object.values(M.pastures).map((p) => p.barn));
+      const r = [M.office, M.town, M.field, M.milk].concat(Object.values(M.pastures)).concat(Object.values(M.pastures).map((p) => p.barn));
       if (r.some((b) => x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad)) return true;
       const dx = (x - M.pond.x) / (M.pond.rx + pad), dy = (y - M.pond.y) / (M.pond.ry + pad);
       if (dx * dx + dy * dy < 1) return true;
@@ -126,6 +131,7 @@ G.map = {
     [[1500, 900], [1500, 1640], [1940, 1640], [1940, 1520]],
     [[420, 900], [420, 1000], [250, 1000], [250, 1400], [160, 1400]],
     [[1500, 900], [1500, 250], [1260, 250]],
+    [[250, 1290], [650, 1290], [650, 1220]],
   ],
   onPath(x, y, pad) {
     for (const p of this.paths) {
@@ -144,6 +150,7 @@ G.map = {
     const M = G.MAP, B = [];
     const o = M.office;
     B.push({ x: o.x, y: o.y + 40, w: o.w, h: o.h - 40 });
+    B.push({ x: M.milk.x, y: M.milk.y + 50, w: M.milk.w, h: M.milk.h - 50 });
     B.push({ x: M.town.x, y: M.town.y + 60, w: 22, h: 70 }, { x: M.town.x + M.town.w - 22, y: M.town.y + 60, w: 22, h: 70 });
     for (const pid of Object.keys(M.pastures)) {
       const p = M.pastures[pid];
@@ -302,7 +309,8 @@ G.map = {
       if (G.S.pastures[pid].open) list.push({ kind: 'barn', pid, x: p.barn.x + p.barn.w / 2, y: p.barn.y + p.barn.h, rect: p.barn });
       else list.push({ kind: 'hill', pid, x: p.x + p.w / 2, y: p.y + p.h / 2, rect: p });
     }
-    list.push({ kind: 'field', x: M.field.x + M.field.w / 2, y: M.field.y + M.field.h / 2, rect: M.field });
+    G.S.fields.forEach((f, i) => { const r = G.fieldRect(i); list.push({ kind: 'field', i, x: r.x + r.w / 2, y: r.y + r.h / 2, rect: r }); });
+    list.push({ kind: 'milk', x: M.milk.x + M.milk.w / 2, y: M.milk.y + M.milk.h, rect: M.milk });
     M.signs.forEach((s, i) => list.push({ kind: 'sign', i, x: s.x, y: s.y, rect: { x: s.x - 22, y: s.y - 56, w: 44, h: 60 } }));
     for (const k of ['girl', 'boy']) { const s = this.staff[k]; list.push({ kind: 'staff', who: k, x: s.x, y: s.y, rect: { x: s.x - 14, y: s.y - 56, w: 28, h: 60 } }); }
     for (const a of G.alive()) { const s = this.stOf(a); const sz = G.sizeOf(a); list.push({ kind: 'animal', a, x: s.x, y: s.y, rect: { x: s.x - 40 * sz, y: s.y - 52 * sz, w: 80 * sz, h: 58 * sz } }); }
@@ -330,6 +338,8 @@ G.map = {
       case 'town': G.ui.openTown(); break;
       case 'barn': G.ui.openOffice('list', t.pid); break;
       case 'hill': G.ui.openExpand(t.pid); break;
+      case 'field': G.ui.openField(t.i); break;
+      case 'milk': G.ui.openMilk(); break;
       case 'sign': G.ui.openWarp(); break;
       case 'staff': this.staffTalk(t.who); break;
       default: break;
@@ -352,7 +362,7 @@ G.map = {
   hit(w) {
     const list = this.targets();
     // 手前（y が大きい）ものを優先
-    const order = ['animal', 'staff', 'sign', 'office', 'barn', 'town', 'hill', 'field'];
+    const order = ['animal', 'staff', 'sign', 'office', 'milk', 'barn', 'town', 'hill', 'field'];
     const hits = list.filter((t) => w.x >= t.rect.x && w.x <= t.rect.x + t.rect.w && w.y >= t.rect.y && w.y <= t.rect.y + t.rect.h);
     hits.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || b.y - a.y);
     return hits[0];
@@ -366,7 +376,7 @@ G.map = {
   onHover(e) {
     const w = this.screenToWorld(e);
     const t = this.hit(w);
-    this.canvas.style.cursor = t && t.kind !== 'field' ? 'pointer' : 'default';
+    this.canvas.style.cursor = t ? 'pointer' : 'default';
   },
   onMini(e) {
     const r = this.mini.getBoundingClientRect();
@@ -461,6 +471,7 @@ G.map = {
     const items = [];
     items.push({ y: M.office.y + M.office.h, f: () => this.drawOffice() });
     items.push({ y: M.town.y + M.town.h, f: () => this.drawTown() });
+    items.push({ y: M.milk.y + M.milk.h, f: () => this.drawMilk() });
     for (const pid of Object.keys(M.pastures)) if (G.S.pastures[pid].open) { const b = M.pastures[pid].barn; items.push({ y: b.y + b.h, f: () => this.drawBarn(b) }); }
     M.signs.forEach((s) => items.push({ y: s.y, f: () => this.drawSign(s.x, s.y) }));
     for (const tr of this.deco.trees) if (vis(tr.x, tr.y, 60)) items.push({ y: tr.y, f: () => this.drawTree(tr, pal) });
@@ -543,17 +554,65 @@ G.map = {
     ctx.fillStyle = '#ffb4c8'; G.roundRect(ctx, g.x1 - 6, gy - 34, 12, 12, 6); ctx.fill(); G.roundRect(ctx, g.x2 - 6, gy - 34, 12, 12, 6); ctx.fill();
   },
   drawField(pal) {
-    // 畑候補の荒れ地（フェーズ2）
-    const ctx = this.ctx, f = G.MAP.field;
-    ctx.fillStyle = (G.S.turn - 1) % 4 === 3 ? '#e6e2dc' : '#d9c39a';
-    G.roundRect(ctx, f.x, f.y, f.w, f.h, 30); ctx.fill();
-    ctx.strokeStyle = 'rgba(140,110,70,0.5)'; ctx.lineWidth = 2;
-    for (const c of this.deco.cracks) { ctx.beginPath(); ctx.moveTo(c[0][0], c[0][1]); for (const q of c.slice(1)) ctx.lineTo(q[0], q[1]); ctx.stroke(); }
-    ctx.fillStyle = '#8fae5d';
-    for (const w of this.deco.weeds) { ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - 5, w.y - 10); ctx.lineTo(w.x, w.y - 4); ctx.lineTo(w.x + 5, w.y - 11); ctx.closePath(); ctx.fill(); }
-    ctx.fillStyle = '#a0764f';
-    for (const [x, y] of [[f.x + 10, f.y + 10], [f.x + f.w - 10, f.y + 10], [f.x + 10, f.y + f.h - 10], [f.x + f.w - 10, f.y + f.h - 10]]) { G.roundRect(ctx, x - 4, y - 20, 8, 22, 2); ctx.fill(); }
-    this.drawSignBoard(f.x + 60, f.y + f.h - 40);
+    const ctx = this.ctx;
+    const season = (G.S.turn - 1) % 4;
+    G.S.fields.forEach((fd, i) => {
+      const f = G.fieldRect(i);
+      const inSlot = (x) => x >= f.x && x < f.x + f.w;
+      if (!fd.open) {
+        // 畑候補の荒れ地
+        ctx.fillStyle = season === 3 ? '#e6e2dc' : '#d9c39a';
+        G.roundRect(ctx, f.x + 6, f.y, f.w - 12, f.h, 26); ctx.fill();
+        ctx.strokeStyle = 'rgba(140,110,70,0.5)'; ctx.lineWidth = 2;
+        for (const c of this.deco.cracks) if (inSlot(c[0][0])) { ctx.beginPath(); ctx.moveTo(c[0][0], c[0][1]); for (const q of c.slice(1)) ctx.lineTo(G.clamp(q[0], f.x + 10, f.x + f.w - 10), q[1]); ctx.stroke(); }
+        ctx.fillStyle = '#8fae5d';
+        for (const w of this.deco.weeds) if (inSlot(w.x)) { ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - 5, w.y - 10); ctx.lineTo(w.x, w.y - 4); ctx.lineTo(w.x + 5, w.y - 11); ctx.closePath(); ctx.fill(); }
+        ctx.fillStyle = '#a0764f';
+        for (const [x, y] of [[f.x + 16, f.y + 14], [f.x + f.w - 16, f.y + 14], [f.x + 16, f.y + f.h - 8], [f.x + f.w - 16, f.y + f.h - 8]]) { G.roundRect(ctx, x - 4, y - 20, 8, 22, 2); ctx.fill(); }
+      } else {
+        // 畝の並んだ畑
+        ctx.fillStyle = season === 3 ? '#e9e4de' : '#b98d62';
+        G.roundRect(ctx, f.x + 6, f.y, f.w - 12, f.h, 22); ctx.fill();
+        for (let y = f.y + 30; y < f.y + f.h - 20; y += 34) {
+          ctx.fillStyle = season === 3 ? '#f7f4f0' : '#a17650';
+          G.roundRect(ctx, f.x + 22, y, f.w - 44, 16, 8); ctx.fill();
+          if (season === 3) continue;
+          if (fd.use === 'pasture') {
+            ctx.fillStyle = season === 2 ? '#c9c56b' : '#7ccf6a';
+            for (let x = f.x + 30; x < f.x + f.w - 30; x += 14) { ctx.beginPath(); ctx.moveTo(x - 5, y + 10); ctx.lineTo(x, y - 8 - ((x + y) % 5)); ctx.lineTo(x + 5, y + 10); ctx.fill(); }
+          } else if (G.field.produce(fd).money > 0) {
+            ctx.fillStyle = season === 2 ? '#f2c94c' : '#5fbf6a';
+            for (let x = f.x + 34; x < f.x + f.w - 30; x += 22) { ctx.beginPath(); ctx.arc(x, y + 4, 6, 0, Math.PI * 2); ctx.fill(); }
+          }
+        }
+      }
+      // 区画の看板
+      const sx = f.x + f.w / 2, sy = f.y + f.h - 6;
+      ctx.fillStyle = '#8e6440'; ctx.fillRect(sx - 3, sy - 30, 6, 32);
+      ctx.fillStyle = '#fff3d6'; G.roundRect(ctx, sx - 18, sy - 50, 36, 26, 8); ctx.fill();
+      ctx.strokeStyle = '#b98b5e'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#8e6440'; ctx.font = 'bold 15px "M PLUS Rounded 1c", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(G.field.label(i), sx, sy - 37);
+    });
+  },
+  drawMilk() {
+    const ctx = this.ctx, b = G.MAP.milk;
+    ctx.fillStyle = 'rgba(60,80,40,0.15)'; ctx.beginPath(); ctx.ellipse(b.x + b.w / 2, b.y + b.h, b.w / 1.8, 14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f4fbff'; G.roundRect(ctx, b.x + 8, b.y + 54, b.w - 16, b.h - 54, 12); ctx.fill();
+    ctx.strokeStyle = '#bfdcef'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#7cc3ec';
+    ctx.beginPath(); ctx.moveTo(b.x - 6, b.y + 62); ctx.quadraticCurveTo(b.x + b.w / 2, b.y - 6, b.x + b.w + 6, b.y + 62); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.ellipse(b.x + 50, b.y + 36, 26, 8, -0.4, 0, Math.PI * 2); ctx.fill();
+    // 牛乳缶
+    const cx = b.x + b.w / 2, cy = b.y + 34;
+    ctx.fillStyle = '#ffffff'; G.roundRect(ctx, cx - 12, cy - 14, 24, 30, 8); ctx.fill();
+    ctx.fillStyle = '#ff9fbd'; ctx.fillRect(cx - 12, cy - 2, 24, 6);
+    ctx.fillStyle = '#ffffff'; G.roundRect(ctx, cx - 7, cy - 20, 14, 8, 3); ctx.fill();
+    // 扉・窓
+    ctx.fillStyle = '#9fd3f2'; G.roundRect(ctx, cx - 22, b.y + b.h - 56, 44, 56, 10); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillRect(cx - 1, b.y + b.h - 54, 2, 54);
+    ctx.fillStyle = '#d8f0ff'; G.roundRect(ctx, b.x + 20, b.y + 76, 30, 26, 6); ctx.fill(); G.roundRect(ctx, b.x + b.w - 50, b.y + 76, 30, 26, 6); ctx.fill();
   },
   drawSignBoard(x, y) {
     const ctx = this.ctx;
@@ -675,7 +734,8 @@ G.map = {
       c.fillRect(p.x * sx, p.y * sy, p.w * sx, p.h * sy);
       if (G.S.pastures[pid].open) { c.strokeStyle = '#b98b5e'; c.lineWidth = 1.5 * this.dpr; c.strokeRect(p.x * sx, p.y * sy, p.w * sx, p.h * sy); c.fillStyle = '#e8766e'; c.fillRect(p.barn.x * sx, p.barn.y * sy, p.barn.w * sx, p.barn.h * sy); }
     }
-    c.fillStyle = '#d9c39a'; c.fillRect(M.field.x * sx, M.field.y * sy, M.field.w * sx, M.field.h * sy);
+    G.S.fields.forEach((f, i) => { const r = G.fieldRect(i); c.fillStyle = f.open ? '#b98d62' : '#d9c39a'; c.fillRect((r.x + 3) * sx, r.y * sy, (r.w - 6) * sx, r.h * sy); });
+    c.fillStyle = '#7cc3ec'; c.fillRect(M.milk.x * sx, M.milk.y * sy, M.milk.w * sx, M.milk.h * sy);
     c.fillStyle = '#ff9a8b'; c.fillRect(M.office.x * sx, M.office.y * sy, M.office.w * sx, M.office.h * sy);
     c.fillStyle = '#ffb4c8'; c.fillRect(M.town.x * sx, M.town.y * sy, M.town.w * sx, M.town.h * sy);
     c.fillStyle = '#8fd3f4'; c.beginPath(); c.ellipse(M.pond.x * sx, M.pond.y * sy, M.pond.rx * sx, M.pond.ry * sy, 0, 0, Math.PI * 2); c.fill();
