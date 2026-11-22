@@ -45,6 +45,7 @@ G.C = {
     ring:     { early: [0, 0, 0],      standard: [0.10, 0, 15], late: [0.30, 0.15, 30], mature: [0.30, 0.15, 30] },
     burdizzo: { early: [0.05, 0, 0],   standard: [0.05, 0, 0],  late: [0.25, 0, 20],    mature: [0.25, 0, 20] },
     surgical: { early: [0, 0.03, 0],   standard: [0, 0.03, 0],  late: [0, 0.03, 0],     mature: [0, 0.03, 0] },
+    traditional: { early: [0.10, 0.10, 10], standard: [0.10, 0.10, 15], late: [0.12, 0.12, 20], mature: [0.15, 0.15, 25] },
   },
   // 馬（四手法×時期。仮）
   horseCastSuitable: {

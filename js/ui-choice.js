@@ -54,7 +54,7 @@ Object.assign(G.ui, {
         ${this.choiceGrid('method', methods.map((m) => {
           const c = G.castCost(a, m, 'direct');
           return { value: m, icon: G.ICONS[m], title: G.METHOD_NAMES[m], sub: `資材費 ${G.yen(c.cost)}`, extra: c.tool ? `器具 ${G.yen(c.tool)}` : '' };
-        }), methods.length === 4 ? 'four' : 'three')}
+        }), 'four')}
       </div>
       <div class="sheet-foot"><div class="total"><span>合計</span><b class="sum">—</b></div>
         <div class="actions"><button class="btn cancel">やめる</button><button class="btn primary ok" disabled>決定</button></div></div>`, { size: 'medium', cls: 'sheet' });

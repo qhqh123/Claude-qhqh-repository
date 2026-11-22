@@ -4,7 +4,7 @@ const GAIN_PRED = { early: 0.2, standard: 0.4, late: 0.6, mature: 0.8 };
 const CAST_BONUS = { early: 0.6, standard: 0.5, late: 0.2, mature: -0.5 };
 const OUTSOURCE_METHOD = { early: 'ring', standard: 'burdizzo', late: 'surgical', mature: 'surgical' };
 
-G.castMethods = (a) => (G.isHorse(a) ? ['ring', 'burdizzo', 'surgical', 'traditional'] : ['ring', 'burdizzo', 'surgical']);
+G.castMethods = () => ['ring', 'burdizzo', 'surgical', 'traditional'];
 G.castCost = (a, method, mode) => {
   const period = G.castPeriod(a);
   if (mode === 'outsource') {
