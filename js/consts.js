@@ -88,6 +88,7 @@ G.C = {
   carePerTurn: 5,
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
+  acqRankMax: 3,           // 後天のデメリットバッジの上限（A）
   fertDownMult: 0.7,       // 【受胎率低下】【繁殖力低下】
   injuryRate: 0.02,        // 【けがしやすい】1ランクあたりのけがの確率
   injuryCost: 10000,

@@ -1,12 +1,12 @@
 // 後天バッジ（老化をデフォルメした印）と、生産の状態
 // 後天バッジは遺伝しない。年齢・性別・種から決まる（保存しない）。
 //  ・繁殖のバッジ：2段階。雌は「受胎率低下→受胎不可」、未去勢の雄は「繁殖力低下→繁殖不能」
-//  ・ランク付きのバッジ：付いた年がC、そこから1年（4ターン）ごとに1ランク上がる（最大S）
+//  ・ランク付きのバッジ：付いた年がC、そこから1年（4ターン）ごとに1ランク上がる（最大A。A+・Sは良い意味のランクなので使わない）
 
 G.AGING = {
   cattle: {
     fert: { F: [24, 32], M: [28, 36] },
-    ranked: [['milkDecline', 12, 'F'], ['meatDecline', 16], ['injuryProne', 32]],
+    ranked: [['milkDecline', 16, 'F'], ['meatDecline', 16], ['injuryProne', 32]],
   },
   horse: {
     fert: { F: [60, 72], M: [72, 88] },
@@ -26,7 +26,7 @@ G.acqList = (a) => {
   }
   for (const [k, start, sex] of A.ranked) {
     if (sex && a.sex !== sex) continue;
-    if (a.age >= start) out.push({ k, r: Math.min(5, 1 + Math.floor((a.age - start) / 4)) });
+    if (a.age >= start) out.push({ k, r: Math.min(G.C.acqRankMax, 1 + Math.floor((a.age - start) / 4)) });
   }
   return out;
 };
