@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>命のふれあい牧場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- 起動時の注意表示 -->
+<div id="warning" class="screen hidden">
+  <div class="warning-card">
+    <p>本作には、家畜の去勢、繁殖管理、生殖機能の喪失、食肉出荷など、<br>実際の畜産に関係する詳細な文章描写が含まれます。<br>ショッキングな記述があるため、念のため成人向けとします。</p>
+    <button class="btn primary agree">同意する</button>
+  </div>
+</div>
+
+<!-- タイトル画面 -->
+<div id="title" class="screen hidden">
+  <div class="title-card">
+    <canvas width="220" height="220"></canvas>
+    <h1>命のふれあい牧場</h1>
+    <div class="title-btns">
+      <button class="btn primary new">新規ゲーム</button>
+      <button class="btn continue hidden">つづきから</button>
+      <button class="btn load">セーブデータを読み込む</button>
+    </div>
+  </div>
+</div>
+
+<!-- ゲーム -->
+<div id="game" class="hidden">
+  <canvas id="map"></canvas>
+
+  <div id="hud">
+    <div class="hud-left">
+      <div class="pill-box date"><span id="hud-season" class="season-icon"></span><span id="hud-date"></span></div>
+      <div class="pill-box money"><span>💰</span><span id="hud-money"></span></div>
+      <div class="pill-box loan"><span>借入</span><span id="hud-loan"></span></div>
+      <div class="pill-box care"><span>お世話</span><span id="hud-care"></span></div>
+      <div class="pill-box herd"><span>🐮</span><span id="hud-herd"></span></div>
+    </div>
+    <div class="hud-right">
+      <button id="btn-office" class="hud-btn">🏠<span>事務所</span><i id="office-badge" class="badge-dot hidden"></i></button>
+      <button id="btn-town" class="hud-btn">🏪<span>町</span></button>
+      <button id="btn-end" class="hud-btn end">🌙<span>ターン終了</span></button>
+      <button id="btn-menu" class="hud-btn icon">⚙</button>
+      <button id="btn-sound" class="hud-btn icon">🔊</button>
+    </div>
+  </div>
+
+  <div id="near-panel" class="hidden"></div>
+  <canvas id="minimap"></canvas>
+  <div id="notices"></div>
+
+  <div id="touch">
+    <div id="joy"><div id="joy-knob"></div></div>
+    <div class="touch-btns">
+      <button id="btn-dash" class="round-btn">💨</button>
+      <button id="btn-act" class="round-btn">✋</button>
+    </div>
+  </div>
+</div>
+
+<div id="modals"></div>
+<div id="toasts"></div>
+
+<!-- 文章イベント -->
+<div id="novel" class="hidden">
+  <div class="novel-bg"></div>
+  <div class="novel-win">
+    <div class="speaker hidden"></div>
+    <div class="ntext"></div>
+    <div class="novel-foot">
+      <span class="nid hidden"></span><button class="copy hidden">コピー</button>
+      <button class="skip">スキップ</button><span class="next">▼</span>
+    </div>
+  </div>
+</div>
+
+<div id="ship" class="hidden"></div>
+<div id="season-overlay" class="hidden"></div>
+<div id="tip" class="hidden"></div>
+
+<script src="js/consts.js"></script>
+<script src="js/util.js"></script>
+<script src="js/text-data.js"></script>
+<script src="js/text.js"></script>
+<script src="js/animals.js"></script>
+<script src="js/game.js"></script>
+<script src="js/events.js"></script>
+<script src="js/save.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/map.js"></script>
+<script src="js/novel.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

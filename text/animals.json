@@ -1,0 +1,72 @@
+{
+ "care.brush_01": {
+  "text": "［care.brush_01｜お世話への反応］",
+  "speaker": "animal",
+  "cond": {
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "マイペース"
+   ]
+  }
+ },
+ "care.brush_02": {
+  "text": "［care.brush_02｜お世話への反応］",
+  "speaker": "animal",
+  "cond": {
+   "personality": [
+    "活発",
+    "好奇心旺盛",
+    "頑固"
+   ]
+  }
+ },
+ "care.pet_01": {
+  "text": "［care.pet_01｜お世話への反応］",
+  "speaker": "animal",
+  "cond": {
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "マイペース"
+   ]
+  }
+ },
+ "care.pet_02": {
+  "text": "［care.pet_02｜お世話への反応］",
+  "speaker": "animal",
+  "cond": {
+   "personality": [
+    "活発",
+    "好奇心旺盛",
+    "頑固"
+   ]
+  }
+ },
+ "care.exercise_01": {
+  "text": "［care.exercise_01｜お世話への反応］",
+  "speaker": "animal",
+  "cond": {
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "マイペース"
+   ]
+  }
+ },
+ "care.exercise_02": {
+  "text": "［care.exercise_02｜お世話への反応］",
+  "speaker": "animal",
+  "cond": {
+   "personality": [
+    "活発",
+    "好奇心旺盛",
+    "頑固"
+   ]
+  }
+ },
+ "anim.mature_01": {
+  "text": "［anim.mature_01｜成熟した様子］",
+  "speaker": "animal"
+ }
+}

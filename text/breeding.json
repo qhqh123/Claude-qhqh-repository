@@ -1,0 +1,71 @@
+{
+ "breed.ai.head": {
+  "text": "［breed.ai.head］{date}｜{name}　{species} {sex}　生後{age}",
+  "speaker": "narration"
+ },
+ "breed.ai.estrus_01": {
+  "text": "［breed.ai.estrus_01｜発情の確認］",
+  "speaker": "narration"
+ },
+ "breed.ai.partner_near_01": {
+  "text": "［breed.ai.partner_near_01｜仲の良い雄］",
+  "speaker": "narration",
+  "cond": {
+   "partner_in_pasture": true
+  }
+ },
+ "breed.ai.staff_01": {
+  "text": "［breed.ai.staff_01｜厩務員の主観］",
+  "speaker": "staff_girl",
+  "cond": {
+   "partner_in_pasture": true
+  }
+ },
+ "breed.ai.act": {
+  "text": "［breed.ai.act｜人工授精の実施］",
+  "speaker": "narration"
+ },
+ "breed.ai.after_partner_01": {
+  "text": "［breed.ai.after_partner_01｜直後（仲の良い雄）］",
+  "speaker": "narration",
+  "cond": {
+   "partner_in_pasture": true
+  }
+ },
+ "breed.natural.head": {
+  "text": "［breed.natural.head］{date}｜{name}　{partner}",
+  "speaker": "narration"
+ },
+ "breed.natural.act_01": {
+  "text": "［breed.natural.act_01｜自然交配（仲の良い相手）］",
+  "speaker": "narration",
+  "cond": {
+   "partner_liked": true
+  }
+ },
+ "breed.natural.act_02": {
+  "text": "［breed.natural.act_02｜自然交配（それ以外）］",
+  "speaker": "narration",
+  "cond": {
+   "partner_liked": false
+  }
+ },
+ "breed.natural.after_01": {
+  "text": "［breed.natural.after_01｜直後］",
+  "speaker": "narration"
+ },
+ "breed.teaser.act_01": {
+  "text": "［breed.teaser.act_01｜当て馬］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
+ },
+ "breed.teaser.after_01": {
+  "text": "［breed.teaser.after_01｜当て馬の直後］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
+ }
+}
