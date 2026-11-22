@@ -13,7 +13,7 @@ G.coatOf = (a) => {
   return Object.assign({ seed: h }, coats[h % coats.length]);
 };
 
-G.sizeOf = (a) => (a.age < 2 ? 0.62 : a.age < G.C.cattleMatureAge ? 0.8 : 1);
+G.sizeOf = (a) => (a.age < 2 ? 0.62 : !G.isMature(a) ? 0.8 : 1);
 
 G.roundRect = (ctx, x, y, w, h, r) => {
   ctx.beginPath();
@@ -84,7 +84,7 @@ G.draw.cow = (ctx, a, x, y, st, t) => {
   // 角（成熟した未去勢雄は少し大きい）
   if (a.age >= 2) {
     ctx.fillStyle = '#f3e3bf';
-    const hr = (a.sex === 'M' && !a.castrated && a.age >= G.C.cattleMatureAge) ? 5 : 3;
+    const hr = (a.sex === 'M' && !a.castrated && G.isMature(a)) ? 5 : 3;
     ctx.beginPath(); ctx.ellipse(hx - 4, hy - 14, 2.5, hr, -0.3, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(hx + 6, hy - 14, 2.5, hr, 0.3, 0, Math.PI * 2); ctx.fill();
   }
@@ -153,6 +153,7 @@ G.draw.person = (ctx, x, y, kind, facing, walking, t) => {
 
 // 立ち絵（性格で表情が少し違う）
 G.draw.portrait = (canvas, a) => {
+  if (a.species === 'horse') { G.draw.horsePortrait(canvas, a); return; }
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
@@ -180,7 +181,7 @@ G.draw.portrait = (canvas, a) => {
   // 角
   if (a.age >= 2) {
     ctx.fillStyle = '#f3e3bf';
-    const big = a.sex === 'M' && !a.castrated && a.age >= G.C.cattleMatureAge;
+    const big = a.sex === 'M' && !a.castrated && G.isMature(a);
     ctx.beginPath(); ctx.ellipse(70, 48, 7, big ? 16 : 10, -0.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.ellipse(130, 48, 7, big ? 16 : 10, 0.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   }

@@ -52,9 +52,13 @@ G.save = {
   migrate(obj) {
     const def = { careLeft: G.C.carePerTurn, cattleSlots: G.C.startCattleSlots, ledger: [], records: {}, readTexts: {}, notices: [], nextNotice: 1, market: [], straws: [], strawCatalog: [], tools: { burdizzo: false }, pendingCourses: [], yearSales: 0, devMode: false, player: { x: 1000, y: 880 }, nextSeq: 1 };
     for (const k of Object.keys(def)) if (obj[k] === undefined) obj[k] = def[k];
-    if (!obj.pastures) obj.pastures = { p1: { open: true }, p2: { open: false }, p3: { open: false } };
+    if (!obj.pastures) obj.pastures = {};
+    for (const pid of Object.keys(G.MAP.pastures)) if (!obj.pastures[pid]) obj.pastures[pid] = { open: pid === 'p1' };
+    if (typeof obj.horseSlots !== 'number') obj.horseSlots = 0;
+    for (const k of ['stallions', 'raceCard', 'raceEntries']) if (!Array.isArray(obj[k])) obj[k] = [];
     if (!Array.isArray(obj.milkSlots)) obj.milkSlots = Array.from({ length: G.C.startMilkSlots }, () => ({ aid: null }));
-    if (!Array.isArray(obj.fields)) obj.fields = ['A', 'B', 'C'].map(() => ({ open: false, use: 'pasture', horse: null }));
+    if (!Array.isArray(obj.fields)) obj.fields = [];
+    while (obj.fields.length < G.FIELD_SLOTS) obj.fields.push({ open: false, use: 'pasture', horse: null });
     obj.noticeTurn = null;
     if (!obj.staff) obj.staff = { girl: { name: 'ミナミ', pasture: 'p1' }, boy: { name: 'ソウスケ', pasture: 'p1' } };
     let maxSeq = 0;
@@ -63,6 +67,9 @@ G.save = {
       if (n > maxSeq) maxSeq = n;
       for (const k of ['history', 'diaries', 'likes', 'dislikes', 'children']) if (!Array.isArray(a[k])) a[k] = [];
       if (!a.flags) a.flags = {};
+      if (!a.species) a.species = 'cattle';
+      if (typeof a.trained !== 'number') a.trained = 0;
+      if (!Array.isArray(a.races)) a.races = [];
       if (!a.affinity) a.affinity = { player: 10, girl: 20, boy: 20 };
       if (!a.genes) a.genes = { length: 0, depth: 0, traits: [] };
       if (!a.genes.traits) a.genes.traits = [];

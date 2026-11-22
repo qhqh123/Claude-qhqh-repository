@@ -41,8 +41,8 @@ G.newIdNumber = () => {
   return s;
 };
 
-G.pickName = (sex) => {
-  const pool = sex === 'F' ? G.NAMES_F : G.NAMES_M;
+G.pickName = (sex, sp) => {
+  const pool = sp === 'horse' ? G.HORSE_NAMES : sex === 'F' ? G.NAMES_F : G.NAMES_M;
   const used = new Set(Object.values(G.S.animals).filter((a) => a.status === 'alive').map((a) => a.name));
   const free = pool.filter((n) => !used.has(n));
   if (free.length) return G.pick(free);

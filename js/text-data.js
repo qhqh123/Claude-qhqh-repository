@@ -141,6 +141,24 @@ window.TEXT_DATA = {
    "cond": {
     "species": "horse"
    }
+  },
+  "breed.stallion.head": {
+   "text": "［breed.stallion.head］{date}｜{name}　{partner}",
+   "speaker": "narration"
+  },
+  "breed.stallion.act_01": {
+   "text": "［breed.stallion.act_01｜外部種牡馬との交配］",
+   "speaker": "narration",
+   "cond": {
+    "species": "horse"
+   }
+  },
+  "breed.stallion.after_01": {
+   "text": "［breed.stallion.after_01｜直後］",
+   "speaker": "narration",
+   "cond": {
+    "species": "horse"
+   }
   }
  },
  "castration.json": {
@@ -478,6 +496,20 @@ window.TEXT_DATA = {
   "cas.staff_boy_01": {
    "text": "［cas.staff_boy_01｜厩務員の主観］",
    "speaker": "staff_boy"
+  },
+  "cas.horse.function_sperm": {
+   "text": "［cas.horse.function_sperm｜機能の説明1］",
+   "speaker": "narration",
+   "cond": {
+    "species": "horse"
+   }
+  },
+  "cas.horse.function_hormone": {
+   "text": "［cas.horse.function_hormone｜機能の説明2］",
+   "speaker": "narration",
+   "cond": {
+    "species": "horse"
+   }
   }
  },
  "daily-events.json": {

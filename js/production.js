@@ -1,5 +1,5 @@
 // 搾乳施設（No.11）と畑・牧草（No.04）
-G.FIELD_KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
+G.FIELD_KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 // ---------- 搾乳 ----------
 G.milk = {
@@ -72,7 +72,8 @@ G.field = {
   horseKey(f) {
     const h = f.horse && G.S.animals[f.horse];
     if (!h || h.status !== 'alive') return 'none';
-    return G.fieldHorseAbility ? G.fieldHorseAbility(h) : 'none';
+    if (f.refusedTurn === G.S.turn) return 'none';
+    return G.fieldHorseAbility(h);
   },
   mult(f) {
     const [crop, pasture] = G.C.fieldMult[this.horseKey(f)];
@@ -99,6 +100,33 @@ G.field = {
     if (!f || !f.open || (use !== 'crop' && use !== 'pasture')) return;
     if (f.use !== use) { f.use = use; G.ledger(`畑 用途変更　区画${this.label(i)}　${use === 'crop' ? '商業作物' : '牧草'}`, 0, 'note'); }
   },
+};
+
+// 農耕馬の能力（スタミナ・当代能力・コンディション）→ 倍率表のキー
+G.fieldHorseAbility = (h) => {
+  if (!G.isMature(h)) return 'none';
+  const st = G.traitRank(h, 'stamina');
+  let k = st <= 1 ? 0 : st === 2 ? 1 : st <= 4 ? 2 : 3;
+  if ((h.trained || 0) >= 60) k++;
+  if (G.condition(h) < 0.85) k--;
+  return G.clamp(k, 0, 3);
+};
+G.FIELD_ABILITY_NAMES = { none: '未配置', 0: '平凡', 1: 'やや優秀', 2: '優秀', 3: '最高水準' };
+// 【気性難】による就労不能（発現している場合のみ。去勢で軽減）
+G.refuseChance = (h) => {
+  const r = G.traitRank(h, 'temper');
+  if (!r || G.traitInactiveReason(h, 'temper')) return 0;
+  return 0.1 * r;
+};
+G.field.canAssign = (h) => h && h.status === 'alive' && G.isHorse(h) && G.isMature(h) && !G.S.fields.some((f) => f.horse === h.id);
+G.field.assign = (i, h) => {
+  const f = G.S.fields[i];
+  if (!f || !f.open) return false;
+  if (!h) { if (f.horse) { const o = G.S.animals[f.horse]; if (o) G.addHistory(o, `畑から外す　区画${G.field.label(i)}`); } f.horse = null; return true; }
+  if (!G.field.canAssign(h)) return false;
+  f.horse = h.id;
+  G.addHistory(h, `畑に配置　区画${G.field.label(i)}`);
+  return true;
 };
 
 // 飼料の必要量と自給量
@@ -134,6 +162,12 @@ G.runProduction = () => {
     if (r.income > 0) G.earn(r.income, `搾乳　${a.name}　${r.liters.toLocaleString('ja-JP')}L　乳質 ${G.rankName(r.q)}　${G.yen(r.income)}`, { silent: true });
   }
   S.fields.forEach((f, i) => {
+    const h = f.horse && S.animals[f.horse];
+    if (f.open && h && h.status === 'alive' && G.chance(G.refuseChance(h))) {
+      f.refusedTurn = S.turn;
+      G.ledger(`就労不能　${h.name}　区画${G.field.label(i)}`, 0, 'note');
+      G.addHistory(h, '就労不能');
+    }
     const r = G.field.produce(f);
     if (r.money > 0) G.earn(r.money, `畑　区画${G.field.label(i)}　商業作物　${G.yen(r.money)}`, { silent: true });
   });

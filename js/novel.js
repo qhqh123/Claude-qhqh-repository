@@ -147,13 +147,13 @@ G.shipScreen = {
     const root = document.getElementById('ship');
     this.root = root;
     root.className = 'stage1';
-    root.innerHTML = `<div class="ship-stage s1"><canvas class="portrait" width="300" height="300"></canvas><div class="ship-name">${G.esc(a.name)}</div><div class="ship-sub">${a.sex === 'M' ? '♂' : '♀'}　牛　${G.ageText(a.age)}</div><div class="tap">▼</div></div>
+    root.innerHTML = `<div class="ship-stage s1"><canvas class="portrait" width="300" height="300"></canvas><div class="ship-name">${G.esc(a.name)}</div><div class="ship-sub">${a.sex === 'M' ? '♂' : '♀'}　${G.spName(a)}　${G.ageText(a.age)}</div><div class="tap">▼</div></div>
       <div class="ship-text hidden"><div class="speaker"></div><div class="ntext"></div><div class="nid dev-only"></div></div>
       <div class="ship-label hidden"></div>`;
     G.draw.portrait(root.querySelector('canvas'), a);
     G.audio.duck(true);
     const v = G.shipValue(a);
-    const ctx = { species: 'cattle', personality: a.personality, meat_grade: v.q };
+    const ctx = { species: a.species, personality: a.personality, meat_grade: v.q };
     this.paras = G.buildParas([{ pick: 'ship.farewell_' }, { pick: 'ship.buyer_marbling_' }], ctx);
     this.vars = G.textVars(a);
     this.i = -1;
@@ -197,7 +197,7 @@ G.shipScreen = {
     const lab = root.querySelector('.ship-label');
     lab.classList.remove('hidden');
     lab.innerHTML = `<div class="label-card">
-      <div class="lab-h">黒毛　ロース</div>
+      <div class="lab-h">${G.isHorse(a) ? '馬肉　ロース' : '黒毛　ロース'}</div>
       <div class="lab-row"><span>枝肉重量</span><b>${v.carcass}kg</b></div>
       <div class="lab-row"><span>肉量</span><b>${G.rankName(v.yieldRank)}</b><span>肉質</span><b>${G.rankName(v.q)}</b></div>
       <div class="lab-row big"><span>売上</span><b>${G.yen(v.sales)}</b></div>

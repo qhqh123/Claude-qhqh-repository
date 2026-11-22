@@ -7,7 +7,8 @@ G.newGame = () => {
     loan: G.C.startLoan,
     careLeft: G.C.carePerTurn,
     cattleSlots: G.C.startCattleSlots,
-    pastures: { p1: { open: true }, p2: { open: false }, p3: { open: false } },
+    horseSlots: 0,
+    pastures: G.defaultPastures(),
     animals: {},
     nextSeq: 1,
     ledger: [],
@@ -22,7 +23,10 @@ G.newGame = () => {
     staff: { girl: { name: 'ミナミ', pasture: 'p1' }, boy: { name: 'ソウスケ', pasture: 'p1' } },
     pendingCourses: [],
     milkSlots: Array.from({ length: G.C.startMilkSlots }, () => ({ aid: null })),
-    fields: ['A', 'B', 'C'].map(() => ({ open: false, use: 'pasture', horse: null })),
+    fields: Array.from({ length: G.FIELD_SLOTS }, () => ({ open: false, use: 'pasture', horse: null })),
+    stallions: [],
+    raceCard: [],
+    raceEntries: [],
     yearSales: 0,
     lastSummary: null,
     devMode: false,
@@ -31,7 +35,18 @@ G.newGame = () => {
   G.setupHerd();
   G.refreshMarket();
   G.refreshCatalog();
+  G.refreshStallions();
+  G.race.makeCard();
 };
+
+G.defaultPastures = () => {
+  const out = {};
+  for (const pid of Object.keys(G.MAP.pastures)) out[pid] = { open: pid === 'p1' };
+  return out;
+};
+G.herdCount = (sp) => G.alive().filter((a) => (a.species || 'cattle') === sp).length;
+G.slotsOf = (sp) => (sp === 'horse' ? G.S.horseSlots : G.S.cattleSlots);
+G.hasRoom = (sp) => G.herdCount(sp) < G.slotsOf(sp);
 
 G.setupHerd = () => {
   const mk = G.makeAnimal;
@@ -137,26 +152,29 @@ G.randomTraitRank = () => {
   const r = Math.random(), d = G.C.marketTraitDist;
   return r < d[0] ? 0 : r < d[0] + d[1] ? 1 : 2;
 };
-G.randomMarketGenes = () => {
+G.randomMarketGenes = (sp) => {
   const genes = { length: G.ri(0, 2), depth: G.ri(0, 2), traits: [] };
-  for (const k of G.shuffle(G.CATTLE_FREE_TRAITS).slice(0, 3)) {
+  for (const k of G.shuffle(G.freeTraits(sp)).slice(0, 3)) {
     const r = G.randomTraitRank();
     if (r) genes.traits.push({ k, r });
   }
-  if (G.chance(G.C.marketDemeritRate)) genes.traits.push({ k: G.pick(G.CATTLE_DEMERITS), r: G.ri(1, 2) });
+  if (G.chance(G.C.marketDemeritRate)) genes.traits.push({ k: G.pick(G.demerits(sp)), r: G.ri(1, 2) });
   genes.traits = genes.traits.slice(0, 4);
+  if (sp === 'horse' && G.chance(0.25)) genes.traits.push({ k: 'racer', r: 1 });
   return genes;
 };
 G.refreshMarket = () => {
   const list = [];
-  const n = G.ri(3, 4);
+  const n = G.ri(3, 4) + 2;
   for (let i = 0; i < n; i++) {
+    const species = i < n - 2 ? 'cattle' : 'horse';
     const sex = G.chance(0.5) ? 'M' : 'F';
-    const age = G.chance(0.5) ? G.ri(0, 2) : G.ri(4, 12);
-    list.push({ key: 'm' + G.S.turn + '_' + i, sex, age, genes: G.randomMarketGenes(), personality: G.pick(G.PERSONALITIES) });
+    const mat = G.SPECIES[species].mature;
+    const age = G.chance(0.5) ? G.ri(0, 2) : G.ri(mat, mat + 8);
+    list.push({ key: 'm' + G.S.turn + '_' + i, species, sex, age, genes: G.randomMarketGenes(species), personality: G.pick(G.PERSONALITIES) });
   }
   for (const m of list) {
-    const tmp = { genes: m.genes, age: m.age };
+    const tmp = { genes: m.genes, age: m.age, species: m.species };
     m.price = G.marketValue(tmp);
   }
   G.S.market = list;
@@ -177,6 +195,36 @@ G.makeStraw = (rank, i) => {
     genes: { length: G.ri(rank - 1, rank), depth: G.ri(rank - 1, rank), traits: traits.slice(0, 4) },
   };
 };
+// 外部種牡馬（競走向けはデメリットが多い。Sは出さない）
+G.makeStallion = (type, rank, i) => {
+  const traits = [];
+  if (type === 'farm') {
+    traits.push({ k: 'stamina', r: rank });
+    if (G.chance(0.5)) traits.push({ k: G.pick(['growth', 'meat', 'charm']), r: G.ri(1, 2) });
+    if (G.chance(0.3)) traits.push({ k: G.pick(G.HORSE_DEMERITS), r: G.ri(1, 2) });
+  } else {
+    const main = G.pick(['speed', 'stamina']);
+    traits.push({ k: main, r: rank });
+    traits.push({ k: main === 'speed' ? 'stamina' : 'speed', r: G.ri(rank - 2, rank - 1) });
+    const nDem = rank === 4 ? 2 : G.ri(1, 2);
+    for (const k of G.shuffle(G.HORSE_DEMERITS).slice(0, nDem)) traits.push({ k, r: rank === 4 ? G.ri(2, 3) : G.ri(1, 2) });
+    traits.splice(4);
+    traits.push({ k: 'racer', r: 1 });
+  }
+  const key = type === 'farm' ? 'farm3' : rank === 4 ? 'race4' : 'race3';
+  return {
+    key: 'h' + G.S.turn + '_' + i,
+    name: G.pick(G.STALLION_NAMES),
+    type, rank,
+    main: type === 'farm' ? 'stamina' : traits[0].k,
+    fee: G.C.stallionFee[key],
+    genes: { length: G.ri(rank - 1, rank), depth: type === 'farm' ? G.ri(rank - 1, rank) : G.ri(1, 2), traits },
+  };
+};
+G.refreshStallions = () => {
+  G.S.stallions = [G.makeStallion('farm', 3, 0), G.makeStallion('farm', 3, 1), G.makeStallion('race', 3, 2), G.makeStallion('race', 4, 3)];
+};
+
 G.refreshCatalog = () => {
   const list = [];
   for (let i = 0; i < 3; i++) list.push(G.makeStraw(3, i));
@@ -187,10 +235,12 @@ G.refreshCatalog = () => {
 // ---------- 施設 ----------
 G.openPasture = (pid) => {
   const S = G.S;
-  if (S.pastures[pid].open || S.money < G.C.pastureOpenCost) return false;
+  const horse = G.pastureSpecies(pid) === 'horse';
+  const cost = horse ? G.C.horsePastureCost : G.C.pastureOpenCost;
+  if (S.pastures[pid].open || S.money < cost) return false;
   S.pastures[pid].open = true;
-  S.cattleSlots += G.C.pastureOpenSlots;
-  G.pay(G.C.pastureOpenCost, `放牧地 開拓　${G.MAP_LABEL ? G.MAP_LABEL[pid] : pid}　${G.yen(G.C.pastureOpenCost)}　飼育枠 +${G.C.pastureOpenSlots}`);
+  if (horse) S.horseSlots += G.C.horseSlotsPerPasture; else S.cattleSlots += G.C.pastureOpenSlots;
+  G.pay(cost, `放牧地 開拓　${G.MAP_LABEL[pid]}　${G.yen(cost)}　飼育枠（${horse ? '馬' : '牛'}） +${horse ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots}`);
   return true;
 };
 
@@ -201,8 +251,9 @@ G.endTurn = () => {
   const births = [];
   S.noticeTurn = S.turn + 1;
 
-  // 生産（今季の状態で計算）
+  // 生産とレース（今季の状態で計算）
   G.runProduction();
+  G.race.resolve();
 
   for (const a of G.alive()) {
     a.age++;
@@ -231,13 +282,15 @@ G.endTurn = () => {
     // 空胎
     if (a.sex === 'F' && G.isMature(a) && !a.pregnancy) a.openTurns++;
     // 成熟
-    if (a.age === G.C.cattleMatureAge) {
+    // 当代能力は少しずつ落ちる
+    if (a.trained) a.trained = Math.max(0, a.trained - G.C.trainDecay);
+    if (a.age === G.SPECIES[a.species || 'cattle'].mature) {
       G.assignRelations(a);
       if (a.sex === 'M' && !a.castrated) a.breedInterest = G.ri(1, 3);
-      if (a.sex === 'F') G.notify('breedable', a.id, `🐮 ${a.name}が交配できるようになりました！`);
+      if (a.sex === 'F') G.notify('breedable', a.id, `${G.spIcon(a)} ${a.name}が交配できるようになりました！`);
     }
     // 出荷適期
-    if (a.age === G.C.cattleShipAgeMin) G.notify('ship', a.id, `🐮 ${a.name}が出荷適期になりました！`);
+    if (a.species !== 'horse' && a.age === G.C.cattleShipAgeMin) G.notify('ship', a.id, `🐮 ${a.name}が出荷適期になりました！`);
     // 出産
     if (a.pregnancy && a.pregnancy.due <= S.turn + 1) births.push(a);
     // 泌乳の低下（次のターンの状態で判定）
@@ -246,7 +299,7 @@ G.endTurn = () => {
       if (k === G.C.milkLowAt && !a.pregnancy) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
       else if (a.age === G.C.milkAgeStart + 1) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
     }
-    else if (a.flags.postpartum) { a.flags.postpartum = false; G.notify('breedable', a.id, `🐮 ${a.name}が交配できるようになりました！`); }
+    else if (a.flags.postpartum) { a.flags.postpartum = false; G.notify('breedable', a.id, `${G.spIcon(a)} ${a.name}が交配できるようになりました！`); }
   }
 
   // 出産（年齢更新後）
@@ -271,7 +324,7 @@ G.endTurn = () => {
       G.removeFromSlots(a);
       G.addHistory(a, '死亡');
       G.ledger(`死亡　${a.name}　個体識別番号 ${a.idNo}`, 0, 'note');
-      G.notify('death', a.id, `🐮 ${a.name}が死亡しました`);
+      G.notify('death', a.id, `${G.spIcon(a)} ${a.name}が死亡しました`);
     }
   }
 
@@ -329,7 +382,7 @@ G.endTurn = () => {
   S.careLeft = G.C.carePerTurn;
   for (const a of newborns) {
     G.notify('birth', a.id, `${a.name}（${a.sex === 'M' ? '♂' : '♀'}）`, { title: '新しい家族が生まれました！' });
-    if (a.sex === 'M') G.notify('castrate', a.id, `🐮 ${a.name}が去勢を検討できる時期になりました！`);
+    if (a.sex === 'M') G.notify('castrate', a.id, `${G.spIcon(a)} ${a.name}が去勢を検討できる時期になりました！`);
   }
   // 経過日誌
   const due = S.pendingCourses.filter((c) => c.turn < S.turn);
@@ -337,6 +390,8 @@ G.endTurn = () => {
   for (const c of due) G.deliverCourse(c);
   G.refreshMarket();
   G.refreshCatalog();
+  G.refreshStallions();
+  G.race.makeCard();
   G.checkRecords();
   S.lastSummary = summary;
   G.save.auto();

@@ -67,5 +67,23 @@
   "cond": {
    "species": "horse"
   }
+ },
+ "breed.stallion.head": {
+  "text": "［breed.stallion.head］{date}｜{name}　{partner}",
+  "speaker": "narration"
+ },
+ "breed.stallion.act_01": {
+  "text": "［breed.stallion.act_01｜外部種牡馬との交配］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
+ },
+ "breed.stallion.after_01": {
+  "text": "［breed.stallion.after_01｜直後］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
  }
 }

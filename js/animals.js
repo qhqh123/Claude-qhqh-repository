@@ -9,6 +9,7 @@ G.mergeTraits = (list) => {
   const map = {};
   for (const t of list) {
     if (!t || !t.r) continue;
+    if (t.k === 'racer') { map.racer = 1; continue; }
     map[t.k] = map[t.k] === undefined ? t.r : G.combineRank(map[t.k], t.r);
   }
   return Object.keys(map).map((k) => ({ k, r: map[k] }));
@@ -19,10 +20,15 @@ G.inherit = (sireGenes, damGenes) => {
     length: G.combineRank(sireGenes.length, damGenes.length),
     depth: G.combineRank(sireGenes.depth, damGenes.depth),
   };
+  // 【競走馬】は父母ともに持てば自由4枠の外で確定継承
+  const has = (g) => (g.traits || []).some((t) => t.k === 'racer');
+  const both = has(sireGenes) && has(damGenes);
+  const pool = (g) => (g.traits || []).filter((t) => !(both && t.k === 'racer'));
   const k = G.ri(1, 3);
-  const fromS = G.shuffle(sireGenes.traits || []).slice(0, k);
-  const fromD = G.shuffle(damGenes.traits || []).slice(0, 4 - fromS.length);
+  const fromS = G.shuffle(pool(sireGenes)).slice(0, k);
+  const fromD = G.shuffle(pool(damGenes)).slice(0, 4 - fromS.length);
   genes.traits = G.mergeTraits(fromS.concat(fromD)).slice(0, 4);
+  if (both) genes.traits.push({ k: 'racer', r: 1 });
   return genes;
 };
 
@@ -31,6 +37,7 @@ G.previewGenes = (sireGenes, damGenes) => {
   const map = {};
   for (const t of (sireGenes.traits || [])) map[t.k] = { k: t.k, r: t.r };
   for (const t of (damGenes.traits || [])) {
+    if (t.k === 'racer') { map.racer = { k: 'racer', r: 1 }; continue; }
     map[t.k] = map[t.k] ? { k: t.k, r: G.combineRank(map[t.k].r, t.r) } : { k: t.k, r: t.r };
   }
   return {
@@ -61,11 +68,13 @@ G.traitInactiveReason = (a, k) => {
 G.makeAnimal = (o) => {
   const S = G.S;
   const id = 'a' + (S.nextSeq++);
+  const sp = o.species || 'cattle';
+  const SP = G.SPECIES[sp];
   const a = {
     id,
     idNo: '',
-    name: o.name || G.pickName(o.sex),
-    species: 'cattle',
+    name: o.name || G.pickName(o.sex, sp),
+    species: sp,
     sex: o.sex,
     age: o.age || 0,
     bornTurn: S.turn - (o.age || 0),
@@ -91,7 +100,9 @@ G.makeAnimal = (o) => {
     castBonus: 0,
     intactPenalty: 0,
     infection: 0,
-    lifespan: G.ri(G.C.cattleLifeMin, G.C.cattleLifeMax),
+    lifespan: G.ri(SP.lifeMin, SP.lifeMax),
+    trained: 0,
+    races: [],
     pasture: o.pasture || 'p1',
     history: [],
     diaries: [],
@@ -103,12 +114,15 @@ G.makeAnimal = (o) => {
   a.idNo = G.newIdNumber();
   // 年齢に合わせて体重を進める
   for (let i = 0; i < a.age; i++) G.growWeight(a, true);
-  if (a.age >= G.C.cattleMatureAge && a.sex === 'M') a.breedInterest = G.ri(1, 3);
+  if (G.isMature(a) && a.sex === 'M') a.breedInterest = G.ri(1, 3);
   return a;
 };
 
 G.alive = () => Object.values(G.S.animals).filter((a) => a.status === 'alive');
-G.isMature = (a) => a.age >= G.C.cattleMatureAge;
+G.isMature = (a) => a.age >= G.SPECIES[a.species || 'cattle'].mature;
+G.isHorse = (a) => a && a.species === 'horse';
+G.spName = (a) => G.SPECIES[a.species || 'cattle'].name;
+G.spIcon = (a) => G.SPECIES[a.species || 'cattle'].icon;
 G.isIntactMature = (a) => a.sex === 'M' && !a.castrated && G.isMature(a) && a.status === 'alive';
 
 G.castPeriod = (a) => {
@@ -124,7 +138,7 @@ G.condition = (a) => {
 };
 
 G.weightCap = (a) => {
-  let cap = 620 + a.genes.length * 40 + a.genes.depth * 25;
+  let cap = G.isHorse(a) ? 440 + a.genes.length * 30 + a.genes.depth * 25 : 620 + a.genes.length * 40 + a.genes.depth * 25;
   if (a.sex === 'F') cap *= 0.9;
   else if (!a.castrated) cap *= 1.15;
   else cap *= ({ early: 1.0, standard: 1.04, late: 1.08, mature: 1.12 })[a.castration.period] || 1;
@@ -141,7 +155,7 @@ G.growWeight = (a, init) => {
   if (a.weight < cap) a.weight += (cap - a.weight) * rate;
   if (!init && a.stress > 85) a.weight *= 0.97;
   // 加齢による痩せ
-  if (a.age > G.C.cattleDeclineAge) a.weight *= 0.995;
+  if (a.age > G.SPECIES[a.species || 'cattle'].decline) a.weight *= 0.995;
 };
 
 // 出荷時の肉質評価（内部数値）
@@ -169,8 +183,9 @@ G.shipValue = (a) => {
 G.marketValue = (a) => {
   // 生体の評価額（市場の購入価格の基準）
   const sum = a.genes.length + a.genes.depth + (a.genes.traits || []).reduce((s, t) => s + (G.TRAITS[t.k].demerit ? -t.r : t.r), 0);
-  const young = a.age < G.C.cattleMatureAge;
-  const [lo, hi] = young ? G.C.marketCalf : G.C.marketAdult;
+  const horse = a.species === 'horse';
+  const young = a.age < G.SPECIES[a.species || 'cattle'].mature;
+  const [lo, hi] = horse ? (young ? G.C.marketFoal : G.C.marketHorse) : (young ? G.C.marketCalf : G.C.marketAdult);
   const base = lo + (hi - lo) * G.clamp(sum / 8, 0, 1);
   let v = base;
   if (a.age > 20) v *= Math.max(0.4, 1 - (a.age - 20) * 0.04);
@@ -183,7 +198,7 @@ G.addHistory = (a, text) => {
 
 // 好き嫌いの決定（成熟時）
 G.assignRelations = (a) => {
-  const mates = G.alive().filter((b) => b.id !== a.id && b.pasture === a.pasture);
+  const mates = G.alive().filter((b) => b.id !== a.id && b.pasture === a.pasture && b.species === a.species);
   const pool = G.shuffle(mates.filter((b) => b.id !== a.dam && !a.children.includes(b.id)));
   const nLike = 2 + G.traitRank(a, 'charm');
   const nDislike = 1 + (G.traitRank(a, 'temper') > 0 ? 1 : 0);
@@ -204,7 +219,7 @@ G.birth = (dam) => {
   const sire = p.sire.external ? null : G.S.animals[p.sire.id];
   if (r < 0.25 && sire) personality = sire.personality;
   else if (r < 0.5) personality = dam.personality;
-  const calf = G.makeAnimal({ sex, genes, personality, sire: p.sire.external ? { external: true, name: p.sire.name, genes: p.sire.genes } : { id: p.sire.id }, dam: dam.id, pasture: dam.pasture });
+  const calf = G.makeAnimal({ species: dam.species, sex, genes, personality, sire: p.sire.external ? { external: true, name: p.sire.name, genes: p.sire.genes } : { id: p.sire.id }, dam: dam.id, pasture: dam.pasture });
   calf.motherBond = { id: dam.id, v: G.ri(2, 3) };
   G.checkRankS(calf);
   dam.children.push(calf.id);

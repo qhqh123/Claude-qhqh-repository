@@ -81,9 +81,13 @@ G.ui = {
     if (!this.countingMoney) $('#hud-money').textContent = G.yen(S.money);
     $('#hud-loan').textContent = G.yen(S.loan);
     $('#hud-care').textContent = S.careLeft;
-    const n = G.alive().length;
+    const n = G.herdCount('cattle');
     $('#hud-herd').textContent = `${n}/${S.cattleSlots}`;
     $('#hud-herd').parentElement.classList.toggle('over', n > S.cattleSlots);
+    const nh = G.herdCount('horse');
+    $('#hud-horse').textContent = `${nh}/${S.horseSlots}`;
+    $('#hud-horse').parentElement.classList.toggle('hidden', !S.horseSlots && !nh);
+    $('#hud-horse').parentElement.classList.toggle('over', nh > S.horseSlots);
     const pending = S.notices.filter((x) => !x.done).length;
     const badge = $('#office-badge');
     badge.textContent = pending; badge.classList.toggle('hidden', !pending);
@@ -116,6 +120,7 @@ G.ui = {
     a.happiness = G.clamp(a.happiness + e[1] * fav, 0, 100);
     a.affinity.player = G.clamp(a.affinity.player + e[2] * fav, 0, 100);
     if (kind === 'exercise') a.health = Math.min(100, a.health + 3);
+    if (G.isHorse(a)) a.trained = Math.min(G.C.trainMax, (a.trained || 0) + G.C.trainCare[kind] * fav);
     const st = G.map.stOf(a);
     G.map.burst(st.x, st.y - 40, kind === 'pet' ? ['💗', '💕', '✨'] : ['✨', '💗', '⭐'], fav > 1 ? 10 : 7);
     st.bubble = '❤'; st.bubbleT = 2.5; st.mode = 'idle'; st.timer = 2;
@@ -151,9 +156,9 @@ G.ui = {
   badge(a, k, r, small) {
     const def = G.TRAITS[k];
     if (!def) return '';
-    const rk = r ? G.rankName(r) : '';
+    const rk = r && !def.noRank ? G.rankName(r) : '';
     const reason = a ? G.traitInactiveReason(a, k) : null;
-    let tip = r ? `${def.name} ${rk}　${def.tip}` : '';
+    let tip = r ? (def.noRank ? `${def.name}　${def.tip}` : `${def.name} ${rk}　${def.tip}`) : '';
     if (reason && tip) tip += '\n' + reason;
     const cls = ['badge', 'r' + (r | 0), def.demerit ? 'demerit' : '', def.frame ? 'frame' : '', reason ? 'off' : '', small ? 'sm' : ''].join(' ');
     return `<span class="${cls}" ${tip ? `data-tip="${G.esc(tip)}"` : ''}>${G.esc(def.name)}${rk ? `<b>${rk}</b>` : ''}</span>`;
@@ -205,7 +210,7 @@ G.ui = {
     const box = $('.detail', w);
     const back = this.detailStack.length ? '<button class="btn back">← 戻る</button>' : '';
     const tabs = [['basic', '基本'], ['family', '家系図'], ['history', '履歴']];
-    box.innerHTML = `<div class="detail-head">${back}<h2>${G.esc(a.name)} <small>${a.sex === 'M' ? '♂' : '♀'}　牛　${G.ageText(a.age)}</small></h2></div>
+    box.innerHTML = `<div class="detail-head">${back}<h2>${G.esc(a.name)} <small>${a.sex === 'M' ? '♂' : '♀'}　${G.spName(a)}　${G.ageText(a.age)}</small></h2></div>
       <div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
       <div class="tab-body"></div>`;
     $$('.tab', box).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderDetail(w, a, b.dataset.tab); });
@@ -224,7 +229,9 @@ G.ui = {
   detailBasic(body, a, w) {
     const alive = a.status === 'alive';
     const v = G.shipValue(a);
-    const pastures = Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open);
+    const pastures = Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && G.pastureSpecies(p) === a.species);
+    const fieldIdx = G.S.fields.findIndex((f) => f.horse === a.id);
+    const rec = G.isHorse(a) ? G.race.record(a) : null;
     const archive = !alive ? `<div class="kv"><span>個体識別番号</span><b>${a.idNo}</b></div>
       <div class="kv"><span>状態</span><b>${this.breedStatus(a)}　${G.dateText(a.endTurn || G.S.turn)}</b></div>
       ${a.shipped ? `<div class="kv"><span>売上</span><b>${G.yen(a.shipped.sales)}</b></div>` : ''}
@@ -237,10 +244,12 @@ G.ui = {
         ${alive ? `<div class="kv"><span>個体識別番号</span><b>${a.idNo}</b></div>` : ''}
         <div class="kv"><span>性格</span><b>${a.personality}</b></div>
         <div class="kv"><span>好きなお世話</span><b>${G.ACTIVITY_NAMES[a.favorite]}</b></div>
-        ${alive ? this.bar('健康', a.health, 'health') + this.bar('幸福度', a.happiness, 'happy') + this.bar('ストレス', a.stress, 'stress') + this.bar('なつき度', a.affinity.player, 'aff') : ''}
+        ${alive ? this.bar('健康', a.health, 'health') + this.bar('幸福度', a.happiness, 'happy') + this.bar('ストレス', a.stress, 'stress') + this.bar('なつき度', a.affinity.player, 'aff') + (G.isHorse(a) ? this.bar('当代能力', a.trained || 0, 'train') : '') : ''}
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(a)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(a)}</div>
         <div class="kv"><span>繁殖状態</span><b>${this.breedStatus(a)}</b></div>
+        ${rec ? `<div class="kv"><span>レース</span><b>${rec.n}戦 ${rec.win}勝 入賞${rec.place}</b></div>` : ''}
+        ${alive && G.isHorse(a) ? `<div class="kv"><span>畑</span><b>${fieldIdx >= 0 ? `畑スロット${G.field.label(fieldIdx)}` : '—'}</b></div>` : ''}
         ${alive && a.lactation ? `<div class="kv"><span>泌乳</span><b>${G.milk.isDry(a) ? '乾乳' : `${G.milk.lactTurn(a)}ターン目　${Math.round(G.milk.lactMult(a) * 100)}%`}</b></div>
         <div class="kv"><span>搾乳施設</span><b>${G.milk.slotOf(a) >= 0 ? `スロット${G.milk.slotOf(a) + 1}` : '—'}</b></div>` : ''}
         ${alive ? `<div class="kv"><span>体重</span><b>${Math.round(a.weight)}kg</b></div>
@@ -326,7 +335,7 @@ G.ui = {
   openCastrate(a) {
     if (a.castrated || a.status !== 'alive') return;
     const period = G.castPeriod(a);
-    const methods = ['ring', 'burdizzo', 'surgical'];
+    const methods = G.castMethods(a);
     const directCost = (m) => {
       const c = G.castCost(a, m, 'direct');
       const lbl = m === 'surgical' ? '獣医' : '資材費';
@@ -334,7 +343,7 @@ G.ui = {
     };
     const out = G.castCost(a, null, 'outsource');
     const w = this.open(`<h2>去勢</h2>
-      <div class="cast-head">${G.esc(a.name)}　牛 ♂　生後${G.ageText(a.age)}（${G.PERIOD_NAMES[period]}）</div>
+      <div class="cast-head">${G.esc(a.name)}　${G.spName(a)} ♂　生後${G.ageText(a.age)}（${G.PERIOD_NAMES[period]}）</div>
       <div class="opt-row"><span class="lbl">対応：</span>
         <label class="radio"><input type="radio" name="mode" value="direct"> 直接対応</label>
         <label class="radio"><input type="radio" name="mode" value="outsource"> 外部委託</label></div>
@@ -367,29 +376,39 @@ G.ui = {
   // ---------- 交配 ----------
   openBreed(dam) {
     if (!G.canBreed(dam)) return;
-    const bulls = G.alive().filter((b) => G.isIntactMature(b));
-    const straws = G.S.straws;
+    const horse = G.isHorse(dam);
+    const bulls = G.alive().filter((b) => G.isIntactMature(b) && b.species === dam.species);
+    const straws = horse ? [] : G.S.straws;
+    const stallions = horse ? G.S.stallions : [];
     const opts = bulls.map((b) => ({ key: 'b' + b.id, label: `${b.name}`, sub: '牧場', genes: b.genes, partner: { type: 'bull', id: b.id }, a: b }))
-      .concat(straws.map((s, i) => ({ key: 's' + i, label: `${s.name}`, sub: `精液ストロー（${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}）`, genes: s.genes, partner: { type: 'straw', index: i }, a: null })));
+      .concat(straws.map((s, i) => ({ key: 's' + i, label: `${s.name}`, sub: `精液ストロー（${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}）`, genes: s.genes, partner: { type: 'straw', index: i }, a: null })))
+      .concat(stallions.map((s, i) => ({ key: 'h' + i, label: `${s.name}`, sub: `外部種牡馬（${s.type === 'farm' ? '農耕' : '競走'}）　${G.yen(s.fee)}`, genes: s.genes, partner: { type: 'stallion', index: i }, a: null, fee: s.fee })));
+    const teasers = horse ? G.teasers() : [];
     const w = this.open(`<h2>交配　<small>${G.esc(dam.name)}</small></h2>
       <div class="breed-dam"><div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(dam)}</div><div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(dam)}</div></div>
       <div class="partners">${opts.length ? opts.map((o) => `<label class="partner"><input type="radio" name="p" value="${o.key}">
         <div><b>${G.esc(o.label)}</b> <small>${o.sub}</small><div class="bs">${this.badgesFrame(o.a, o.genes, true)}${this.badgesTraits(o.a, o.genes, true)}</div></div></label>`).join('') : '<div class="muted">—</div>'}</div>
+      ${teasers.length ? `<div class="opt-row teaser hidden"><span class="lbl">当て馬</span><select class="teaser-sel"><option value="">—</option>${teasers.map((t) => `<option value="${t.id}">${G.esc(t.name)}</option>`).join('')}</select></div>` : ''}
       <div class="preview hidden"><h3>産子の予想</h3><div class="pv"></div></div>
-      <div class="actions"><button class="btn primary ok" disabled>交配する</button><button class="btn go-town">🏪 精液ストローを買う</button><button class="btn cancel">やめる</button></div>`, { size: 'medium' });
+      <div class="actions"><button class="btn primary ok" disabled>交配する</button>${horse ? '' : '<button class="btn go-town">🏪 精液ストローを買う</button>'}<button class="btn cancel">やめる</button></div>`, { size: 'medium' });
     $$('input[name=p]', w).forEach((i) => i.onchange = () => {
       G.audio.sfx('click');
       const o = opts.find((x) => x.key === i.value);
       const pv = G.previewGenes(o.genes, dam.genes);
       $('.preview', w).classList.remove('hidden');
       $('.pv', w).innerHTML = `<div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, pv, true)}</div><div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, pv, true)}</div>`;
-      $('.ok', w).disabled = false;
+      $('.ok', w).disabled = !!(o.fee && G.S.money < o.fee);
+      const tz = $('.teaser', w);
+      if (tz) tz.classList.toggle('hidden', o.partner.type !== 'stallion');
     });
     $('.cancel', w).onclick = () => this.close(w);
-    $('.go-town', w).onclick = () => { this.close(w); this.openTown('straw'); };
+    const gt = $('.go-town', w);
+    if (gt) gt.onclick = () => { this.close(w); this.openTown('straw'); };
     $('.ok', w).onclick = () => {
       const key = $('input[name=p]:checked', w).value;
       const o = opts.find((x) => x.key === key);
+      const ts = $('.teaser-sel', w);
+      if (o.partner.type === 'stallion' && ts && ts.value) o.partner.teaser = ts.value;
       this.close(w);
       const r = G.breed(dam, o.partner);
       this.markNoticesDone('breedable', dam.id);
@@ -441,7 +460,7 @@ G.ui = {
   renderOffice(w, tab, pid) {
     w.dataset.office = tab;
     w.dataset.pid = pid || '';
-    const tabs = [['notice', '通知'], ['list', '個体一覧'], ['breed', '繁殖'], ['ledger', '帳簿'], ['money', '収支'], ['facility', '施設'], ['staff', '厩務員'], ['archive', 'アーカイブ'], ['records', '牧場の記録']];
+    const tabs = [['notice', '通知'], ['list', '個体一覧'], ['breed', '繁殖'], ['race', 'レース'], ['ledger', '帳簿'], ['money', '収支'], ['facility', '施設'], ['staff', '厩務員'], ['archive', 'アーカイブ'], ['records', '牧場の記録']];
     $('.office-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('');
     $$('.office-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderOffice(w, b.dataset.tab); });
     const body = $('.office-body', w);
@@ -455,9 +474,9 @@ G.ui = {
       const ps = Object.keys(S.pastures).filter((p) => S.pastures[p].open);
       const filt = pid && S.pastures[pid] ? pid : '';
       const list = G.alive().filter((a) => !filt || a.pasture === filt).sort((x, y) => x.pasture.localeCompare(y.pasture) || y.age - x.age);
-      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt ? 'on' : ''}" data-p="${p}">${p ? G.MAP_LABEL[p] : 'すべて'}</button>`).join('')}<span class="count">${G.alive().length}/${S.cattleSlots}</span></div>
+      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt ? 'on' : ''}" data-p="${p}">${p ? G.MAP_LABEL[p] : 'すべて'}</button>`).join('')}<span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
         <table class="tbl"><thead><tr><th>名前</th><th>年齢</th><th>体格</th><th>特性</th><th>状態</th></tr></thead><tbody>
-        ${list.map((a) => `<tr data-id="${a.id}"><td><b>${G.esc(a.name)}</b> ${a.sex === 'M' ? '♂' : '♀'}</td><td>${G.ageText(a.age)}</td><td>${this.badgesFrame(a, null, true)}</td><td>${this.badgesTraits(a, null, true)}</td><td><small>${this.breedStatus(a)}${a.age >= G.C.cattleShipAgeMin ? '　<span class="pill">出荷適期</span>' : ''}</small></td></tr>`).join('')}
+        ${list.map((a) => `<tr data-id="${a.id}"><td>${G.spIcon(a)} <b>${G.esc(a.name)}</b> ${a.sex === 'M' ? '♂' : '♀'}</td><td>${G.ageText(a.age)}</td><td>${this.badgesFrame(a, null, true)}</td><td>${this.badgesTraits(a, null, true)}</td><td><small>${this.breedStatus(a)}${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '　<span class="pill">出荷適期</span>' : ''}</small></td></tr>`).join('')}
         </tbody></table>`;
       $$('[data-p]', body).forEach((b) => b.onclick = () => this.renderOffice(w, 'list', b.dataset.p));
       $$('tr[data-id]', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
@@ -465,13 +484,14 @@ G.ui = {
     if (tab === 'breed') {
       const fem = G.alive().filter((a) => a.sex === 'F' && G.isMature(a));
       body.innerHTML = `<table class="tbl"><thead><tr><th>名前</th><th>体格</th><th>特性</th><th>状態</th><th></th></tr></thead><tbody>
-        ${fem.map((a) => `<tr><td><a class="link" data-id="${a.id}">${G.esc(a.name)}</a></td><td>${this.badgesFrame(a, null, true)}</td><td>${this.badgesTraits(a, null, true)}</td><td><small>${this.breedStatus(a)}${a.openTurns > 1 && !a.pregnancy ? `　空胎 ${a.openTurns}ターン` : ''}</small></td><td>${G.canBreed(a) ? `<button class="btn small primary" data-b="${a.id}">交配</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">—</td></tr>'}
+        ${fem.map((a) => `<tr><td>${G.spIcon(a)} <a class="link" data-id="${a.id}">${G.esc(a.name)}</a></td><td>${this.badgesFrame(a, null, true)}</td><td>${this.badgesTraits(a, null, true)}</td><td><small>${this.breedStatus(a)}${a.openTurns > 1 && !a.pregnancy ? `　空胎 ${a.openTurns}ターン` : ''}</small></td><td>${G.canBreed(a) ? `<button class="btn small primary" data-b="${a.id}">交配</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">—</td></tr>'}
         </tbody></table>
         <h3>精液ストロー（在庫）</h3>
         <div class="straws">${S.straws.length ? S.straws.map((s) => `<div class="straw"><b>${G.esc(s.name)}</b> <small>${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}</small><div class="bs">${this.badgesFrame(null, s.genes, true)}${this.badgesTraits(null, s.genes, true)}</div></div>`).join('') : '<span class="muted">—</span>'}</div>`;
       $$('[data-b]', body).forEach((b) => b.onclick = () => this.openBreed(S.animals[b.dataset.b]));
       $$('.link', body).forEach((l) => l.onclick = () => this.openDetail(l.dataset.id));
     }
+    if (tab === 'race') this.renderRaceTab(w, body);
     if (tab === 'ledger') {
       const groups = {};
       for (const e of S.ledger) (groups[e.turn] = groups[e.turn] || []).push(e);
@@ -506,9 +526,10 @@ G.ui = {
       </div>`;
     }
     if (tab === 'facility') {
-      body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.alive().length}/${S.cattleSlots}</b></div>
+      body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.herdCount('cattle')}/${S.cattleSlots}</b></div>
+        <div class="kv"><span>飼育枠（馬）</span><b>${G.herdCount('horse')}/${S.horseSlots}</b></div>
         <h3>放牧地・畜舎</h3>
-        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span>${G.alive().filter((a) => a.pasture === p).length}頭</span>` : `<span>${G.yen(G.C.pastureOpenCost)}　飼育枠 +${G.C.pastureOpenSlots}</span><button class="btn small primary" data-open="${p}" ${S.money < G.C.pastureOpenCost ? 'disabled' : ''}>開拓</button>`}</li>`).join('')}</ul>
+        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span>${G.alive().filter((a) => a.pasture === p).length}頭</span>` : `<span>${G.pastureSpecies(p) === 'horse' ? `${G.yen(G.C.horsePastureCost)}　飼育枠（馬） +${G.C.horseSlotsPerPasture}` : `${G.yen(G.C.pastureOpenCost)}　飼育枠（牛） +${G.C.pastureOpenSlots}`}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
         <h3>搾乳施設</h3>
         <div class="kv"><span>スロット</span><b>${S.milkSlots.filter((x) => x.aid).length}/${S.milkSlots.length}　<button class="btn small" data-go="milk">開く</button></b></div>
         <h3>畑</h3>
@@ -540,10 +561,12 @@ G.ui = {
   openExpand(pid) {
     const S = G.S;
     if (S.pastures[pid].open) { this.openOffice('list', pid); return; }
-    const can = S.money >= G.C.pastureOpenCost;
+    const horse = G.pastureSpecies(pid) === 'horse';
+    const cost = horse ? G.C.horsePastureCost : G.C.pastureOpenCost;
+    const can = S.money >= cost;
     const w = this.open(`<h2>⛰ ${G.HILL_LABEL[pid]}</h2>
-      <div class="kv"><span>開拓</span><b>${G.yen(G.C.pastureOpenCost)}</b></div>
-      <div class="kv"><span>飼育枠</span><b>+${G.C.pastureOpenSlots}</b></div>
+      <div class="kv"><span>開拓</span><b>${G.yen(cost)}</b></div>
+      <div class="kv"><span>${horse ? '飼育枠（馬）' : '飼育枠（牛）'}</span><b>+${horse ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots}</b></div>
       <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeep)}／ターン</b></div>
       <div class="actions"><button class="btn primary ok" ${can ? '' : 'disabled'}>開拓する</button><button class="btn cancel">やめる</button></div>`, { size: 'small' });
     $('.cancel', w).onclick = () => this.close(w);
@@ -565,17 +588,16 @@ G.ui = {
   },
   renderTown(w, tab) {
     const S = G.S;
-    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['vet', '獣医']];
+    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医']];
     $('.town-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('');
     $$('.town-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderTown(w, b.dataset.tab); });
     const body = $('.town-body', w);
-    const full = G.alive().length >= S.cattleSlots;
     if (tab === 'market') {
-      body.innerHTML = `<div class="kv"><span>飼育枠</span><b>${G.alive().length}/${S.cattleSlots}</b></div>
-        <div class="cards">${S.market.map((m, i) => `<div class="card"><div class="card-h"><b>${m.sex === 'M' ? '♂' : '♀'} 牛</b><small>${G.ageText(m.age)}　${m.personality}</small></div>
+      body.innerHTML = `<div class="kv"><span>飼育枠</span><b>🐮 ${G.herdCount('cattle')}/${S.cattleSlots}　🐴 ${G.herdCount('horse')}/${S.horseSlots}</b></div>
+        <div class="cards">${S.market.map((m, i) => `<div class="card"><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${G.ageText(m.age)}　${m.personality}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits({ sex: m.sex, castrated: false }, m.genes, true)}</div>
-        <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || full ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
+        <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || !G.hasRoom(m.species || 'cattle') || !G.pastureWithRoom(m.species || 'cattle') ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
       $$('[data-buy]', body).forEach((b) => b.onclick = () => {
         const a = G.buy(S.market[+b.dataset.buy]);
         if (a) { G.audio.sfx('coin'); this.renderTown(w, 'market'); this.refreshHud(); }
@@ -590,6 +612,12 @@ G.ui = {
       $$('[data-s]', body).forEach((b) => b.onclick = () => {
         if (G.buyStraw(S.strawCatalog[+b.dataset.s])) { G.audio.sfx('coin'); this.renderTown(w, 'straw'); this.refreshHud(); }
       });
+    }
+    if (tab === 'stallion') {
+      body.innerHTML = `<div class="cards">${S.stallions.map((s) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${s.type === 'farm' ? '農耕' : '競走'}　${G.TRAITS[s.main].name}${G.rankName(s.rank)}</small></div>
+        <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, s.genes, true)}</div>
+        <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, s.genes, true)}</div>
+        <div class="card-f"><span class="muted">種付け料</span><b>${G.yen(s.fee)}</b></div></div>`).join('')}</div>`;
     }
     if (tab === 'vet') {
       const items = [['early', '早期'], ['standard', '標準'], ['late', '晩期'], ['mature', '高齢'], ['ring', 'ゴムリング法'], ['burdizzo', '去勢鉗子法'], ['surgical', '観血法']];
@@ -608,7 +636,7 @@ G.ui = {
       ['🏠 事務所', M.office.x + M.office.w / 2, M.office.y + M.office.h + 40],
       ...Object.keys(M.pastures).map((p) => [`${G.S.pastures[p].open ? '🐮' : '⛰'} ${G.pastureLabel(p)}`, G.gateOf(p).out.x, G.gateOf(p).out.y]),
       ['🥛 搾乳施設', M.milk.x + M.milk.w / 2, M.milk.y + M.milk.h + 40],
-      [G.S.fields.some((f) => f.open) ? '🌾 畑' : '🌾 荒れ地', M.field.x - 40, M.field.y + M.field.h / 2],
+      [G.S.fields.some((f) => f.open) ? '🌾 畑' : '🌾 荒れ地', M.fieldBlocks[0].x - 40, M.fieldBlocks[0].y + M.fieldBlocks[0].h / 2],
       ['🏪 町への道', M.town.x + M.town.w + 50, M.town.y + M.town.h - 20],
     ];
     const w = this.open(`<h2>🪧 案内看板</h2><div class="warp">${dests.map((d, i) => `<button class="btn" data-w="${i}">${d[0]}</button>`).join('')}</div>`, { size: 'small' });

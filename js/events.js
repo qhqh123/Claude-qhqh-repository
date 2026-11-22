@@ -4,10 +4,12 @@ const GAIN_PRED = { early: 0.2, standard: 0.4, late: 0.6, mature: 0.8 };
 const CAST_BONUS = { early: 0.6, standard: 0.5, late: 0.2, mature: -0.5 };
 const OUTSOURCE_METHOD = { early: 'ring', standard: 'burdizzo', late: 'surgical', mature: 'surgical' };
 
+G.castMethods = (a) => (G.isHorse(a) ? ['surgical'] : ['ring', 'burdizzo', 'surgical']);
 G.castCost = (a, method, mode) => {
   const period = G.castPeriod(a);
+  if (G.isHorse(a)) method = 'surgical';
   if (mode === 'outsource') {
-    const m = OUTSOURCE_METHOD[period];
+    const m = G.isHorse(a) ? 'surgical' : OUTSOURCE_METHOD[period];
     return { method: m, cost: G.C.castOutsource[m], tool: 0 };
   }
   const tool = method === 'burdizzo' && !G.S.tools.burdizzo ? G.C.burdizzoToolCost : 0;
@@ -46,15 +48,15 @@ G.castrate = (a, methodSel, mode) => {
   S.pendingCourses.push({ aid: a.id, method, mode, incomplete, infection, turn: S.turn });
 
   if (mode !== 'direct') return null;
-  const ctx = { species: 'cattle', method, personality: a.personality };
+  const ctx = { species: a.species, method, personality: a.personality };
   const staff = G.staffFor(a);
   const steps = [
     'cas.head',
     { pick: `cas.${method}.pre_` },
     `cas.${method}.tool`,
     `cas.${method}.locate`,
-    'cas.cattle.function_sperm',
-    'cas.cattle.function_hormone',
+    `cas.${a.species}.function_sperm`,
+    `cas.${a.species}.function_hormone`,
     `cas.${method}.act`,
   ];
   if (!suitable) steps.push({ pick: `cas.${method}.mismatch_` });
@@ -77,7 +79,7 @@ G.storeDiary = (a, ev) => {
 G.deliverCourse = (c) => {
   const a = G.S.animals[c.aid];
   if (!a || a.status !== 'alive') return;
-  const ctx = { species: 'cattle', method: c.method, personality: a.personality };
+  const ctx = { species: a.species, method: c.method, personality: a.personality };
   if (c.infection) {
     a.infection = G.C.infectionTurns;
     a.health = Math.max(30, a.health - 30);
@@ -108,7 +110,9 @@ G.deliverCourse = (c) => {
 // ---------- 交配 ----------
 G.canBreed = (a) => a.status === 'alive' && a.sex === 'F' && G.isMature(a) && !a.pregnancy && a.bredTurn !== G.S.turn;
 
-G.partnerNear = (dam) => G.alive().some((b) => G.isIntactMature(b) && b.pasture === dam.pasture && G.likesAnimal(dam, b));
+G.partnerNear = (dam) => G.alive().some((b) => G.isIntactMature(b) && b.species === dam.species && b.pasture === dam.pasture && G.likesAnimal(dam, b));
+// 当て馬に使える牡馬
+G.teasers = () => G.alive().filter((b) => G.isHorse(b) && G.isIntactMature(b));
 
 // partner: { type:'bull', id } | { type:'straw', index }
 G.breed = (dam, partner) => {
@@ -124,17 +128,35 @@ G.breed = (dam, partner) => {
     ok = G.chance(G.C.naturalConception);
     line = `自然交配　${dam.name} × ${bull.name}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = bull.name;
-    const ctx = { species: 'cattle', personality: dam.personality, partner_liked: G.likesAnimal(dam, bull) };
+    const ctx = { species: dam.species, personality: dam.personality, partner_liked: G.likesAnimal(dam, bull) };
     ev = { title: '交配', paras: G.buildParas(['breed.natural.head', { pick: 'breed.natural.act_' }, { pick: 'breed.natural.after_' }], ctx), vars, aid: dam.id };
     G.addHistory(dam, `自然交配　${bull.name}　${ok ? '受胎' : '不受胎'}`);
     G.addHistory(bull, `自然交配　${dam.name}　${ok ? '受胎' : '不受胎'}`);
+  } else if (partner.type === 'stallion') {
+    const st = S.stallions[partner.index];
+    const teaser = partner.teaser && S.animals[partner.teaser];
+    sire = { external: true, name: st.name, genes: st.genes };
+    ok = G.chance(G.C.naturalConception + (teaser ? G.C.teaserBonus : 0));
+    G.pay(st.fee, `種付け料　${st.name}（外部）　${G.yen(st.fee)}`);
+    line = `種付け　${dam.name} × ${st.name}（外部）${teaser ? `　当て馬 ${teaser.name}` : ''}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
+    vars.partner = st.name;
+    const ctx = { species: dam.species, personality: dam.personality };
+    const steps = ['breed.stallion.head'];
+    if (teaser) steps.push({ pick: 'breed.teaser.act_' }, { pick: 'breed.teaser.after_' });
+    steps.push({ pick: 'breed.stallion.act_' }, { pick: 'breed.stallion.after_' });
+    ev = { title: '種付け', paras: G.buildParas(steps, ctx), vars, aid: dam.id };
+    G.addHistory(dam, `種付け　${st.name}（外部）　${ok ? '受胎' : '不受胎'}`);
+    if (teaser) {
+      G.addHistory(teaser, `当て馬　${dam.name}`);
+      G.storeDiary(teaser, { title: '当て馬', paras: ev.paras.filter((p) => p.startsWith('breed.teaser') || p === 'breed.stallion.head'), vars: G.textVars(teaser, { partner: dam.name }), ledger: null });
+    }
   } else {
     const straw = S.straws.splice(partner.index, 1)[0];
     sire = { external: true, name: straw.name, genes: straw.genes };
     ok = G.chance(G.C.aiConception);
     line = `人工授精　${dam.name}　精液ストロー ${straw.name}（${G.TRAITS[straw.main].name}期待${G.rankName(straw.rank)}）${G.yen(straw.price)}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     const near = G.partnerNear(dam);
-    const ctx = { species: 'cattle', personality: dam.personality, partner_in_pasture: near };
+    const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near };
     ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, 'breed.ai.act', { pick: 'breed.ai.after_partner_' }], ctx), vars, aid: dam.id };
     G.addHistory(dam, `人工授精　${straw.name}　${ok ? '受胎' : '不受胎'}`);
   }
@@ -178,13 +200,16 @@ G.sell = (a) => {
 
 G.buy = (m) => {
   const S = G.S;
-  if (S.money < m.price || G.alive().length >= S.cattleSlots) return null;
-  const a = G.makeAnimal({ sex: m.sex, age: m.age, genes: m.genes, personality: m.personality, origin: 'market', pasture: G.pastureWithRoom() });
+  const sp = m.species || 'cattle';
+  if (S.money < m.price || !G.hasRoom(sp)) return null;
+  const pasture = G.pastureWithRoom(sp);
+  if (!pasture) return null;
+  const a = G.makeAnimal({ species: sp, sex: m.sex, age: m.age, genes: m.genes, personality: m.personality, origin: 'market', pasture });
   if (G.isMature(a)) G.assignRelations(a);
   S.market = S.market.filter((x) => x !== m);
   G.addHistory(a, '購入');
   G.pay(m.price, `購入　${a.name}　個体識別番号 ${a.idNo}　${G.yen(m.price)}`);
-  if (a.sex === 'M' && !G.isMature(a)) G.notify('castrate', a.id, `🐮 ${a.name}が去勢を検討できる時期になりました！`);
+  if (a.sex === 'M' && !G.isMature(a)) G.notify('castrate', a.id, `${G.spIcon(a)} ${a.name}が去勢を検討できる時期になりました！`);
   return a;
 };
 
@@ -197,8 +222,9 @@ G.buyStraw = (s) => {
   return true;
 };
 
-G.pastureWithRoom = () => {
-  const open = Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open);
+G.pastureWithRoom = (sp) => {
+  const open = Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && G.pastureSpecies(p) === (sp || 'cattle'));
+  if (!open.length) return null;
   let best = open[0], min = 1e9;
   for (const p of open) {
     const n = G.alive().filter((a) => a.pasture === p).length;

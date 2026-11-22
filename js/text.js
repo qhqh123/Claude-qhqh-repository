@@ -82,7 +82,7 @@ G.textVars = (a, extra) => {
     name: a.name,
     sex: a.sex === 'M' ? '♂' : '♀',
     age: G.ageText(a.age),
-    species: '牛',
+    species: G.spName(a),
     staff: S.staff[staffKey].name,
     partner: '',
     date: G.dateText(S.turn),

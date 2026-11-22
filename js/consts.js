@@ -71,6 +71,29 @@ G.C = {
 
   carePerTurn: 5,
 
+  // 馬（No.13・付録C。賞金・種付け料・価格などは仮）
+  horseMatureAge: 6,
+  horseLifeMin: 80,
+  horseLifeMax: 120,
+  horseDeclineAge: 40,
+  teaserBonus: 0.15,
+  horseSlotsPerPasture: 4,
+  horsePastureCost: 2000000,
+  marketFoal: [400000, 900000],
+  marketHorse: [700000, 1500000],
+  stallionFee: { farm3: 150000, race3: 500000, race4: 2000000 },
+  trainMax: 100,
+  trainDecay: 3,
+  trainCare: { brush: 2, pet: 1, exercise: 8 },
+  // レース：[入賞ライン, 勝利ライン, 出走料, 入賞賞金, 優勝賞金]
+  races: {
+    farm: { name: '農耕馬レース', line: [20, 28], fee: 20000, prize: [80000, 300000] },
+    G3: { name: 'G3', line: [30, 38], fee: 100000, prize: [500000, 2000000] },
+    G2: { name: 'G2', line: [38, 45], fee: 200000, prize: [1200000, 5000000] },
+    G1: { name: 'G1', line: [44, 52], fee: 500000, prize: [3000000, 15000000] },
+  },
+  distWeights: { short: [0.75, 0.25], mid: [0.5, 0.5], long: [0.25, 0.75] },
+
   // 搾乳（No.11）
   milkBase: [1200, 1500, 1800, 2100, 2400, 2700],
   milkDepthPerRank: 0.05,
@@ -101,6 +124,11 @@ G.C = {
 };
 
 G.SEASONS = ['春', '夏', '秋', '冬'];
+G.SPECIES = {
+  cattle: { name: '牛', icon: '🐮', mature: 4, lifeMin: 60, lifeMax: 80, decline: 32 },
+  horse: { name: '馬', icon: '🐴', mature: 6, lifeMin: 80, lifeMax: 120, decline: 40 },
+};
+G.DIST_NAMES = { short: '短距離', mid: '中距離', long: '長距離' };
 G.RANKS = ['平凡', 'C', 'B', 'A', 'A+', 'S'];
 G.PERSONALITIES = ['おっとり', '甘えん坊', '活発', '好奇心旺盛', 'マイペース', '頑固'];
 G.ACTIVITIES = ['brush', 'pet', 'exercise'];
@@ -120,7 +148,18 @@ G.TRAITS = {
   charm:   { name: '愛嬌', tip: '好かれやすい' },
   temper:  { name: '気性難', tip: 'トラブルが起きやすい　就労・出走不能 C10% / B20% / A30% / A+40% / S50%', demerit: true, intactMaleOnly: true },
   frail:   { name: '虚弱体質', tip: 'ストレスに弱い', demerit: true },
+  speed:   { name: 'スピード', tip: '速く走る' },
+  stamina: { name: 'スタミナ', tip: '長く走れる' },
+  timid:   { name: '臆病', tip: 'レースで力を出しにくい', demerit: true },
+  fickle:  { name: '気まぐれ', tip: 'レース成績がばらつく', demerit: true },
+  racer:   { name: '競走馬', tip: 'レース評価点 +5', noRank: true },
 };
+G.HORSE_FREE_TRAITS = ['speed', 'stamina', 'meat', 'growth', 'charm'];
+G.HORSE_DEMERITS = ['temper', 'frail', 'timid', 'fickle'];
+G.freeTraits = (sp) => (sp === 'horse' ? G.HORSE_FREE_TRAITS : G.CATTLE_FREE_TRAITS);
+G.demerits = (sp) => (sp === 'horse' ? G.HORSE_DEMERITS : G.CATTLE_DEMERITS);
+G.HORSE_NAMES = ['ハヤテ', 'ソヨカゼ', 'ポニー', 'クリ', 'アオバ', 'ヒカリ', 'ツムジ', 'ホシ', 'ミドリ', 'カザミ', 'シラユキ', 'イナホ', 'ノゾミ', 'コハク', 'サクヤ', 'ライ', 'ギンガ', 'ススキ', 'マツカゼ', 'タチバナ'];
+G.STALLION_NAMES = ['サンダーボルト', 'ハーベストキング', 'シルバーアロー', 'ノーザンスター', 'グランドホープ', 'ブルーファルコン', 'レッドクラウン', 'ゴールドウィング', 'ストームライダー', 'ミストラル'];
 G.CATTLE_FREE_TRAITS = ['milk', 'milkq', 'meat', 'growth', 'charm'];
 G.CATTLE_DEMERITS = ['temper', 'frail'];
 

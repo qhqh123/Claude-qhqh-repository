@@ -1,27 +1,42 @@
 // 見下ろし2Dマップ（No.17）
 G.MAP = {
-  W: 2400, H: 1800,
+  W: 4100, H: 2700,
   office: { x: 300, y: 620, w: 240, h: 190 },
   town: { x: 30, y: 1330, w: 130, h: 130 },
   pond: { x: 400, y: 1180, rx: 120, ry: 70 },
+  // species: 放牧地の動物種。開拓前は丘として描く
   pastures: {
-    p1: { x: 760, y: 330, w: 620, h: 430, gate: 'bottom', barn: { x: 1170, y: 160, w: 180, h: 150 } },
-    p2: { x: 1640, y: 330, w: 600, h: 430, gate: 'bottom', barn: { x: 2030, y: 160, w: 180, h: 150 } },
-    p3: { x: 760, y: 1090, w: 620, h: 430, gate: 'top', barn: { x: 1410, y: 1360, w: 170, h: 150 } },
+    p1: { species: 'cattle', x: 760, y: 330, w: 620, h: 430, gate: 'bottom', barn: { x: 1170, y: 160, w: 180, h: 150 } },
+    p2: { species: 'cattle', x: 1640, y: 330, w: 600, h: 430, gate: 'bottom', barn: { x: 2030, y: 160, w: 180, h: 150 } },
+    p3: { species: 'cattle', x: 760, y: 1090, w: 620, h: 430, gate: 'top', barn: { x: 1410, y: 1360, w: 170, h: 150 } },
+    p4: { species: 'cattle', x: 760, y: 1880, w: 620, h: 430, gate: 'top', barn: { x: 1410, y: 2150, w: 170, h: 150 } },
+    p5: { species: 'cattle', x: 2520, y: 1880, w: 620, h: 430, gate: 'top', barn: { x: 3170, y: 2150, w: 170, h: 150 } },
+    h1: { species: 'horse', x: 2520, y: 330, w: 620, h: 430, gate: 'bottom', barn: { x: 2930, y: 160, w: 180, h: 150 } },
+    h2: { species: 'horse', x: 3400, y: 330, w: 600, h: 430, gate: 'bottom', barn: { x: 3790, y: 160, w: 180, h: 150 } },
   },
-  field: { x: 1640, y: 1090, w: 600, h: 430 },
+  // 荒れ地（1ブロック3区画）
+  fieldBlocks: [
+    { x: 1640, y: 1090, w: 600, h: 430 },
+    { x: 2520, y: 1090, w: 620, h: 430 },
+    { x: 3400, y: 1090, w: 600, h: 430 },
+    { x: 1640, y: 1880, w: 600, h: 430 },
+    { x: 3400, y: 1880, w: 600, h: 430 },
+  ],
   milk: { x: 560, y: 1050, w: 180, h: 170 },
   signs: [
-    { x: 600, y: 880 }, { x: 1500, y: 900 }, { x: 1500, y: 1640 }, { x: 260, y: 1250 }, { x: 1500, y: 250 },
+    { x: 600, y: 880 }, { x: 1500, y: 900 }, { x: 1500, y: 1700 }, { x: 260, y: 1250 }, { x: 1500, y: 250 },
+    { x: 2380, y: 880 }, { x: 3260, y: 880 }, { x: 2380, y: 1700 }, { x: 3260, y: 1700 }, { x: 600, y: 1700 },
   ],
 };
-G.MAP_LABEL = { p1: '第1放牧地', p2: '第2放牧地', p3: '第3放牧地' };
-G.HILL_LABEL = { p2: '丘（北東）', p3: '丘（南）' };
+G.FIELD_SLOTS = G.MAP.fieldBlocks.length * 3;
+G.MAP_LABEL = { p1: '第1放牧地', p2: '第2放牧地', p3: '第3放牧地', p4: '第4放牧地', p5: '第5放牧地', h1: '馬の放牧地1', h2: '馬の放牧地2' };
+G.HILL_LABEL = { p2: '丘（北）', p3: '丘（西）', p4: '丘（南西）', p5: '丘（南）', h1: '丘（北東）', h2: '丘（東）' };
 G.fieldRect = (i) => {
-  const f = G.MAP.field, n = 3, w = f.w / n;
-  return { x: f.x + i * w, y: f.y, w, h: f.h };
+  const b = G.MAP.fieldBlocks[Math.floor(i / 3)], w = b.w / 3;
+  return { x: b.x + (i % 3) * w, y: b.y, w, h: b.h };
 };
 G.pastureLabel = (pid) => (G.S.pastures[pid].open ? G.MAP_LABEL[pid] : G.HILL_LABEL[pid]);
+G.pastureSpecies = (pid) => G.MAP.pastures[pid].species;
 
 G.gateOf = (pid) => {
   const p = G.MAP.pastures[pid];
@@ -67,9 +82,10 @@ G.map = {
     this.vw = window.innerWidth; this.vh = window.innerHeight;
     this.canvas.width = this.vw * dpr; this.canvas.height = this.vh * dpr;
     this.canvas.style.width = this.vw + 'px'; this.canvas.style.height = this.vh + 'px';
-    const mw = this.vw < 600 ? 132 : 200;
-    this.mini.width = mw * dpr; this.mini.height = mw * 0.75 * dpr;
-    this.mini.style.width = mw + 'px'; this.mini.style.height = mw * 0.75 + 'px';
+    const mw = this.vw < 600 ? 150 : 230;
+    const mh = mw * G.MAP.H / G.MAP.W;
+    this.mini.width = mw * dpr; this.mini.height = mh * dpr;
+    this.mini.style.width = mw + 'px'; this.mini.style.height = mh + 'px';
   },
 
   makeDeco() {
@@ -77,14 +93,14 @@ G.map = {
     let seed = 12345;
     const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
     const inside = (x, y, pad) => {
-      const r = [M.office, M.town, M.field, M.milk].concat(Object.values(M.pastures)).concat(Object.values(M.pastures).map((p) => p.barn));
+      const r = [M.office, M.town, M.milk].concat(M.fieldBlocks).concat(Object.values(M.pastures)).concat(Object.values(M.pastures).map((p) => p.barn));
       if (r.some((b) => x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad)) return true;
       const dx = (x - M.pond.x) / (M.pond.rx + pad), dy = (y - M.pond.y) / (M.pond.ry + pad);
       if (dx * dx + dy * dy < 1) return true;
       return this.onPath(x, y, pad);
     };
     const trees = [];
-    for (let i = 0; i < 400 && trees.length < 70; i++) {
+    for (let i = 0; i < 1200 && trees.length < 150; i++) {
       const edge = rnd() < 0.6;
       let x, y;
       if (edge) {
@@ -97,41 +113,49 @@ G.map = {
       trees.push({ x, y, r: 26 + rnd() * 14, kind: rnd() < 0.3 ? 1 : 0 });
     }
     const tufts = [];
-    for (let i = 0; i < 900; i++) tufts.push({ x: rnd() * M.W, y: rnd() * M.H, k: rnd() });
+    for (let i = 0; i < 2000; i++) tufts.push({ x: rnd() * M.W, y: rnd() * M.H, k: rnd() });
     const flowers = [];
-    for (let i = 0; i < 260; i++) {
+    for (let i = 0; i < 600; i++) {
       const x = rnd() * M.W, y = rnd() * M.H;
       if (inside(x, y, 6)) continue;
       flowers.push({ x, y, c: Math.floor(rnd() * 4) });
     }
     const hillDeco = {};
-    for (const pid of ['p2', 'p3']) {
+    for (const pid of Object.keys(M.pastures)) {
       const p = M.pastures[pid];
       hillDeco[pid] = { rocks: [], weeds: [] };
       for (let i = 0; i < 8; i++) hillDeco[pid].rocks.push({ x: p.x + 40 + rnd() * (p.w - 80), y: p.y + 40 + rnd() * (p.h - 80), r: 8 + rnd() * 14 });
       for (let i = 0; i < 40; i++) hillDeco[pid].weeds.push({ x: p.x + 20 + rnd() * (p.w - 40), y: p.y + 20 + rnd() * (p.h - 40), c: Math.floor(rnd() * 4) });
     }
     const cracks = [];
-    for (let i = 0; i < 26; i++) {
-      const f = M.field;
+    for (let i = 0; i < 26 * M.fieldBlocks.length; i++) {
+      const f = M.fieldBlocks[i % M.fieldBlocks.length];
       const x = f.x + 30 + rnd() * (f.w - 60), y = f.y + 30 + rnd() * (f.h - 60);
       const pts = [[x, y]];
       for (let j = 0; j < 3; j++) pts.push([pts[j][0] + (rnd() - 0.5) * 50, pts[j][1] + (rnd() - 0.5) * 30]);
       cracks.push(pts);
     }
     const weeds = [];
-    for (let i = 0; i < 50; i++) weeds.push({ x: M.field.x + 20 + rnd() * (M.field.w - 40), y: M.field.y + 20 + rnd() * (M.field.h - 40) });
+    for (let i = 0; i < 50 * M.fieldBlocks.length; i++) { const f = M.fieldBlocks[i % M.fieldBlocks.length]; weeds.push({ x: f.x + 20 + rnd() * (f.w - 40), y: f.y + 20 + rnd() * (f.h - 40) }); }
     this.deco = { trees, tufts, flowers, hillDeco, cracks, weeds };
   },
 
   paths: [
-    [[420, 810], [420, 900], [1070, 900], [1070, 760]],
-    [[1070, 900], [1940, 900], [1940, 760]],
+    [[420, 810], [420, 900], [3700, 900]],
+    [[1070, 900], [1070, 760]],
+    [[1940, 900], [1940, 760]],
+    [[2830, 900], [2830, 760]],
+    [[3700, 900], [3700, 760]],
     [[1070, 900], [1070, 1090]],
-    [[1500, 900], [1500, 1640], [1940, 1640], [1940, 1520]],
-    [[420, 900], [420, 1000], [250, 1000], [250, 1400], [160, 1400]],
     [[1500, 900], [1500, 250], [1260, 250]],
+    [[420, 900], [420, 1000], [250, 1000], [250, 1400], [160, 1400]],
     [[250, 1290], [650, 1290], [650, 1220]],
+    [[1500, 900], [1500, 1700]],
+    [[250, 1400], [250, 1700], [3700, 1700]],
+    [[1070, 1700], [1070, 1880]],
+    [[2830, 1700], [2830, 1880]],
+    [[2380, 900], [2380, 1700]],
+    [[3260, 900], [3260, 1700]],
   ],
   onPath(x, y, pad) {
     for (const p of this.paths) {
@@ -472,13 +496,13 @@ G.map = {
     items.push({ y: M.office.y + M.office.h, f: () => this.drawOffice() });
     items.push({ y: M.town.y + M.town.h, f: () => this.drawTown() });
     items.push({ y: M.milk.y + M.milk.h, f: () => this.drawMilk() });
-    for (const pid of Object.keys(M.pastures)) if (G.S.pastures[pid].open) { const b = M.pastures[pid].barn; items.push({ y: b.y + b.h, f: () => this.drawBarn(b) }); }
+    for (const pid of Object.keys(M.pastures)) if (G.S.pastures[pid].open) { const b = M.pastures[pid].barn; const sp = M.pastures[pid].species; items.push({ y: b.y + b.h, f: () => this.drawBarn(b, sp) }); }
     M.signs.forEach((s) => items.push({ y: s.y, f: () => this.drawSign(s.x, s.y) }));
     for (const tr of this.deco.trees) if (vis(tr.x, tr.y, 60)) items.push({ y: tr.y, f: () => this.drawTree(tr, pal) });
     for (const a of G.alive()) {
       const s = this.stOf(a);
       if (!vis(s.x, s.y, 80)) continue;
-      items.push({ y: s.y, f: () => { G.draw.cow(ctx, a, s.x, s.y, s, t); this.drawAnimalExtras(a, s); } });
+      items.push({ y: s.y, f: () => { (a.species === 'horse' ? G.draw.horse : G.draw.cow)(ctx, a, s.x, s.y, s, t); this.drawAnimalExtras(a, s); } });
     }
     for (const k of ['girl', 'boy']) { const s = this.staff[k]; items.push({ y: s.y, f: () => { G.draw.person(ctx, s.x, s.y, k, s.facing, s.walk, t); this.drawSay(s); } }); }
     const P = G.S.player;
@@ -558,15 +582,15 @@ G.map = {
     const season = (G.S.turn - 1) % 4;
     G.S.fields.forEach((fd, i) => {
       const f = G.fieldRect(i);
-      const inSlot = (x) => x >= f.x && x < f.x + f.w;
+      const inSlot = (x, y) => x >= f.x && x < f.x + f.w && y >= f.y && y < f.y + f.h;
       if (!fd.open) {
         // 畑候補の荒れ地
         ctx.fillStyle = season === 3 ? '#e6e2dc' : '#d9c39a';
         G.roundRect(ctx, f.x + 6, f.y, f.w - 12, f.h, 26); ctx.fill();
         ctx.strokeStyle = 'rgba(140,110,70,0.5)'; ctx.lineWidth = 2;
-        for (const c of this.deco.cracks) if (inSlot(c[0][0])) { ctx.beginPath(); ctx.moveTo(c[0][0], c[0][1]); for (const q of c.slice(1)) ctx.lineTo(G.clamp(q[0], f.x + 10, f.x + f.w - 10), q[1]); ctx.stroke(); }
+        for (const c of this.deco.cracks) if (inSlot(c[0][0], c[0][1])) { ctx.beginPath(); ctx.moveTo(c[0][0], c[0][1]); for (const q of c.slice(1)) ctx.lineTo(G.clamp(q[0], f.x + 10, f.x + f.w - 10), q[1]); ctx.stroke(); }
         ctx.fillStyle = '#8fae5d';
-        for (const w of this.deco.weeds) if (inSlot(w.x)) { ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - 5, w.y - 10); ctx.lineTo(w.x, w.y - 4); ctx.lineTo(w.x + 5, w.y - 11); ctx.closePath(); ctx.fill(); }
+        for (const w of this.deco.weeds) if (inSlot(w.x, w.y)) { ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x - 5, w.y - 10); ctx.lineTo(w.x, w.y - 4); ctx.lineTo(w.x + 5, w.y - 11); ctx.closePath(); ctx.fill(); }
         ctx.fillStyle = '#a0764f';
         for (const [x, y] of [[f.x + 16, f.y + 14], [f.x + f.w - 16, f.y + 14], [f.x + 16, f.y + f.h - 8], [f.x + f.w - 16, f.y + f.h - 8]]) { G.roundRect(ctx, x - 4, y - 20, 8, 22, 2); ctx.fill(); }
       } else {
@@ -641,8 +665,9 @@ G.map = {
     ctx.fillStyle = '#7cc47a'; G.roundRect(ctx, o.x + 14, o.y + o.h - 12, 60, 12, 6); ctx.fill(); G.roundRect(ctx, o.x + o.w - 74, o.y + o.h - 12, 60, 12, 6); ctx.fill();
     ['#ff8fab', '#ffd166', '#ff8fab', '#b9a6ff'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(o.x + 24 + i * 14, o.y + o.h - 12, 4, 0, Math.PI * 2); ctx.arc(o.x + o.w - 64 + i * 14, o.y + o.h - 12, 4, 0, Math.PI * 2); ctx.fill(); });
   },
-  drawBarn(b) {
+  drawBarn(b, sp) {
     const ctx = this.ctx;
+    if (sp === 'horse') { this.drawStable(b); return; }
     ctx.fillStyle = 'rgba(60,80,40,0.15)'; ctx.beginPath(); ctx.ellipse(b.x + b.w / 2, b.y + b.h, b.w / 1.8, 14, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#e8766e'; G.roundRect(ctx, b.x + 8, b.y + 50, b.w - 16, b.h - 50, 10); ctx.fill();
     ctx.fillStyle = '#fff5ee';
@@ -653,6 +678,22 @@ G.map = {
     ctx.strokeStyle = '#e8766e'; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.moveTo(b.x + b.w / 2 - 26, b.y + b.h - 56); ctx.lineTo(b.x + b.w / 2 + 26, b.y + b.h - 4); ctx.moveTo(b.x + b.w / 2 + 26, b.y + b.h - 56); ctx.lineTo(b.x + b.w / 2 - 26, b.y + b.h - 4); ctx.stroke();
     ctx.fillStyle = '#fff5ee'; ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + 40, 9, 0, Math.PI * 2); ctx.fill();
+  },
+  drawStable(b) {
+    // 馬房
+    const ctx = this.ctx;
+    ctx.fillStyle = 'rgba(60,80,40,0.15)'; ctx.beginPath(); ctx.ellipse(b.x + b.w / 2, b.y + b.h, b.w / 1.8, 14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d9a66b'; G.roundRect(ctx, b.x + 6, b.y + 50, b.w - 12, b.h - 50, 10); ctx.fill();
+    ctx.fillStyle = '#7d9b5b';
+    ctx.beginPath(); ctx.moveTo(b.x - 8, b.y + 58); ctx.lineTo(b.x + 20, b.y + 14); ctx.lineTo(b.x + b.w - 20, b.y + 14); ctx.lineTo(b.x + b.w + 8, b.y + 58); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(b.x + 24, b.y + 22, b.w - 48, 6);
+    for (let i = 0; i < 3; i++) {
+      const dx = b.x + 18 + i * ((b.w - 36) / 3);
+      ctx.fillStyle = '#8a5a3c'; G.roundRect(ctx, dx + 4, b.y + 76, (b.w - 36) / 3 - 8, b.h - 76, 6); ctx.fill();
+      ctx.fillStyle = '#b77b4f'; ctx.fillRect(dx + 4, b.y + 76 + (b.h - 76) / 2, (b.w - 36) / 3 - 8, 4);
+    }
+    ctx.fillStyle = '#ffe08a'; ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + 36, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#b98b5e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + 39, 6, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
   },
   drawTown() {
     const ctx = this.ctx, t = G.MAP.town;
