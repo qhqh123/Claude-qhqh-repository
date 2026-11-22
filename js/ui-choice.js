@@ -144,3 +144,25 @@ Object.assign(G.ui, {
     };
   },
 });
+
+// ---------- 一覧の行・チップ ----------
+Object.assign(G.ui, {
+  // 小さな立ち絵つきの個体の行
+  animalRow(a, right, attrs) {
+    return `<div class="a-row ${a.status !== 'alive' ? 'gone' : ''}" data-id="${a.id}" ${attrs || ''}>
+      <canvas class="a-face" data-face="${a.id}" width="96" height="96"></canvas>
+      <div class="a-main"><div class="a-name">${G.esc(a.name)} <small>${a.sex === 'M' ? '♂' : '♀'}　${G.spName(a)}　${G.ageText(a.age)}</small></div>
+        <div class="bs">${this.badgesFrame(a, null, true)}${this.badgesTraits(a, null, true)}</div></div>
+      <div class="a-right">${right || ''}</div></div>`;
+  },
+  drawFaces(root) {
+    $$('canvas[data-face]', root).forEach((c) => {
+      const a = G.S.animals[c.dataset.face] || (this.faceCache && this.faceCache[c.dataset.face]);
+      if (a) G.draw.portrait(c, a);
+    });
+  },
+  // 名前チップ（押すとすぐ決まる）
+  pickChips(items, attr) {
+    return `<div class="pick-chips">${items.map((it) => `<button type="button" class="pick ${it.on ? 'on' : ''}" ${attr}="${G.esc(it.value)}" ${it.disabled ? 'disabled' : ''}>${it.face ? `<canvas class="pick-face" data-face="${it.face}" width="48" height="48"></canvas>` : ''}<span>${it.label}</span>${it.sub ? `<small>${it.sub}</small>` : ''}</button>`).join('')}</div>`;
+  },
+});

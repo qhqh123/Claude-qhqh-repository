@@ -256,7 +256,7 @@ G.ui = {
         ${alive ? `<div class="kv"><span>体重</span><b>${Math.round(a.weight)}kg</b></div>
         <div class="kv"><span>枝肉（予測）</span><b>${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}</b></div>
         <div class="kv"><span>売上（予測）</span><b>${G.yen(v.sales)}${v.pen > 0 ? `　<small>未去勢 −${Math.round(v.pen * 100)}%</small>` : ''}</b></div>
-        <div class="kv"><span>放牧地</span><b>${pastures.length > 1 ? `<select class="pasture">${pastures.map((p) => `<option value="${p}" ${p === a.pasture ? 'selected' : ''}>${G.MAP_LABEL[p]}</option>`).join('')}</select>` : G.MAP_LABEL[a.pasture]}</b></div>` : ''}
+        <div class="kv"><span>放牧地</span><b>${pastures.length > 1 ? '' : G.MAP_LABEL[a.pasture]}</b></div>${pastures.length > 1 ? this.pickChips(pastures.map((p) => ({ value: p, label: G.MAP_LABEL[p], on: p === a.pasture })), 'data-move') : ''}` : ''}
       </div></div>
       ${alive ? `<div class="actions">
         ${G.canBreed(a) ? '<button class="btn primary" data-act="breed">💞 交配</button>' : ''}
@@ -267,8 +267,12 @@ G.ui = {
     G.draw.portrait($('.portrait', body), a);
     const rn = $('.rename', body);
     if (rn) rn.onclick = () => this.rename(a, () => this.renderDetail(w, a, 'basic'));
-    const ps = $('.pasture', body);
-    if (ps) ps.onchange = () => { a.pasture = ps.value; G.addHistory(a, `移動　${G.MAP_LABEL[a.pasture]}`); };
+    $$('[data-move]', body).forEach((b) => b.onclick = () => {
+      const p = b.getAttribute('data-move');
+      if (p === a.pasture) return;
+      a.pasture = p; G.addHistory(a, `移動　${G.MAP_LABEL[p]}`); G.audio.sfx('click');
+      this.renderDetail(w, a, 'basic');
+    });
     $$('[data-act]', body).forEach((b) => b.onclick = () => {
       const act = b.dataset.act;
       if (act === 'breed') this.openBreed(a);
@@ -394,20 +398,24 @@ G.ui = {
 
   // ---------- 事務所 ----------
   openOffice(tab, pid) {
-    const w = this.open('<h2>🏠 事務所</h2><div class="tabs office-tabs"></div><div class="tab-body office-body"></div>', { size: 'large' });
+    const w = this.open('<h2>🏠 事務所</h2><div class="office-layout"><nav class="office-nav"></nav><div class="tab-body office-body"></div></div>', { size: 'large', cls: 'office' });
     this.renderOffice(w, tab || 'notice', pid);
   },
   renderOffice(w, tab, pid) {
     w.dataset.office = tab;
     w.dataset.pid = pid || '';
-    const tabs = [['notice', '通知'], ['list', '個体一覧'], ['breed', '繁殖'], ['race', 'レース'], ['ledger', '帳簿'], ['money', '収支'], ['facility', '施設'], ['staff', '厩務員'], ['archive', 'アーカイブ'], ['records', '牧場の記録']];
-    $('.office-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('');
-    $$('.office-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderOffice(w, b.dataset.tab); });
+    const pending = G.S.notices.filter((n) => !n.done).length;
+    const tabs = [['notice', '🔔', '通知', pending], ['list', '🐮', '個体一覧'], ['breed', '💞', '繁殖'], ['race', '🏇', 'レース'], ['ledger', '📒', '帳簿'], ['money', '💰', '収支'], ['facility', '🏡', '施設'], ['staff', '🧑‍🌾', '厩務員'], ['archive', '📚', 'アーカイブ'], ['records', '🏅', '牧場の記録']];
+    $('.office-nav', w).innerHTML = tabs.map(([k, ic, n, c]) => `<button class="nav-item ${k === tab ? 'on' : ''}" data-tab="${k}"><span class="ni">${ic}</span><span class="nt">${n}</span>${c ? `<i class="nb">${c}</i>` : ''}</button>`).join('');
+    $$('.office-nav .nav-item', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderOffice(w, b.dataset.tab); });
+    const on = $('.office-nav .nav-item.on', w);
+    if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     const body = $('.office-body', w);
     const S = G.S;
     if (tab === 'notice') {
       const list = S.notices.slice().reverse();
-      body.innerHTML = list.length ? `<ul class="notice-list">${list.map((n) => `<li class="${n.done ? 'done' : ''}"><span class="date">${G.dateText(n.turn)}</span><span class="txt">${n.title ? G.esc(n.title) + ' ' : ''}${G.esc(n.text)}</span>${this.noticeAction(n) ? `<button class="btn small" data-n="${n.id}">${this.noticeAction(n)}</button>` : ''}</li>`).join('')}</ul>` : '<div class="muted">—</div>';
+      body.innerHTML = list.length ? `<ul class="notice-list">${list.map((n) => `<li class="${n.done ? 'done' : 'new'}">${n.aid && G.S.animals[n.aid] ? `<canvas class="a-face sm" data-face="${n.aid}" width="72" height="72"></canvas>` : ''}<div class="txt"><span class="date">${G.dateText(n.turn)}</span>${n.title ? `<b>${G.esc(n.title)}</b> ` : ''}${G.esc(n.text)}</div>${this.noticeAction(n) ? `<button class="btn small ${n.done ? '' : 'primary'}" data-n="${n.id}">${this.noticeAction(n)}</button>` : ''}</li>`).join('')}</ul>` : '<div class="muted">—</div>';
+      this.drawFaces(body);
       $$('[data-n]', body).forEach((b) => b.onclick = () => this.doNotice(S.notices.find((n) => n.id === +b.dataset.n)));
     }
     if (tab === 'list') {
@@ -415,21 +423,19 @@ G.ui = {
       const filt = pid && S.pastures[pid] ? pid : '';
       const list = G.alive().filter((a) => !filt || a.pasture === filt).sort((x, y) => x.pasture.localeCompare(y.pasture) || y.age - x.age);
       body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt ? 'on' : ''}" data-p="${p}">${p ? G.MAP_LABEL[p] : 'すべて'}</button>`).join('')}<span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
-        <table class="tbl"><thead><tr><th>名前</th><th>年齢</th><th>体格</th><th>特性</th><th>状態</th></tr></thead><tbody>
-        ${list.map((a) => `<tr data-id="${a.id}"><td>${G.spIcon(a)} <b>${G.esc(a.name)}</b> ${a.sex === 'M' ? '♂' : '♀'}</td><td>${G.ageText(a.age)}</td><td>${this.badgesFrame(a, null, true)}</td><td>${this.badgesTraits(a, null, true)}</td><td><small>${this.breedStatus(a)}${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '　<span class="pill">出荷適期</span>' : ''}</small></td></tr>`).join('')}
-        </tbody></table>`;
+        <div class="a-list">${list.map((a) => this.animalRow(a, `<span class="st">${this.breedStatus(a)}</span>${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '<span class="pill">出荷適期</span>' : ''}`)).join('') || '<div class="muted">—</div>'}</div>`;
+      this.drawFaces(body);
+      $$('.a-row', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
       $$('[data-p]', body).forEach((b) => b.onclick = () => this.renderOffice(w, 'list', b.dataset.p));
-      $$('tr[data-id]', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
     }
     if (tab === 'breed') {
       const fem = G.alive().filter((a) => a.sex === 'F' && G.isMature(a));
-      body.innerHTML = `<table class="tbl"><thead><tr><th>名前</th><th>体格</th><th>特性</th><th>状態</th><th></th></tr></thead><tbody>
-        ${fem.map((a) => `<tr><td>${G.spIcon(a)} <a class="link" data-id="${a.id}">${G.esc(a.name)}</a></td><td>${this.badgesFrame(a, null, true)}</td><td>${this.badgesTraits(a, null, true)}</td><td><small>${this.breedStatus(a)}${a.openTurns > 1 && !a.pregnancy ? `　空胎 ${a.openTurns}ターン` : ''}</small></td><td>${G.canBreed(a) ? `<button class="btn small primary" data-b="${a.id}">交配</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">—</td></tr>'}
-        </tbody></table>
+      body.innerHTML = `<div class="a-list">${fem.map((a) => this.animalRow(a, `<span class="st">${this.breedStatus(a)}${a.openTurns > 1 && !a.pregnancy ? `<br>空胎 ${a.openTurns}ターン` : ''}</span>${G.canBreed(a) ? `<button class="btn small primary" data-b="${a.id}">💞 交配</button>` : ''}`)).join('') || '<div class="muted">—</div>'}</div>
         <h3>精液ストロー（在庫）</h3>
         <div class="straws">${S.straws.length ? S.straws.map((s) => `<div class="straw"><b>${G.esc(s.name)}</b> <small>${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}</small><div class="bs">${this.badgesFrame(null, s.genes, true)}${this.badgesTraits(null, s.genes, true)}</div></div>`).join('') : '<span class="muted">—</span>'}</div>`;
-      $$('[data-b]', body).forEach((b) => b.onclick = () => this.openBreed(S.animals[b.dataset.b]));
-      $$('.link', body).forEach((l) => l.onclick = () => this.openDetail(l.dataset.id));
+      this.drawFaces(body);
+      $$('[data-b]', body).forEach((b) => b.onclick = (e) => { e.stopPropagation(); this.openBreed(S.animals[b.dataset.b]); });
+      $$('.a-row', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
     }
     if (tab === 'race') this.renderRaceTab(w, body);
     if (tab === 'ledger') {
@@ -447,23 +453,19 @@ G.ui = {
       const thisTurn = S.ledger.filter((e) => e.turn === S.turn);
       const inc = thisTurn.filter((e) => e.amount > 0).reduce((s, e) => s + e.amount, 0);
       const exp = -thisTurn.filter((e) => e.amount < 0).reduce((s, e) => s + e.amount, 0);
-      body.innerHTML = `<div class="money-grid">
-        <div class="kv"><span>所持金</span><b>${G.yen(S.money)}</b></div>
-        <div class="kv"><span>借入金</span><b>${G.yen(S.loan)}</b></div>
-        <div class="kv"><span>年次返済（冬）</span><b>${G.yen(Math.min(G.C.yearlyRepay, S.loan))}</b></div>
-        <div class="kv"><span>今年の売上</span><b>${G.yen(S.yearSales)}</b></div>
-        <div class="kv"><span>今季の収入</span><b>${G.yen(inc)}</b></div>
-        <div class="kv"><span>今季の支出</span><b>${G.yen(exp)}</b></div>
-        <h3>今季の生産（見込み）</h3>
-        <div class="kv"><span>搾乳</span><b>${G.yen(milkInc)}</b></div>
-        <div class="kv"><span>畑</span><b>${G.yen(cropInc)}</b></div>
-        ${fb.surplusIncome ? `<div class="kv"><span>飼料 売却</span><b>${G.yen(fb.surplusIncome)}</b></div>` : ''}
-        <h3>今季の維持費（見込み）</h3>
-        <div class="kv"><span>飼料費</span><b>${G.yen(feed)}　<small>必要 ${fb.need}・自給 ${fb.self}単位</small></b></div>
-        <div class="kv"><span>施設維持費</span><b>${G.yen(up.total)}</b></div>
-        <div class="kv"><span>人件費</span><b>${G.yen(G.C.staffWage)}</b></div>
-        <div class="kv total"><span>合計</span><b>${G.yen(feed + up.total + G.C.staffWage)}</b></div>
-      </div>`;
+      body.innerHTML = `<div class="stat-strip big"><div><span>所持金</span><b>${G.yen(S.money)}</b></div><div><span>借入金</span><b>${G.yen(S.loan)}</b></div><div><span>年次返済（冬）</span><b>${G.yen(Math.min(G.C.yearlyRepay, S.loan))}</b></div><div><span>今年の売上</span><b>${G.yen(S.yearSales)}</b></div></div>
+        <div class="summary">
+          <div class="sum-col in"><div class="sum-title">今季の生産（見込み）</div>
+            <div class="sum-row in"><span class="si">🥛</span><span class="sn">搾乳</span><b>${G.yen(milkInc)}</b></div>
+            <div class="sum-row in"><span class="si">🌾</span><span class="sn">畑</span><b>${G.yen(cropInc)}</b></div>
+            ${fb.surplusIncome ? `<div class="sum-row in"><span class="si">🌱</span><span class="sn">飼料 売却</span><b>${G.yen(fb.surplusIncome)}</b></div>` : ''}
+            <div class="sum-row in total"><span class="si">✨</span><span class="sn">今季の収入（現在）</span><b>${G.yen(inc)}</b></div></div>
+          <div class="sum-col out"><div class="sum-title">今季の維持費（見込み）<b>${G.yen(feed + up.total + G.C.staffWage)}</b></div>
+            <div class="sum-row out"><span class="si">🌾</span><span class="sn">飼料費<small>必要 ${fb.need}・自給 ${fb.self}単位</small></span><b>${G.yen(feed)}</b></div>
+            <div class="sum-row out"><span class="si">🏡</span><span class="sn">施設維持費</span><b>${G.yen(up.total)}</b></div>
+            <div class="sum-row out"><span class="si">🧑‍🌾</span><span class="sn">人件費</span><b>${G.yen(G.C.staffWage)}</b></div>
+            <div class="sum-row out total"><span class="si">📒</span><span class="sn">今季の支出（現在）</span><b>${G.yen(exp)}</b></div></div>
+        </div>`;
     }
     if (tab === 'facility') {
       body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.herdCount('cattle')}/${S.cattleSlots}</b></div>
@@ -480,18 +482,17 @@ G.ui = {
     }
     if (tab === 'staff') {
       const ps = Object.keys(S.pastures).filter((p) => S.pastures[p].open);
-      body.innerHTML = ['girl', 'boy'].map((k) => `<div class="staff-row"><span class="staff-dot ${k}"></span>
-        <input class="text-input" data-name="${k}" maxlength="10" value="${G.esc(S.staff[k].name)}">
-        <select data-pasture="${k}">${ps.map((p) => `<option value="${p}" ${S.staff[k].pasture === p ? 'selected' : ''}>${G.MAP_LABEL[p]}</option>`).join('')}</select></div>`).join('');
+      body.innerHTML = ['girl', 'boy'].map((k) => `<div class="staff-card ${k}"><div class="staff-avatar">${k === 'girl' ? '👩‍🌾' : '👨‍🌾'}</div>
+        <div class="staff-main"><input class="text-input" data-name="${k}" maxlength="10" value="${G.esc(S.staff[k].name)}">
+        <div class="sec-label">担当放牧地</div>${this.pickChips(ps.map((p) => ({ value: `${k}|${p}`, label: G.MAP_LABEL[p], on: S.staff[k].pasture === p })), 'data-sp')}</div></div>`).join('');
       $$('[data-name]', body).forEach((i) => i.onchange = () => { const v = i.value.trim(); if (v) S.staff[i.dataset.name].name = v; });
-      $$('[data-pasture]', body).forEach((s) => s.onchange = () => { S.staff[s.dataset.pasture].pasture = s.value; });
+      $$('[data-sp]', body).forEach((b) => b.onclick = () => { const [k, p] = b.getAttribute('data-sp').split('|'); S.staff[k].pasture = p; G.audio.sfx('click'); this.renderOffice(w, 'staff'); });
     }
     if (tab === 'archive') {
       const list = Object.values(S.animals).filter((a) => a.status !== 'alive').sort((x, y) => (y.endTurn || 0) - (x.endTurn || 0));
-      body.innerHTML = `<table class="tbl"><thead><tr><th>名前</th><th>個体識別番号</th><th>生年</th><th>去勢</th><th>出荷・死亡・売却</th><th>売上</th></tr></thead><tbody>
-        ${list.map((a) => `<tr data-id="${a.id}"><td><b>${G.esc(a.name)}</b> ${a.sex === 'M' ? '♂' : '♀'}</td><td>${a.idNo}</td><td>${G.dateText(Math.max(1, a.bornTurn))}${a.bornTurn < 1 ? '以前' : ''}</td><td>${a.castration ? `${G.PERIOD_NAMES[a.castration.period]}・${G.METHOD_SHORT[a.castration.method]}` : '—'}</td><td>${this.breedStatus(a)}　${G.dateText(a.endTurn)}</td><td>${a.shipped ? G.yen(a.shipped.sales) : a.soldPrice ? G.yen(a.soldPrice) : '—'}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">—</td></tr>'}
-        </tbody></table>`;
-      $$('tr[data-id]', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
+      body.innerHTML = `<div class="a-list">${list.map((a) => this.animalRow(a, `<span class="st">${this.breedStatus(a)}　${G.dateText(a.endTurn)}</span><small>${a.idNo}　${a.castration ? `${G.PERIOD_NAMES[a.castration.period]}・${G.METHOD_SHORT[a.castration.method]}` : '—'}</small><b>${a.shipped ? G.yen(a.shipped.sales) : a.soldPrice ? G.yen(a.soldPrice) : ''}</b>`)).join('') || '<div class="muted">—</div>'}</div>`;
+      this.drawFaces(body);
+      $$('.a-row', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
     }
     if (tab === 'records') {
       body.innerHTML = `<ul class="records">${G.RECORDS.map(([k, n]) => `<li class="${S.records[k] ? 'got' : ''}"><span class="medal">${S.records[k] ? '🏅' : '・'}</span>${S.records[k] ? n : '？？？'}<small>${S.records[k] ? G.dateText(S.records[k].turn) : ''}</small></li>`).join('')}</ul>`;
@@ -533,10 +534,11 @@ G.ui = {
     const body = $('.town-body', w);
     if (tab === 'market') {
       body.innerHTML = `<div class="kv"><span>飼育枠</span><b>🐮 ${G.herdCount('cattle')}/${S.cattleSlots}　🐴 ${G.herdCount('horse')}/${S.horseSlots}</b></div>
-        <div class="cards">${S.market.map((m, i) => `<div class="card"><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${G.ageText(m.age)}　${m.personality}</small></div>
+        <div class="cards">${S.market.map((m, i) => `<div class="card market"><canvas class="a-face" data-mk="${i}" width="96" height="96"></canvas><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${G.ageText(m.age)}　${m.personality}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || !G.hasRoom(m.species || 'cattle') || !G.pastureWithRoom(m.species || 'cattle') ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
+      $$('canvas[data-mk]', body).forEach((c) => { const m = S.market[+c.dataset.mk]; G.draw.portrait(c, { id: m.key, idNo: '', species: m.species || 'cattle', sex: m.sex, age: m.age, castrated: false, personality: m.personality }); });
       $$('[data-buy]', body).forEach((b) => b.onclick = () => {
         const a = G.buy(S.market[+b.dataset.buy]);
         if (a) { G.audio.sfx('coin'); this.renderTown(w, 'market'); this.refreshHud(); }
@@ -712,22 +714,42 @@ G.ui = {
     this.refreshHud();
     this.showSummary(sum);
   },
+  summaryCat(line, inc) {
+    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース']]
+      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設']];
+    let best = null;
+    for (const c of cats) if (line.startsWith(c[0]) && (!best || c[0].length > best[0].length)) best = c;
+    return best ? { icon: best[1], name: best[2] } : { icon: '📒', name: 'その他' };
+  },
+  summaryGroups(entries, inc) {
+    const g = {};
+    for (const e of entries) {
+      const c = this.summaryCat(e.lines[0], inc);
+      const k = c.name;
+      (g[k] = g[k] || { icon: c.icon, name: k, sum: 0, n: 0 });
+      g[k].sum += Math.abs(e.amount); g[k].n++;
+    }
+    return Object.values(g).sort((a, b) => b.sum - a.sum);
+  },
   showSummary(sum) {
     const inc = sum.entries.filter((e) => e.amount > 0), exp = sum.entries.filter((e) => e.amount < 0);
     const st = sum.settlement;
-    const w = this.open(`<h2>📒 ${G.dateText(sum.turn)}の収支</h2>
+    const net = sum.income - sum.expense;
+    const rows = (list, cls) => list.map((r) => `<div class="sum-row ${cls}"><span class="si">${r.icon}</span><span class="sn">${r.name}${r.n > 1 ? `<small>×${r.n}</small>` : ''}</span><b>${G.yen(r.sum)}</b></div>`).join('') || '<div class="muted">—</div>';
+    const w = this.open(`<div class="sum-head"><div class="sum-date">${G.dateText(sum.turn)}</div><h2>📒 季節の収支</h2>
+        <div class="sum-net ${net >= 0 ? 'plus' : 'minus'}"><span>収支</span><b>${net >= 0 ? '+' : '−'}${G.yen(Math.abs(net)).replace('¥', '¥')}</b></div></div>
       <div class="summary">
-      <div class="sum-col"><h3>収入</h3>${inc.map((e) => `<div class="sum-line"><span>${G.esc(e.lines[0])}</span></div>`).join('') || '<div class="muted">—</div>'}<div class="kv total"><span>合計</span><b class="in">${G.yen(sum.income)}</b></div></div>
-      <div class="sum-col"><h3>支出</h3>${exp.map((e) => `<div class="sum-line"><span>${G.esc(e.lines[0])}</span></div>`).join('') || '<div class="muted">—</div>'}<div class="kv total"><span>合計</span><b class="out">${G.yen(sum.expense)}</b></div></div>
+        <div class="sum-col in"><div class="sum-title">収入<b>${G.yen(sum.income)}</b></div>${rows(this.summaryGroups(inc, true), 'in')}</div>
+        <div class="sum-col out"><div class="sum-title">支出<b>${G.yen(sum.expense)}</b></div>${rows(this.summaryGroups(exp, false), 'out')}</div>
       </div>
-      ${st ? `<div class="settle"><h3>年次決算</h3>
-        <div class="kv"><span>年間売上</span><b>${G.yen(st.sales)}</b></div>
-        <div class="kv"><span>返済</span><b>${G.yen(st.paid)}</b></div>
-        ${st.unpaid ? `<div class="kv"><span>返済不足</span><b>${G.yen(st.unpaid)}</b></div><div class="kv"><span>利息</span><b>${G.yen(st.interest)}</b></div>` : ''}
-        <div class="kv"><span>借入金残高</span><b>${G.yen(st.loan)}</b></div></div>` : ''}
-      ${sum.borrowed ? `<div class="kv"><span>借入金 振替</span><b>${G.yen(sum.borrowed)}</b></div>` : ''}
-      <div class="kv total"><span>所持金</span><b>${G.yen(sum.money)}</b></div>
-      <div class="actions"><button class="btn primary ok">OK</button></div>`, { size: 'medium', sticky: true, onClose: () => this.seasonChange() });
+      <details class="sum-detail"><summary>明細</summary>${sum.entries.map((e) => `<div class="ledger-line ${e.amount > 0 ? 'in' : 'out'}">${e.lines.map((l) => `<div>${G.esc(l)}</div>`).join('')}</div>`).join('')}</details>
+      ${st ? `<div class="settle"><div class="sum-title">🧾 年次決算</div>
+        <div class="mini-stats"><div><span>年間売上</span><b>${G.yen(st.sales)}</b></div><div><span>返済</span><b>${G.yen(st.paid)}</b></div>
+        ${st.unpaid ? `<div><span>返済不足</span><b>${G.yen(st.unpaid)}</b></div><div><span>利息</span><b>${G.yen(st.interest)}</b></div>` : ''}
+        <div class="big"><span>借入金残高</span><b>${G.yen(st.loan)}</b></div></div></div>` : ''}
+      <div class="sum-foot">${sum.borrowed ? `<div class="kv"><span>借入金 振替</span><b>${G.yen(sum.borrowed)}</b></div>` : ''}
+        <div class="sum-money"><span>所持金</span><b>${G.yen(sum.money)}</b></div>
+        <button class="btn primary ok">OK</button></div>`, { size: 'medium', sticky: true, cls: 'sum', onClose: () => this.seasonChange() });
     $('.ok', w).onclick = () => this.close(w);
   },
   seasonChange() {

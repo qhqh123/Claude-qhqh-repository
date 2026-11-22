@@ -35,7 +35,7 @@ G.milk = {
     return { liters, base, depth, lact, season: sm, age, cond, geneM, geneQ, dilution, q, price: C.milkPrice[q], income: liters * C.milkPrice[q], dry, lactTurn: this.lactTurn(a) };
   },
   slotOf(a) { return G.S.milkSlots.findIndex((s) => s.aid === a.id); },
-  canPlace(a) { return a && a.status === 'alive' && a.sex === 'F' && G.isMature(a) && this.slotOf(a) < 0; },
+  canPlace(a) { return a && a.status === 'alive' && a.species !== 'horse' && a.sex === 'F' && G.isMature(a) && this.slotOf(a) < 0; },
   place(i, a) {
     const s = G.S.milkSlots[i];
     if (!s || s.aid || !this.canPlace(a)) return false;
