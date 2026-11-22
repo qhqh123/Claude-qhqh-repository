@@ -510,6 +510,105 @@ window.TEXT_DATA = {
    "cond": {
     "species": "horse"
    }
+  },
+  "cas.traditional.pre_01": {
+   "text": "［cas.traditional.pre_01｜処置前の観察］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "おっとり",
+     "甘えん坊",
+     "マイペース"
+    ]
+   }
+  },
+  "cas.traditional.pre_02": {
+   "text": "［cas.traditional.pre_02｜処置前の観察］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "活発",
+     "好奇心旺盛",
+     "頑固"
+    ]
+   }
+  },
+  "cas.traditional.tool": {
+   "text": "［cas.traditional.tool｜器具の準備］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
+  },
+  "cas.traditional.locate": {
+   "text": "［cas.traditional.locate｜対象の確認］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
+  },
+  "cas.traditional.act": {
+   "text": "［cas.traditional.act｜処置の実施］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
+  },
+  "cas.traditional.mismatch_01": {
+   "text": "［cas.traditional.mismatch_01｜適さない時期の処置］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
+  },
+  "cas.traditional.react_01": {
+   "text": "［cas.traditional.react_01｜反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ]
+   }
+  },
+  "cas.traditional.react_02": {
+   "text": "［cas.traditional.react_02｜反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "活発",
+     "頑固"
+    ]
+   }
+  },
+  "cas.traditional.react_03": {
+   "text": "［cas.traditional.react_03｜反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ]
+   }
+  },
+  "cas.traditional.after": {
+   "text": "［cas.traditional.after｜直後］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
+  },
+  "cas.traditional.course_01": {
+   "text": "［cas.traditional.course_01｜経過日誌］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
   }
  },
  "daily-events.json": {
@@ -592,6 +691,14 @@ window.TEXT_DATA = {
   },
   "vet.advice.surgical": {
    "text": "［vet.advice.surgical｜術式ごとのアドバイス］",
+   "speaker": "narration"
+  },
+  "vet.advice.traditional": {
+   "text": "［vet.advice.traditional｜アドバイス］",
+   "speaker": "narration"
+  },
+  "vet.advice.horse": {
+   "text": "［vet.advice.horse｜アドバイス］",
    "speaker": "narration"
   }
  }

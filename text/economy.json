@@ -41,5 +41,13 @@
  "vet.advice.surgical": {
   "text": "［vet.advice.surgical｜術式ごとのアドバイス］",
   "speaker": "narration"
+ },
+ "vet.advice.traditional": {
+  "text": "［vet.advice.traditional｜アドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.horse": {
+  "text": "［vet.advice.horse｜アドバイス］",
+  "speaker": "narration"
  }
 }

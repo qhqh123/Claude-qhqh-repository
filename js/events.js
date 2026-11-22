@@ -1,15 +1,15 @@
 // 去勢・交配・出荷・売買
-const WORK_MIN = { ring: 10, burdizzo: 15, surgical: 40 };
+const WORK_MIN = { ring: 10, burdizzo: 15, surgical: 40, traditional: 30 };
 const GAIN_PRED = { early: 0.2, standard: 0.4, late: 0.6, mature: 0.8 };
 const CAST_BONUS = { early: 0.6, standard: 0.5, late: 0.2, mature: -0.5 };
 const OUTSOURCE_METHOD = { early: 'ring', standard: 'burdizzo', late: 'surgical', mature: 'surgical' };
 
-G.castMethods = (a) => (G.isHorse(a) ? ['surgical'] : ['ring', 'burdizzo', 'surgical']);
+G.castMethods = (a) => (G.isHorse(a) ? ['ring', 'burdizzo', 'surgical', 'traditional'] : ['ring', 'burdizzo', 'surgical']);
 G.castCost = (a, method, mode) => {
   const period = G.castPeriod(a);
-  if (G.isHorse(a)) method = 'surgical';
   if (mode === 'outsource') {
-    const m = G.isHorse(a) ? 'surgical' : OUTSOURCE_METHOD[period];
+    if (G.isHorse(a)) return { method: 'surgical', cost: G.C.horseCastOutsource, tool: 0 };
+    const m = OUTSOURCE_METHOD[period];
     return { method: m, cost: G.C.castOutsource[m], tool: 0 };
   }
   const tool = method === 'burdizzo' && !G.S.tools.burdizzo ? G.C.burdizzoToolCost : 0;
@@ -21,10 +21,13 @@ G.castrate = (a, methodSel, mode) => {
   const S = G.S;
   const period = G.castPeriod(a);
   const { method, cost, tool } = G.castCost(a, methodSel, mode);
-  const [pInc, pInf, extra] = G.C.castRisk[method][period];
+  const horse = G.isHorse(a);
+  const [pInc, pInf, extra] = horse
+    ? (mode === 'outsource' ? [G.horseOutsourceFail(), 0, 0] : G.C.horseCastRisk[method][period])
+    : G.C.castRisk[method][period];
   const incomplete = G.chance(pInc);
   const infection = G.chance(pInf);
-  const suitable = G.C.castSuitable[period].includes(method);
+  const suitable = (horse ? G.C.horseCastSuitable : G.C.castSuitable)[period].includes(method);
 
   if (tool) {
     S.tools.burdizzo = true;

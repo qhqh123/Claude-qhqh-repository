@@ -620,7 +620,7 @@ G.ui = {
         <div class="card-f"><span class="muted">種付け料</span><b>${G.yen(s.fee)}</b></div></div>`).join('')}</div>`;
     }
     if (tab === 'vet') {
-      const items = [['early', '早期'], ['standard', '標準'], ['late', '晩期'], ['mature', '高齢'], ['ring', 'ゴムリング法'], ['burdizzo', '去勢鉗子法'], ['surgical', '観血法']];
+      const items = [['early', '早期'], ['standard', '標準'], ['late', '晩期'], ['mature', '高齢'], ['ring', 'ゴムリング法'], ['burdizzo', '去勢鉗子法'], ['surgical', '観血法'], ['traditional', '旧来手法'], ['horse', '馬']];
       body.innerHTML = `<div class="vet"><div class="vet-icon">🩺</div><div class="vet-list">${items.map(([k, n]) => `<button class="btn" data-v="${k}">${n}</button>`).join('')}</div></div>`;
       $$('[data-v]', body).forEach((b) => b.onclick = () => {
         const id = 'vet.advice.' + b.dataset.v;

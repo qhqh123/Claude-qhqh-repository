@@ -27,9 +27,10 @@ G.C = {
   strawPrice: { 3: 8000, 4: 30000 },
   strawDemeritRate: { 3: 0.30, 4: 0.70 },
 
-  castDirect: { ring: 300, burdizzo: 1000, surgical: 18000 },
+  castDirect: { ring: 300, burdizzo: 1000, surgical: 18000, traditional: 5000 },
   burdizzoToolCost: 20000,
   castOutsource: { ring: 5000, burdizzo: 8000, surgical: 25000 },
+  horseCastOutsource: 25000,
   castStress: { early: 20, standard: 35, late: 50, mature: 65 },
   castWeightLoss: { early: 0, standard: 0.02, late: 0.05, mature: 0.07 },
   // 時期に適した術式
@@ -44,6 +45,19 @@ G.C = {
     ring:     { early: [0, 0, 0],      standard: [0.10, 0, 15], late: [0.30, 0.15, 30], mature: [0.30, 0.15, 30] },
     burdizzo: { early: [0.05, 0, 0],   standard: [0.05, 0, 0],  late: [0.25, 0, 20],    mature: [0.25, 0, 20] },
     surgical: { early: [0, 0.03, 0],   standard: [0, 0.03, 0],  late: [0, 0.03, 0],     mature: [0, 0.03, 0] },
+  },
+  // 馬（四手法×時期。仮）
+  horseCastSuitable: {
+    early: ['surgical', 'traditional'],
+    standard: ['surgical', 'traditional'],
+    late: ['surgical', 'traditional'],
+    mature: ['surgical'],
+  },
+  horseCastRisk: {
+    ring:        { early: [0.30, 0.20, 30], standard: [0.35, 0.20, 30], late: [0.40, 0.25, 35], mature: [0.40, 0.25, 35] },
+    burdizzo:    { early: [0.20, 0.05, 20], standard: [0.25, 0.05, 20], late: [0.30, 0.05, 25], mature: [0.30, 0.05, 25] },
+    surgical:    { early: [0, 0.03, 0],     standard: [0, 0.03, 0],     late: [0, 0.03, 0],     mature: [0, 0.03, 0] },
+    traditional: { early: [0.02, 0.05, 0],  standard: [0.02, 0.05, 0],  late: [0.03, 0.05, 5],  mature: [0.15, 0.10, 20] },
   },
   infectionStress: 30,
   infectionTurns: 2,
@@ -133,8 +147,10 @@ G.RANKS = ['平凡', 'C', 'B', 'A', 'A+', 'S'];
 G.PERSONALITIES = ['おっとり', '甘えん坊', '活発', '好奇心旺盛', 'マイペース', '頑固'];
 G.ACTIVITIES = ['brush', 'pet', 'exercise'];
 G.ACTIVITY_NAMES = { brush: 'ブラッシング', pet: 'ふれあい', exercise: '運動' };
-G.METHOD_NAMES = { ring: 'ゴムリング法', burdizzo: '去勢鉗子法', surgical: '観血法' };
-G.METHOD_SHORT = { ring: 'ゴムリング', burdizzo: '去勢鉗子', surgical: '観血法' };
+G.METHOD_NAMES = { ring: 'ゴムリング法', burdizzo: '去勢鉗子法', surgical: '観血法', traditional: '旧来手法' };
+G.METHOD_SHORT = { ring: 'ゴムリング', burdizzo: '去勢鉗子', surgical: '観血法', traditional: '旧来手法' };
+// 馬の外部委託の不完全率は、牛の去勢鉗子法（標準）の不完全率に合わせる
+G.horseOutsourceFail = () => G.C.castRisk.burdizzo.standard[0];
 G.PERIOD_NAMES = { early: '早期', standard: '標準', late: '晩期', mature: '高齢' };
 
 // バッジ定義（吹き出しの文字列は「表示：」扱い）
