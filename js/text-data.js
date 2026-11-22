@@ -70,6 +70,30 @@ window.TEXT_DATA = {
   "anim.mature_01": {
    "text": "［anim.mature_01｜成熟した様子］",
    "speaker": "animal"
+  },
+  "rel.mother_01": {
+   "text": "{name}は{partner}から生まれた",
+   "speaker": "narration"
+  },
+  "rel.child_01": {
+   "text": "{partner}は{name}から生まれた",
+   "speaker": "narration"
+  },
+  "rel.like_01": {
+   "text": "{partner}と一緒に過ごすことが多いようだ",
+   "speaker": "narration"
+  },
+  "rel.like_02": {
+   "text": "{partner}と一緒に遊ぶことが多いようだ",
+   "speaker": "narration"
+  },
+  "rel.dislike_01": {
+   "text": "{partner}と喧嘩しがちなようだ",
+   "speaker": "narration"
+  },
+  "rel.match_01": {
+   "text": "{partner}と性格が合うようだ",
+   "speaker": "narration"
   }
  },
  "breeding.json": {
@@ -647,6 +671,28 @@ window.TEXT_DATA = {
   "daily.animal_03": {
    "text": "［daily.animal_03｜家畜の仕草］",
    "speaker": "narration"
+  },
+  "staff.match_girl_01": {
+   "text": "［staff.match_girl_01｜相性の良い個体への台詞］",
+   "speaker": "staff_girl",
+   "cond": {
+    "personality": [
+     "おっとり",
+     "甘えん坊",
+     "活発"
+    ]
+   }
+  },
+  "staff.match_boy_01": {
+   "text": "［staff.match_boy_01｜相性の良い個体への台詞］",
+   "speaker": "staff_boy",
+   "cond": {
+    "personality": [
+     "好奇心旺盛",
+     "マイペース",
+     "頑固"
+    ]
+   }
   }
  },
  "economy.json": {

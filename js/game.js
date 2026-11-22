@@ -263,12 +263,14 @@ G.endTurn = () => {
     // ストレス回復
     const likedHere = G.alive().some((b) => b.pasture === a.pasture && G.likesAnimal(a, b));
     const dislikedHere = G.alive().some((b) => b.pasture === a.pasture && a.dislikes.some((d) => d.id === b.id));
-    let rec = 20 - G.traitRank(a, 'frail') * 3 + (likedHere ? 5 : 0);
+    const staffMatch = G.staffMatches(a);
+    let rec = 20 - G.traitRank(a, 'frail') * 3 + (likedHere ? 5 : 0) + (staffMatch ? 5 : 0);
     if (a.flags.earlyCast) { rec = 100; a.flags.earlyCast = false; }
     a.stress = G.clamp(a.stress - rec + (dislikedHere ? 3 : 0), 0, 100);
     if (G.traitRank(a, 'temper') && !a.castrated && a.sex === 'M' && G.chance(0.1 * G.traitRank(a, 'temper'))) a.stress = Math.min(100, a.stress + 10);
     // 幸福度
-    const target = 50 + (likedHere ? 8 : 0) - (dislikedHere ? 6 : 0) + (a.affinity.player + a.affinity.girl + a.affinity.boy) / 30;
+    const target = 50 + (likedHere ? 8 : 0) - (dislikedHere ? 6 : 0) + (staffMatch ? 3 : 0) + (a.affinity.player + a.affinity.girl + a.affinity.boy) / 30;
+    if (staffMatch) { const sk = G.STAFF_FOR_PERSONALITY[a.personality]; a.affinity[sk] = Math.min(100, a.affinity[sk] + 2); }
     a.happiness = G.clamp(a.happiness + (target - a.happiness) * 0.3, 0, 100);
     // 成長
     G.growWeight(a);

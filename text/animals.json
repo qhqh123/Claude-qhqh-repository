@@ -68,5 +68,29 @@
  "anim.mature_01": {
   "text": "［anim.mature_01｜成熟した様子］",
   "speaker": "animal"
+ },
+ "rel.mother_01": {
+  "text": "{name}は{partner}から生まれた",
+  "speaker": "narration"
+ },
+ "rel.child_01": {
+  "text": "{partner}は{name}から生まれた",
+  "speaker": "narration"
+ },
+ "rel.like_01": {
+  "text": "{partner}と一緒に過ごすことが多いようだ",
+  "speaker": "narration"
+ },
+ "rel.like_02": {
+  "text": "{partner}と一緒に遊ぶことが多いようだ",
+  "speaker": "narration"
+ },
+ "rel.dislike_01": {
+  "text": "{partner}と喧嘩しがちなようだ",
+  "speaker": "narration"
+ },
+ "rel.match_01": {
+  "text": "{partner}と性格が合うようだ",
+  "speaker": "narration"
  }
 }

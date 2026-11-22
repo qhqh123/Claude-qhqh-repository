@@ -209,7 +209,7 @@ G.ui = {
     w.dataset.tab = tab;
     const box = $('.detail', w);
     const back = this.detailStack.length ? '<button class="btn back">← 戻る</button>' : '';
-    const tabs = [['basic', '基本'], ['family', '家系図'], ['history', '履歴']];
+    const tabs = [['basic', '基本'], ['rel', '関係'], ['family', '家系図'], ['history', '履歴']];
     box.innerHTML = `<div class="detail-head">${back}<h2>${G.esc(a.name)} <small>${a.sex === 'M' ? '♂' : '♀'}　${G.spName(a)}　${G.ageText(a.age)}</small></h2></div>
       <div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('')}</div>
       <div class="tab-body"></div>`;
@@ -223,6 +223,7 @@ G.ui = {
     };
     const body = $('.tab-body', box);
     if (tab === 'basic') this.detailBasic(body, a, w);
+    if (tab === 'rel') this.detailRelations(body, a, w);
     if (tab === 'family') this.detailFamily(body, a, w);
     if (tab === 'history') this.detailHistory(body, a, w);
   },
@@ -320,6 +321,30 @@ G.ui = {
       G.audio.sfx('page');
       this.openDetail(l.dataset.id, { tab: 'basic' });
     });
+  },
+  detailRelations(body, a) {
+    const r = G.rel.compute(a);
+    const dev = G.S.devMode;
+    const line = (l) => {
+      const e = G.text.get(l.id);
+      const txt = e ? G.text.fill(e.text, G.textVars(a, { partner: l.b.name })) : `［${l.id}］`;
+      G.S.readTexts[l.id] = true;
+      return `<li><span class="rel-txt">${G.esc(txt)}</span><span class="rel-v">${G.esc(l.b.name)}への好感 ${l.v > 0 ? '+' : '−'}${Math.abs(l.v)}</span>${dev ? `<code>${l.id}</code>` : ''}</li>`;
+    };
+    const hearts = (m) => {
+      if (m.total < 0) return `<span class="x">✕</span> −${Math.abs(m.total)}`;
+      return `<span class="h1">${'♡'.repeat(Math.max(0, Math.min(10, m.like)))}</span><span class="h2">${'♥'.repeat(m.interest)}</span> +${m.total}`;
+    };
+    body.innerHTML = a.status !== 'alive' ? '<div class="muted">—</div>' : `<div class="rel-box">
+      <div class="rel-label">💞 関係値（推定）</div>
+      <h4>${G.esc(a.name)}の関係の内訳</h4>
+      <ul class="rel-lines">${r.lines.map(line).join('') || '<li class="muted">—</li>'}</ul>
+      ${r.interest ? `<h4>繁殖関心</h4><div class="rel-int"><span class="h2">${'♥'.repeat(r.interest)}</span> +${r.interest}</div>` : ''}
+      <h4>${G.esc(a.name)}の関係（合計）</h4>
+      <ul class="rel-totals">${r.totals.map((m) => `<li><a class="link" data-id="${m.b.id}">${G.esc(m.b.name)}</a><small>（${G.rel.category(m.b)}）</small><b>${hearts(m)}</b></li>`).join('')}
+      ${r.others ? `<li><span>その他の成熟雌</span><b><span class="h2">${'♥'.repeat(r.others)}</span> +${r.others}</b></li>` : ''}
+      ${!r.totals.length && !r.others ? '<li class="muted">—</li>' : ''}</ul></div>`;
+    $$('.link', body).forEach((l) => l.onclick = () => { G.audio.sfx('page'); this.openDetail(l.dataset.id, { tab: 'rel' }); });
   },
   detailHistory(body, a) {
     const hist = a.history.slice().reverse();

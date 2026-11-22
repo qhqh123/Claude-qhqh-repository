@@ -328,3 +328,19 @@ body.dev .dev-only { display: block; }
 .card.race .entry { background: #f1f8ff; border-radius: 12px; padding: 5px 10px; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
 .card.race.G1 { border: 2px solid #ffd76b; background: linear-gradient(#fff, #fffbe8); }
 .card.race select, .card.slot select { width: 100%; margin: 6px 0; }
+
+/* ---------- 関係値 ---------- */
+.rel-box { background: linear-gradient(160deg, #fff0f6, #fff8fb 40%, #f6f0ff); border-radius: 24px; padding: 16px 18px; border: 3px solid #ffd6e6; }
+.rel-label { display: inline-block; background: linear-gradient(90deg, #ff8fb1, #c9a7ff); color: #fff; font-weight: 800; border-radius: 999px; padding: 4px 16px; box-shadow: 0 3px 0 #e8678f; }
+.rel-box h4 { color: var(--pink-d); font-size: 14px; margin: 14px 0 6px; }
+.rel-lines, .rel-totals { list-style: none; margin: 0; padding: 0; }
+.rel-lines li { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; background: rgba(255,255,255,.85); border-radius: 14px; padding: 7px 12px; margin-bottom: 5px; font-size: 14px; }
+.rel-lines .rel-txt { flex: 1; min-width: 180px; }
+.rel-lines .rel-v { font-weight: 800; color: var(--pink-d); white-space: nowrap; }
+.rel-lines code, .rel-totals code { font-size: 10px; color: #7a6cff; }
+.rel-int { font-weight: 800; font-size: 16px; }
+.rel-totals li { display: flex; gap: 6px; align-items: center; background: #fff; border-radius: 999px; padding: 7px 14px; margin-bottom: 6px; box-shadow: 0 2px 0 #f6d3e1; }
+.rel-totals li b { margin-left: auto; font-size: 15px; }
+.h1 { color: #ff7aa5; letter-spacing: 1px; }
+.h2 { color: #e0375f; letter-spacing: 1px; }
+.x { color: #8a8a8a; }

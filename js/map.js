@@ -371,10 +371,17 @@ G.map = {
   },
   staffTalk(who) {
     const s = this.staff[who];
-    const id = G.text.pick(`daily.staff_${who}_`, {});
+    let id = null, vars = { staff: G.S.staff[who].name };
+    const matched = G.alive().filter((a) => G.STAFF_FOR_PERSONALITY[a.personality] === who && a.pasture === G.S.staff[who].pasture);
+    if (matched.length && Math.random() < 0.4) {
+      const a = G.pick(matched);
+      id = G.text.pick(`staff.match_${who}_`, { personality: a.personality, species: a.species });
+      if (id) vars = G.textVars(a, { staff: G.S.staff[who].name });
+    }
+    if (!id) id = G.text.pick(`daily.staff_${who}_`, {});
     if (!id) return;
     const e = G.text.get(id);
-    s.say = G.text.fill(e.text, { staff: G.S.staff[who].name });
+    s.say = G.text.fill(e.text, vars);
     s.sayId = id;
     s.sayT = 4;
     G.S.readTexts[id] = true;
@@ -731,6 +738,11 @@ G.map = {
       const w = ctx.measureText(a.name).width + 14;
       ctx.fillStyle = 'rgba(255,255,255,0.9)'; G.roundRect(ctx, s.x - w / 2, s.y - 62 * sz - 16, w, 18, 9); ctx.fill();
       ctx.fillStyle = '#6b4a5a'; ctx.fillText(a.name, s.x, s.y - 62 * sz - 7);
+    }
+    if (s.say) {
+      s.sayT -= 1 / 60;
+      if (s.sayT < 0) s.say = null;
+      else { this.drawSay({ x: s.x, y: s.y - 62 * sz + 50, say: s.say, sayId: s.sayId }); return; }
     }
     if (s.bubble) {
       const by = s.y - 62 * sz - (near ? 36 : 18);
