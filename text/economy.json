@@ -1,0 +1,64 @@
+{
+ "ship.farewell_01": {
+  "text": "［ship.farewell_01｜見送りの一言］",
+  "speaker": "staff_girl"
+ },
+ "ship.farewell_02": {
+  "text": "［ship.farewell_02｜トラックが出ていく］",
+  "speaker": "narration"
+ },
+ "ship.buyer_marbling_01": {
+  "text": "［ship.buyer_marbling_01｜バイヤーの評価］",
+  "speaker": "narration",
+  "cond": {
+   "meat_grade_min": 4
+  }
+ },
+ "vet.advice.early": {
+  "text": "［vet.advice.early｜時期ごとのアドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.standard": {
+  "text": "［vet.advice.standard｜時期ごとのアドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.late": {
+  "text": "［vet.advice.late｜時期ごとのアドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.mature": {
+  "text": "［vet.advice.mature｜時期ごとのアドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.ring": {
+  "text": "［vet.advice.ring｜術式ごとのアドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.burdizzo": {
+  "text": "［vet.advice.burdizzo｜術式ごとのアドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.surgical": {
+  "text": "［vet.advice.surgical｜術式ごとのアドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.traditional": {
+  "text": "［vet.advice.traditional｜アドバイス］",
+  "speaker": "narration"
+ },
+ "vet.advice.horse": {
+  "text": "［vet.advice.horse｜アドバイス］",
+  "speaker": "narration"
+ },
+ "memo.nameplate_01": {
+  "text": "［memo.nameplate_01｜ネームプレートを残す］",
+  "speaker": "narration"
+ },
+ "memo.horseshoe_01": {
+  "text": "［memo.horseshoe_01｜蹄鉄を残す］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
+ }
+}

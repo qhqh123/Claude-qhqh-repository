@@ -1,0 +1,454 @@
+{
+ "cas.head": {
+  "text": "［cas.head］{date}｜{name}　{species} {sex}　生後{age}",
+  "speaker": "narration"
+ },
+ "cas.cattle.function_sperm": {
+  "text": "［cas.cattle.function_sperm｜機能の説明1］",
+  "speaker": "narration",
+  "cond": {
+   "species": "cattle"
+  }
+ },
+ "cas.cattle.function_hormone": {
+  "text": "［cas.cattle.function_hormone｜機能の説明2］",
+  "speaker": "narration",
+  "cond": {
+   "species": "cattle"
+  }
+ },
+ "cas.ring.pre_01": {
+  "text": "［cas.ring.pre_01｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring",
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.ring.pre_02": {
+  "text": "［cas.ring.pre_02｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring",
+   "personality": [
+    "活発",
+    "好奇心旺盛",
+    "頑固"
+   ]
+  }
+ },
+ "cas.ring.tool": {
+  "text": "［cas.ring.tool｜器具の準備］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring"
+  }
+ },
+ "cas.ring.locate": {
+  "text": "［cas.ring.locate｜対象の確認］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring"
+  }
+ },
+ "cas.ring.act": {
+  "text": "［cas.ring.act｜処置の実施］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring"
+  }
+ },
+ "cas.ring.mismatch_01": {
+  "text": "［cas.ring.mismatch_01｜適さない時期の処置］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring"
+  }
+ },
+ "cas.ring.react_01": {
+  "text": "［cas.ring.react_01｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring",
+   "personality": [
+    "おっとり",
+    "甘えん坊"
+   ]
+  }
+ },
+ "cas.ring.react_02": {
+  "text": "［cas.ring.react_02｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring",
+   "personality": [
+    "活発",
+    "頑固"
+   ]
+  }
+ },
+ "cas.ring.react_03": {
+  "text": "［cas.ring.react_03｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring",
+   "personality": [
+    "好奇心旺盛",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.ring.after": {
+  "text": "［cas.ring.after｜直後］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring"
+  }
+ },
+ "cas.ring.course_01": {
+  "text": "［cas.ring.course_01｜経過日誌］",
+  "speaker": "narration",
+  "cond": {
+   "method": "ring"
+  }
+ },
+ "cas.burdizzo.pre_01": {
+  "text": "［cas.burdizzo.pre_01｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo",
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.burdizzo.pre_02": {
+  "text": "［cas.burdizzo.pre_02｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo",
+   "personality": [
+    "活発",
+    "好奇心旺盛",
+    "頑固"
+   ]
+  }
+ },
+ "cas.burdizzo.tool": {
+  "text": "［cas.burdizzo.tool｜器具の準備］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo"
+  }
+ },
+ "cas.burdizzo.locate": {
+  "text": "［cas.burdizzo.locate｜対象の確認］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo"
+  }
+ },
+ "cas.burdizzo.act": {
+  "text": "［cas.burdizzo.act｜処置の実施］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo"
+  }
+ },
+ "cas.burdizzo.mismatch_01": {
+  "text": "［cas.burdizzo.mismatch_01｜適さない時期の処置］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo"
+  }
+ },
+ "cas.burdizzo.react_01": {
+  "text": "［cas.burdizzo.react_01｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo",
+   "personality": [
+    "おっとり",
+    "甘えん坊"
+   ]
+  }
+ },
+ "cas.burdizzo.react_02": {
+  "text": "［cas.burdizzo.react_02｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo",
+   "personality": [
+    "活発",
+    "頑固"
+   ]
+  }
+ },
+ "cas.burdizzo.react_03": {
+  "text": "［cas.burdizzo.react_03｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo",
+   "personality": [
+    "好奇心旺盛",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.burdizzo.after": {
+  "text": "［cas.burdizzo.after｜直後］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo"
+  }
+ },
+ "cas.burdizzo.course_01": {
+  "text": "［cas.burdizzo.course_01｜経過日誌］",
+  "speaker": "narration",
+  "cond": {
+   "method": "burdizzo"
+  }
+ },
+ "cas.surgical.pre_01": {
+  "text": "［cas.surgical.pre_01｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical",
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.surgical.pre_02": {
+  "text": "［cas.surgical.pre_02｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical",
+   "personality": [
+    "活発",
+    "好奇心旺盛",
+    "頑固"
+   ]
+  }
+ },
+ "cas.surgical.tool": {
+  "text": "［cas.surgical.tool｜器具の準備］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical"
+  }
+ },
+ "cas.surgical.locate": {
+  "text": "［cas.surgical.locate｜対象の確認］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical"
+  }
+ },
+ "cas.surgical.act": {
+  "text": "［cas.surgical.act｜処置の実施］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical"
+  }
+ },
+ "cas.surgical.mismatch_01": {
+  "text": "［cas.surgical.mismatch_01｜適さない時期の処置］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical"
+  }
+ },
+ "cas.surgical.react_01": {
+  "text": "［cas.surgical.react_01｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical",
+   "personality": [
+    "おっとり",
+    "甘えん坊"
+   ]
+  }
+ },
+ "cas.surgical.react_02": {
+  "text": "［cas.surgical.react_02｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical",
+   "personality": [
+    "活発",
+    "頑固"
+   ]
+  }
+ },
+ "cas.surgical.react_03": {
+  "text": "［cas.surgical.react_03｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical",
+   "personality": [
+    "好奇心旺盛",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.surgical.after": {
+  "text": "［cas.surgical.after｜直後］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical"
+  }
+ },
+ "cas.surgical.course_01": {
+  "text": "［cas.surgical.course_01｜経過日誌］",
+  "speaker": "narration",
+  "cond": {
+   "method": "surgical"
+  }
+ },
+ "cas.course_incomplete_01": {
+  "text": "［cas.course_incomplete_01｜経過日誌（不完全）］",
+  "speaker": "narration"
+ },
+ "cas.course_infection_01": {
+  "text": "［cas.course_infection_01｜経過日誌（感染）］",
+  "speaker": "narration"
+ },
+ "cas.react_projection_01": {
+  "text": "［cas.react_projection_01｜語り手の一文］",
+  "speaker": "narration"
+ },
+ "cas.staff_girl_01": {
+  "text": "［cas.staff_girl_01｜厩務員の主観］",
+  "speaker": "staff_girl"
+ },
+ "cas.staff_boy_01": {
+  "text": "［cas.staff_boy_01｜厩務員の主観］",
+  "speaker": "staff_boy"
+ },
+ "cas.horse.function_sperm": {
+  "text": "［cas.horse.function_sperm｜機能の説明1］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
+ },
+ "cas.horse.function_hormone": {
+  "text": "［cas.horse.function_hormone｜機能の説明2］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse"
+  }
+ },
+ "cas.traditional.pre_01": {
+  "text": "［cas.traditional.pre_01｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional",
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.traditional.pre_02": {
+  "text": "［cas.traditional.pre_02｜処置前の観察］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional",
+   "personality": [
+    "活発",
+    "好奇心旺盛",
+    "頑固"
+   ]
+  }
+ },
+ "cas.traditional.tool": {
+  "text": "［cas.traditional.tool｜器具の準備］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional"
+  }
+ },
+ "cas.traditional.locate": {
+  "text": "［cas.traditional.locate｜対象の確認］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional"
+  }
+ },
+ "cas.traditional.act": {
+  "text": "［cas.traditional.act｜処置の実施］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional"
+  }
+ },
+ "cas.traditional.mismatch_01": {
+  "text": "［cas.traditional.mismatch_01｜適さない時期の処置］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional"
+  }
+ },
+ "cas.traditional.react_01": {
+  "text": "［cas.traditional.react_01｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional",
+   "personality": [
+    "おっとり",
+    "甘えん坊"
+   ]
+  }
+ },
+ "cas.traditional.react_02": {
+  "text": "［cas.traditional.react_02｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional",
+   "personality": [
+    "活発",
+    "頑固"
+   ]
+  }
+ },
+ "cas.traditional.react_03": {
+  "text": "［cas.traditional.react_03｜反応］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional",
+   "personality": [
+    "好奇心旺盛",
+    "マイペース"
+   ]
+  }
+ },
+ "cas.traditional.after": {
+  "text": "［cas.traditional.after｜直後］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional"
+  }
+ },
+ "cas.traditional.course_01": {
+  "text": "［cas.traditional.course_01｜経過日誌］",
+  "speaker": "narration",
+  "cond": {
+   "method": "traditional"
+  }
+ },
+ "cas.keep_testes_01": {
+  "text": "［cas.keep_testes_01｜精巣の冷凍保存］",
+  "speaker": "narration"
+ }
+}

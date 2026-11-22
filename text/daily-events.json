@@ -1,0 +1,60 @@
+{
+ "daily.staff_girl_01": {
+  "text": "［daily.staff_girl_01｜厩務員ガールの台詞］",
+  "speaker": "staff_girl"
+ },
+ "daily.staff_boy_01": {
+  "text": "［daily.staff_boy_01｜厩務員ボーイの台詞］",
+  "speaker": "staff_boy"
+ },
+ "daily.staff_girl_02": {
+  "text": "［daily.staff_girl_02｜厩務員ガールの台詞］",
+  "speaker": "staff_girl"
+ },
+ "daily.staff_boy_02": {
+  "text": "［daily.staff_boy_02｜厩務員ボーイの台詞］",
+  "speaker": "staff_boy"
+ },
+ "daily.staff_girl_03": {
+  "text": "［daily.staff_girl_03｜厩務員ガールの台詞］",
+  "speaker": "staff_girl"
+ },
+ "daily.staff_boy_03": {
+  "text": "［daily.staff_boy_03｜厩務員ボーイの台詞］",
+  "speaker": "staff_boy"
+ },
+ "daily.animal_01": {
+  "text": "［daily.animal_01｜家畜の仕草］",
+  "speaker": "narration"
+ },
+ "daily.animal_02": {
+  "text": "［daily.animal_02｜家畜の仕草］",
+  "speaker": "narration"
+ },
+ "daily.animal_03": {
+  "text": "［daily.animal_03｜家畜の仕草］",
+  "speaker": "narration"
+ },
+ "staff.match_girl_01": {
+  "text": "［staff.match_girl_01｜相性の良い個体への台詞］",
+  "speaker": "staff_girl",
+  "cond": {
+   "personality": [
+    "おっとり",
+    "甘えん坊",
+    "活発"
+   ]
+  }
+ },
+ "staff.match_boy_01": {
+  "text": "［staff.match_boy_01｜相性の良い個体への台詞］",
+  "speaker": "staff_boy",
+  "cond": {
+   "personality": [
+    "好奇心旺盛",
+    "マイペース",
+    "頑固"
+   ]
+  }
+ }
+}
