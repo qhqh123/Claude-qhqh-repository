@@ -546,7 +546,7 @@ G.ui = {
   },
   renderTown(w, tab) {
     const S = G.S;
-    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医'], ['senior', '先輩牧場主' + (G.senior.needed() ? ' ❗' : '')]];
+    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医'], ['work', '手伝い'], ['senior', '先輩牧場主' + (G.senior.needed() ? ' ❗' : '')]];
     $('.town-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''} ${k === 'senior' && G.senior.needed() ? 'alert' : ''}" data-tab="${k}">${n}</button>`).join('');
     $$('.town-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderTown(w, b.dataset.tab); });
     const body = $('.town-body', w);
@@ -577,6 +577,13 @@ G.ui = {
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, s.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, s.genes, true)}</div>
         <div class="card-f"><span class="muted">種付け料</span><b>${G.yen(s.fee)}</b></div></div>`).join('')}</div>`;
+    }
+    if (tab === 'work') {
+      const left = S.careLeft;
+      body.innerHTML = `<div class="work"><div class="work-icon">🧺</div><div class="work-main"><div class="work-title">他の牧場の手伝い</div>
+        <div class="mini-stats"><div><span>お世話の残り</span><b>${left}</b></div><div class="big"><span>1回あたり</span><b>${G.yen(G.C.sideWorkWage)}</b></div></div>
+        <div class="work-btns">${[1, 2, 3, 4, 5].filter((n) => n <= left).map((n) => `<button class="btn ${n === left ? 'primary' : ''}" data-work="${n}">${n}回　${G.yen(n * G.C.sideWorkWage)}</button>`).join('') || '<span class="muted">—</span>'}</div></div></div>`;
+      $$('[data-work]', body).forEach((b) => b.onclick = () => { if (G.sideWork(+b.dataset.work)) { this.renderTown(w, 'work'); this.refreshHud(); } });
     }
     if (tab === 'senior') {
       const need = G.senior.needed();

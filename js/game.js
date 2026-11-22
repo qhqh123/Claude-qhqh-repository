@@ -243,6 +243,17 @@ G.refreshCatalog = () => {
   G.S.strawCatalog = list;
 };
 
+// ---------- 他の牧場の手伝い ----------
+G.sideWork = (n) => {
+  const S = G.S;
+  n = Math.min(n, S.careLeft);
+  if (n <= 0) return 0;
+  S.careLeft -= n;
+  const wage = n * G.C.sideWorkWage;
+  G.earn(wage, `手伝い　他の牧場　お世話 ${n}回分　${G.yen(wage)}`);
+  return wage;
+};
+
 // ---------- 施設 ----------
 G.openPasture = (pid) => {
   const S = G.S;

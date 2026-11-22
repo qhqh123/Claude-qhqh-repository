@@ -642,3 +642,10 @@ body.dev .dev-only { display: block; }
 .trend { font-size: 11px; font-weight: 800; color: var(--ink-l); }
 .trend.t1 { color: #3f9f6a; } .trend.t-1 { color: #c9708a; }
 .badge[data-tip^="受胎"], .badge[data-tip^="繁殖"] { background: #efe6dc; color: #8a6a52; }
+
+/* ---------- 他の牧場の手伝い ---------- */
+.work { display: flex; gap: 18px; align-items: center; background: #fff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 0 #f3dce5; }
+.work-icon { font-size: 48px; width: 80px; height: 80px; border-radius: 50%; background: #f1f8e9; display: flex; align-items: center; justify-content: center; flex: none; }
+.work-main { flex: 1; min-width: 0; }
+.work-title { font-weight: 800; font-size: 18px; }
+.work-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

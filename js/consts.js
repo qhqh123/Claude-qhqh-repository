@@ -86,6 +86,7 @@ G.C = {
   marketDemeritRate: 0.30,
 
   carePerTurn: 5,
+  sideWorkWage: 25000, // 他の牧場の手伝い：お世話1回あたりの賃金（仮）
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
   acqRankMax: 3,           // 後天のデメリットバッジの上限（A）
