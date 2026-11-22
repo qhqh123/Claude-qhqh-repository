@@ -27,7 +27,7 @@ G.C = {
   strawPrice: { 3: 8000, 4: 30000 },
   strawDemeritRate: { 3: 0.30, 4: 0.70 },
 
-  castDirect: { ring: 300, burdizzo: 1000, surgical: 18000, traditional: 5000 },
+  castDirect: { ring: 300, burdizzo: 1000, surgical: 3000, traditional: 1000 },
   burdizzoToolCost: 20000,
   castOutsource: { ring: 5000, burdizzo: 8000, surgical: 25000 },
   horseCastOutsource: 25000,
