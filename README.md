@@ -20,6 +20,20 @@ python3 tools/build-text.py
 
 ゲーム内では、メニューで開発者モードを入れると、文章IDの表示・コピーと、文章JSONの読み込み（差し替え）ができる。
 
+| コマンド | 内容 |
+| --- | --- |
+| `python3 tools/check-text.py` | 文章JSONのチェック（ID・条件・プレースホルダー・抜け） |
+| `python3 tools/text-sheet.py` | 執筆用の台帳 `docs/文章台帳.md` を作り直す |
+| `node tools/sim.js [回数] [年数]` | 自動プレーでのバランス検証（結果は `docs/バランス検証.md`） |
+| `python3 tools/build-artifact.py 出力.html` | 1つのHTMLにまとめる（共有ページ用） |
+
+## 資料
+
+- `docs/仕様書.txt`：仕様のすべて
+- `docs/文章台帳.md`：文章イベントの表示順と全文章ID
+- `docs/バランス検証.md`：自動プレーの結果と調整案
+- `docs/仕様との突き合わせ.md`：仕様の各項目の実装状態
+
 ## 構成
 
 | ファイル | 内容 |
