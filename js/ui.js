@@ -639,7 +639,7 @@ G.ui = {
       });
     }
     if (tab === 'straw') {
-      body.innerHTML = `<div class="cards">${S.strawCatalog.map((s, i) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}</small></div>
+      body.innerHTML = `<div class="cards">${S.strawCatalog.map((s, i) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : ''}${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, s.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, s.genes, true)}</div>
         <div class="card-f"><b>${G.yen(s.price)}</b><button class="btn small primary" data-s="${i}" ${S.money < s.price ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>
@@ -649,7 +649,7 @@ G.ui = {
       });
     }
     if (tab === 'stallion') {
-      body.innerHTML = `<div class="cards">${S.stallions.map((s) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${s.type === 'farm' ? '農耕' : '競走'}　${G.TRAITS[s.main].name}${G.rankName(s.rank)}</small></div>
+      body.innerHTML = `<div class="cards">${S.stallions.map((s) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : ''}${s.type === 'farm' ? '農耕' : '競走'}　${G.TRAITS[s.main].name}${G.rankName(s.rank)}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, s.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, s.genes, true)}</div>
         <div class="card-f"><span class="muted">種付け料</span><b>${G.yen(s.fee)}</b></div></div>`).join('')}</div>`;

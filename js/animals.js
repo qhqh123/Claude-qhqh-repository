@@ -225,7 +225,9 @@ G.birth = (dam) => {
   const sire = p.sire.external ? null : G.S.animals[p.sire.id];
   if (r < 0.25 && sire) personality = sire.personality;
   else if (r < 0.5) personality = dam.personality;
-  const calf = G.makeAnimal({ species: dam.species, sex, genes, personality, sire: p.sire.external ? { external: true, name: p.sire.name, genes: p.sire.genes } : { id: p.sire.id }, dam: dam.id, pasture: dam.pasture });
+  const sireForm = (p.sire.external ? p.sire.form : (sire || {}).form) || 'normal';
+  const form = G.chance(0.5) ? (dam.form || 'normal') : sireForm;
+  const calf = G.makeAnimal({ species: dam.species, sex, genes, personality, form, sire: p.sire.external ? { external: true, name: p.sire.name, genes: p.sire.genes, form: p.sire.form } : { id: p.sire.id }, dam: dam.id, pasture: dam.pasture });
   calf.motherBond = { id: dam.id, v: G.ri(2, 3) };
   G.checkRankS(calf);
   dam.children.push(calf.id);

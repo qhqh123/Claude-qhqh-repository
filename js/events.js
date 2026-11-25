@@ -147,7 +147,7 @@ G.breed = (dam, partner) => {
   } else if (partner.type === 'stallion') {
     const st = S.stallions[partner.index];
     const teaser = partner.teaser && S.animals[partner.teaser];
-    sire = { external: true, name: st.name, genes: st.genes };
+    sire = { external: true, name: st.name, genes: st.genes, form: st.form };
     ok = G.chance((G.C.naturalConception + (teaser ? G.C.teaserBonus : 0)) * G.fertMult(dam));
     G.pay(st.fee, `種付け料　${st.name}（外部）　${G.yen(st.fee)}`);
     line = `種付け　${dam.name} × ${st.name}（外部）${teaser ? `　当て馬 ${teaser.name}` : ''}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
@@ -164,7 +164,7 @@ G.breed = (dam, partner) => {
     }
   } else {
     const straw = S.straws.splice(partner.index, 1)[0];
-    sire = { external: true, name: straw.name, genes: straw.genes };
+    sire = { external: true, name: straw.name, genes: straw.genes, form: straw.form };
     ok = G.chance(G.C.aiConception * G.fertMult(dam));
     line = `人工授精　${dam.name}　精液ストロー ${straw.name}（${G.TRAITS[straw.main].name}期待${G.rankName(straw.rank)}）${G.yen(straw.price)}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     const near = G.partnerNear(dam);

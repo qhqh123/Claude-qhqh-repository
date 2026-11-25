@@ -286,14 +286,18 @@ G.makeStallion = (type, rank, i) => {
     genes: { length: G.ri(rank - 1, rank), depth: type === 'farm' ? G.ri(rank - 1, rank) : G.ri(1, 2), traits },
   };
 };
+// 外部の種雄（精液ストロー・外部種牡馬）のフォーム：入荷済みのフォームから
+G.extForm = () => (G.S.formsIn && G.S.formsIn.length && G.chance(G.C.formMarketRate) ? G.pick(G.S.formsIn) : undefined);
 G.refreshStallions = () => {
   G.S.stallions = [G.makeStallion('farm', 3, 0), G.makeStallion('farm', 3, 1), G.makeStallion('race', 3, 2), G.makeStallion('race', 4, 3)];
+  for (const s of G.S.stallions) { const f = G.extForm(); if (f) s.form = f; }
 };
 
 G.refreshCatalog = () => {
   const list = [];
   for (let i = 0; i < 3; i++) list.push(G.makeStraw(3, i));
   list.push(G.makeStraw(4, 3));
+  for (const s of list) { const f = G.extForm(); if (f) s.form = f; }
   G.S.strawCatalog = list;
 };
 

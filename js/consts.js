@@ -243,9 +243,9 @@ G.STRAW_NAMES = ['北の誉', '福光', '安美', '茂勝', '百合花', '勝早
 G.FORM_KEYS = ['normal', 'telepathy', 'taur', 'halfbeast', 'kemomimi'];
 G.FORMS = {
   normal:    { name: '普通',       body: 'full',     voice: false, arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 1.0,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
-  telepathy: { name: 'テレパシー種', body: 'full',     voice: true,  arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 0.9,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
-  taur:      { name: 'タウル種',     body: 'full',     voice: true,  arms: true,  face: true,  loco: 'quad',  weight: 1.0, upkeep: 0.8,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
-  halfbeast: { name: '半獣人種',     body: 'head',     voice: false, arms: true,  face: false, loco: 'biped', weight: 0.6, upkeep: 0.5,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  telepathy: { name: 'テレパシー種', body: 'full',     voice: true,  arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 0.96,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  taur:      { name: 'タウル種',     body: 'full',     voice: true,  arms: true,  face: true,  loco: 'quad',  weight: 1.0, upkeep: 0.89,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  halfbeast: { name: '半獣人種',     body: 'head',     voice: false, arms: true,  face: false, loco: 'biped', weight: 0.6, upkeep: 0.78,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
   kemomimi:  { name: 'ケモミミ種',   body: 'earsTail', voice: true,  arms: true,  face: true,  loco: 'biped', weight: 0.4, upkeep: 0.35, meatPlus: 2, meatDecline: 0.3, aging: 2, slot: 0 },
 };
 G.NPC_NAMES = { vet: '獣医', dealer: '家畜商', buyer: 'バイヤー' };

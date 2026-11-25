@@ -274,6 +274,40 @@ for (const [name, r] of Object.entries(results)) {
 const pastureSave = C.fieldPastureBase * 0.5 * C.feedUnitPrice;
 console.log(`- 畑（馬なしの牧草）：1区画 ${man(pastureSave)}／ターン分の飼料を自給、維持費 ${man(C.fieldUpkeep)} → 開拓費 ${man(C.fieldOpenCost)} の回収 ${(C.fieldOpenCost / Math.max(1, pastureSave - C.fieldUpkeep) / 4).toFixed(1)}年`);
 
+// ---------- フォームごとの維持費1あたりの利益（No.24） ----------
+// 最初の家畜をすべて同じフォームにして「基本」の方針で遊ぶ（子も同じフォームになる）。
+// 利益 = 家畜からの収入（出荷・売却・搾乳・副産物）− 飼料費、維持費 = 飼料費
+if (!process.env.SKIP_FORMS) {
+  console.log('\n# フォームごとの維持費1あたりの利益（基本の方針、中央値）\n');
+  console.log('| フォーム | 家畜からの収入 | 飼料費 | 利益 | 維持費1あたりの利益 | 前のフォームとの比 | 最終の頭数 |');
+  console.log('|---|---|---|---|---|---|---|');
+  const play = STRATEGIES['基本（自然交配・標準去勢・出荷）'];
+  CARE = 'none';
+  let prev = null;
+  for (const f of G.FORM_KEYS) {
+    const inc = [], feed = [], ratio = [], herd = [];
+    for (let run = 0; run < RUNS; run++) {
+      G.newGame();
+      G.S.formsIn = G.FORM_KEYS.slice(1);
+      for (const a of G.alive()) a.form = f;
+      let i = 0, fd = 0;
+      for (let t = 0; t < YEARS * 4; t++) {
+        play();
+        const s = G.endTurn();
+        for (const e of s.entries) {
+          const l = e.lines[0];
+          if (/^(出荷|売却|搾乳|副産物)/.test(l)) i += e.amount;
+          if (l.startsWith('飼料費')) fd -= e.amount;
+        }
+      }
+      inc.push(i); feed.push(fd); ratio.push((i - fd) / Math.max(1, fd)); herd.push(G.alive().length);
+    }
+    const r = pct(ratio, 0.5);
+    console.log(`| ${G.FORMS[f].name} | ${man(pct(inc, 0.5))} | ${man(pct(feed, 0.5))} | ${man(pct(inc, 0.5) - pct(feed, 0.5))} | ${r.toFixed(2)} | ${prev === null ? '—' : (r / prev).toFixed(2)} | ${pct(herd, 0.5)} |`);
+    prev = r;
+  }
+}
+
 // ---------- 去勢時期と出荷時期の比較 ----------
 if (process.env.SKIP_CAST) process.exit(0);
 console.log('\n# 去勢の時期ごとの損得（雄1頭。体格C・肉質C、外部委託、ストレス・健康は平常）\n');

@@ -89,8 +89,8 @@ Object.assign(G.ui, {
     const horse = G.isHorse(dam);
     const bulls = G.alive().filter((b) => G.isIntactMature(b) && b.species === dam.species && G.fertMult(b) > 0);
     const opts = bulls.map((b) => ({ key: 'b' + b.id, type: 'bull', label: b.name, tag: '牧場', genes: b.genes, partner: { type: 'bull', id: b.id }, a: b, fee: 0 }))
-      .concat((horse ? [] : S.straws).map((s, i) => ({ key: 's' + i, type: 'straw', label: s.name, tag: '精液ストロー', sub: `${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}`, genes: s.genes, partner: { type: 'straw', index: i }, a: null, fee: 0 })))
-      .concat((horse ? S.stallions : []).map((s, i) => ({ key: 'h' + i, type: 'stallion', label: s.name, tag: '外部種牡馬', sub: s.type === 'farm' ? '農耕' : '競走', genes: s.genes, partner: { type: 'stallion', index: i }, a: null, fee: s.fee })));
+      .concat((horse ? [] : S.straws).map((s, i) => ({ key: 's' + i, type: 'straw', label: s.name, tag: '精液ストロー', sub: `${s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : ''}${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}`, genes: s.genes, partner: { type: 'straw', index: i }, a: null, fee: 0 })))
+      .concat((horse ? S.stallions : []).map((s, i) => ({ key: 'h' + i, type: 'stallion', label: s.name, tag: '外部種牡馬', sub: (s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : '') + (s.type === 'farm' ? '農耕' : '競走'), genes: s.genes, partner: { type: 'stallion', index: i }, a: null, fee: s.fee })));
     const teasers = horse ? G.teasers() : [];
     const st = { key: null, teaser: '' };
     const card = (o) => ({
