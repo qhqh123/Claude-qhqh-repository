@@ -223,8 +223,9 @@ G.sell = (a) => {
 G.buy = (m) => {
   const S = G.S;
   const sp = m.species || 'cattle';
-  if (S.money < m.price || !G.hasRoom(sp)) return null;
-  const pasture = G.pastureWithRoom(sp);
+  const free = G.FORMS[m.form || 'normal'].slot === 0;
+  if (S.money < m.price || (!free && !G.hasRoom(sp))) return null;
+  const pasture = G.pastureWithRoom(sp) || (free ? G.openPastures(sp)[0] : null);
   if (!pasture) return null;
   const a = G.makeAnimal({ species: sp, sex: m.sex, age: m.age, genes: m.genes, personality: m.personality, origin: 'market', pasture, form: m.form });
   if (G.isMature(a)) G.assignRelations(a);

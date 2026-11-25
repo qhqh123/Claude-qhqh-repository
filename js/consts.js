@@ -100,7 +100,10 @@ G.C = {
   woodRound: 10,        // 拡張に求める木材は10単位に四捨五入
   woodShare: { pasture: 0.5, field: 0.3, storage: 0.8 }, // 拡張費用のうち木材で求める割合
   // フォームの入荷（No.24。仮）：何年目から家畜市場に並ぶか、並ぶ割合
-  formArrival: { telepathy: 3, taur: 5, halfbeast: 7 },
+  formArrival: { telepathy: 3, taur: 5, halfbeast: 7, kemomimi: 9 },
+  // 出荷時のバイヤーの「年齢のわりに肉が若い」（仮）：この年齢（ターン）以上で、【肉質低下】の実際の効き目がこれ以下
+  youngMeatAge: 24,
+  youngMeatMaxDecline: 0.1,
   // タウル種の出荷（No.24。仮）：上半身の体重の割合、ペットフード原料の単価、埋葬費
   taurUpperShare: 0.1,
   petfoodPerKg: 300,

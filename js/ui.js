@@ -631,7 +631,7 @@ G.ui = {
         <div class="cards">${S.market.map((m, i) => `<div class="card market"><canvas class="a-face" data-mk="${i}" width="96" height="96"></canvas><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${m.form && m.form !== 'normal' ? G.FORMS[m.form].name + '　' : ''}${G.ageText(m.age)}　${m.personality}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits({ sex: m.sex, castrated: false }, m.genes, true)}</div>
-        <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || !G.hasRoom(m.species || 'cattle') || !G.pastureWithRoom(m.species || 'cattle') ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
+        <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || (G.FORMS[m.form || 'normal'].slot ? !G.pastureWithRoom(m.species || 'cattle') : !G.openPastures(m.species || 'cattle').length) ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
       $$('canvas[data-mk]', body).forEach((c) => { const m = S.market[+c.dataset.mk]; G.draw.portrait(c, { id: m.key, idNo: '', species: m.species || 'cattle', form: m.form, sex: m.sex, age: m.age, castrated: false, personality: m.personality }); });
       $$('[data-buy]', body).forEach((b) => b.onclick = () => {
         const a = G.buy(S.market[+b.dataset.buy]);

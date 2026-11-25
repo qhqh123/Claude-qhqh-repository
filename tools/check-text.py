@@ -12,7 +12,7 @@ import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal', 'senior', 'vet', 'dealer', 'buyer'}
-COND_KEYS = {'species', 'method', 'personality', 'partner_in_pasture', 'partner_liked', 'meat_grade_min', 'locomotion'}
+COND_KEYS = {'species', 'method', 'personality', 'partner_in_pasture', 'partner_liked', 'meat_grade_min', 'locomotion', 'young_meat'}
 LOCOMOTION = ['quad', 'biped']
 PLACEHOLDERS = {'name', 'sex', 'age', 'species', 'staff', 'partner', 'date', 'id_number'}
 PERSONALITIES = ['おっとり', '甘えん坊', '活発', '好奇心旺盛', 'マイペース', '頑固']
@@ -52,6 +52,7 @@ for pk in PERS_KEYS:
 # 体の文の二足版（No.24）と腕の文
 for m in METHODS:
     REQUIRED += [f'cas.{m}.locate.biped', f'cas.{m}.act.biped', f'cas.{m}.react_biped_*']
+REQUIRED += ['ship.buyer_young_meat_01']
 REQUIRED += ['breed.ai.act.biped', 'breed.ai.estrus_biped_*', 'breed.natural.act_biped_*', 'breed.teaser.act_biped_*', 'breed.stallion.act_biped_*',
              'cas.arms.locate_*', 'cas.arms.act_*', 'cas.arms.react_*']
 # 性格ごとに必ず候補があるべきもの
@@ -108,6 +109,10 @@ def check():
         for p in PERSONALITIES:
             if cands and not any(not (c.get('cond') or {}).get('personality') or p in c['cond']['personality'] for c in cands):
                 errors.append(f'{pre}*: 性格「{p}」の候補がありません')
+    # ケモミミ種のためだけの反応の文章（去勢・繁殖）は作らない（No.24）
+    for k, (f, v) in data.items():
+        if k.startswith(('cas.', 'breed.')) and ('kemomimi' in k or 'kemomimi' in json.dumps((v or {}).get('cond') or {})):
+            errors.append(f'{k}: 去勢・繁殖にケモミミ種専用の文章があります')
     dummy = sum(1 for _, v in data.values() if is_dummy(v.get('text')))
     return data, errors, dummy
 

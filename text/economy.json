@@ -276,5 +276,52 @@
  "npc.halfbeast.staff_boy_02": {
   "text": "［npc.halfbeast.staff_boy_02｜厩務員ボーイ・半獣人種の評価］",
   "speaker": "staff_boy"
+ },
+ "npc.kemomimi.senior_01": {
+  "text": "［npc.kemomimi.senior_01｜先輩牧場主・ケモミミ種の評価］",
+  "speaker": "senior"
+ },
+ "npc.kemomimi.senior_02": {
+  "text": "［npc.kemomimi.senior_02｜先輩牧場主・ケモミミ種の評価］",
+  "speaker": "senior"
+ },
+ "npc.kemomimi.vet_01": {
+  "text": "［npc.kemomimi.vet_01｜獣医・ケモミミ種の評価］",
+  "speaker": "vet"
+ },
+ "npc.kemomimi.vet_02": {
+  "text": "［npc.kemomimi.vet_02｜獣医・ケモミミ種の評価］",
+  "speaker": "vet"
+ },
+ "npc.kemomimi.dealer_01": {
+  "text": "［npc.kemomimi.dealer_01｜家畜商・ケモミミ種の評価］",
+  "speaker": "dealer"
+ },
+ "npc.kemomimi.dealer_02": {
+  "text": "［npc.kemomimi.dealer_02｜家畜商・ケモミミ種の評価］",
+  "speaker": "dealer"
+ },
+ "npc.kemomimi.staff_girl_01": {
+  "text": "［npc.kemomimi.staff_girl_01｜厩務員ガール・ケモミミ種の評価］",
+  "speaker": "staff_girl"
+ },
+ "npc.kemomimi.staff_girl_02": {
+  "text": "［npc.kemomimi.staff_girl_02｜厩務員ガール・ケモミミ種の評価］",
+  "speaker": "staff_girl"
+ },
+ "npc.kemomimi.staff_boy_01": {
+  "text": "［npc.kemomimi.staff_boy_01｜厩務員ボーイ・ケモミミ種の評価］",
+  "speaker": "staff_boy"
+ },
+ "npc.kemomimi.staff_boy_02": {
+  "text": "［npc.kemomimi.staff_boy_02｜厩務員ボーイ・ケモミミ種の評価］",
+  "speaker": "staff_boy"
+ },
+ "ship.buyer_young_meat_01": {
+  "text": "［ship.buyer_young_meat_01｜バイヤー・年齢のわりに肉が若い］",
+  "speaker": "buyer",
+  "cond": {
+   "young_meat": true
+  }
  }
 }

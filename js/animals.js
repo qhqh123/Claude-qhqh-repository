@@ -174,6 +174,8 @@ G.meatEval = (a) => {
   return v;
 };
 
+// 年齢が一定以上で、年齢による肉質の減価をほとんど受けていない
+G.youngMeat = (a) => a.age >= G.C.youngMeatAge && G.C.meatDeclinePerRank * G.acqRank(a, 'meatDecline') * G.formOf(a).meatDecline <= G.C.youngMeatMaxDecline;
 G.shipValue = (a) => {
   const carcass = Math.round(a.weight * G.C.carcassRatio * (a.form === 'taur' ? 1 - G.C.taurUpperShare : 1));
   const q = G.clamp(Math.floor(G.meatEval(a) + 1e-6), 0, 5);

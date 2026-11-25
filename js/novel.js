@@ -156,8 +156,8 @@ G.shipScreen = {
     G.draw.portrait(root.querySelector('canvas'), a);
     G.audio.duck(true);
     const v = G.shipValue(a);
-    const ctx = { species: a.species, personality: a.personality, meat_grade: v.q };
-    this.paras = G.buildParas([{ pick: 'ship.farewell_' }, G.voiceStep(a, 'ship.voice', 'farewell'), { pick: 'ship.buyer_marbling_' }], ctx);
+    const ctx = { species: a.species, personality: a.personality, meat_grade: v.q, young_meat: G.youngMeat(a) };
+    this.paras = G.buildParas([{ pick: 'ship.farewell_' }, G.voiceStep(a, 'ship.voice', 'farewell'), { pick: 'ship.buyer_marbling_' }, { pick: 'ship.buyer_young_meat_' }], ctx);
     const buyer = G.npcLine('buyer', [], ctx);
     if (buyer) this.paras.push(buyer);
     this.vars = G.textVars(a);
