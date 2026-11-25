@@ -78,8 +78,7 @@ G.main = {
     G.recalcSlots();
     this.enterGame();
     G.ui.holdNotices = false;
-    G.ui.noticeQueue = G.S.notices.filter((n) => !n.done && n.turn === G.S.turn);
-    G.ui.flushNotices();
+    G.ui.buildNoticeQueue();
   },
 };
 

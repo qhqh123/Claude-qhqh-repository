@@ -706,7 +706,41 @@ G.ui = {
     if (n.type === 'crowd') return '個体一覧';
     return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け', idle: '詳細', peak: '詳細', aging: '詳細' }[n.type] || '';
   },
+  // 同じ種類が2頭以上なら1枚にまとめる種類
+  DIGEST: {
+    breedable: { label: '交配できる', act: '繁殖', tab: 'breed' },
+    ship: { label: '出荷適期', act: '個体一覧', tab: 'list' },
+    aging: { act: '個体一覧', tab: 'list' },
+    idle: { label: '生産が止まった', act: '個体一覧', tab: 'list', pid: 'idle' },
+    peak: { label: '見込み売上が伸びない', act: '個体一覧', tab: 'list', pid: 'idle' },
+  },
+  noticeDone(n) { return n.items ? n.items.every((i) => i.done) : n.done; },
+  // 季節の始めの通知の並び（カードを出さない記録は除き、まとめられるものはまとめる）
+  buildNoticeQueue() {
+    const S = G.S;
+    const pending = S.notices.filter((n) => !n.done && n.turn === S.turn && n.card !== false);
+    const groups = {};
+    for (const n of pending) if (this.DIGEST[n.type]) (groups[n.type] = groups[n.type] || []).push(n);
+    const out = [];
+    for (const n of pending) {
+      const g = groups[n.type];
+      if (!g || g.length < 2) out.push(n);
+      else if (g[0] === n) out.push(this.makeDigest(n.type, g));
+    }
+    this.noticeQueue = out;
+    this.flushNotices();
+  },
+  makeDigest(kind, items) {
+    const names = items.map((n) => (G.S.animals[n.aid] || {}).name).filter(Boolean).join('・');
+    let label = this.DIGEST[kind].label;
+    if (kind === 'aging') {
+      const b = items[0].badge || '';
+      label = `「${b}」${items.every((n) => n.badge === b) ? '' : 'など'}が付いた`;
+    }
+    return { type: 'digest', kind, items, text: `${label}：${names}` };
+  },
   queueNotice(n) {
+    if (n.card === false) return;
     this.noticeQueue.push(n);
     if (!this.holdNotices) this.flushNotices();
   },
@@ -715,15 +749,16 @@ G.ui = {
     const box = $('#notices');
     while (this.noticeQueue.length && box.children.length < 3) {
       const n = this.noticeQueue.shift();
-      if (n.done) continue;
+      if (this.noticeDone(n)) continue;
       this.showNoticeCard(n);
     }
   },
   showNoticeCard(n) {
     const box = $('#notices');
     const el = document.createElement('div');
-    el.className = 'notice ' + n.type;
-    const act = this.noticeAction(n);
+    el.className = 'notice ' + n.type + (n.kind ? ' ' + n.kind : '');
+    if (n.type === 'birth') return this.showBirthCard(n, el);
+    const act = n.type === 'digest' ? this.DIGEST[n.kind].act : this.noticeAction(n);
     const second = n.type === 'birth' || n.type === 'death' ? 'OK' : 'あとで';
     const extra = n.type === 'milklow' ? '<button class="btn small c">外す</button>' : '';
     const secondLabel = n.type === 'milklow' ? 'このまま' : second;
@@ -744,8 +779,37 @@ G.ui = {
       remove(); this.refreshHud();
     };
   },
+  // 出産：去勢・搾乳もこの1枚から
+  showBirthCard(n, el) {
+    const S = G.S, calf = S.animals[n.aid], dam = S.animals[n.dam];
+    const btns = [];
+    if (calf && calf.status === 'alive' && S.notices.some((x) => x.type === 'castrate' && x.aid === calf.id && !x.done)) btns.push(['castrate', '去勢を決める']);
+    if (dam && G.milk.canPlace(dam)) btns.push(['milk', '搾乳施設']);
+    if (calf) btns.push(['detail', '詳細']);
+    el.innerHTML = `${n.title ? `<div class="n-title">${G.esc(n.title)}</div>` : ''}<div class="n-text">${G.esc(n.text)}</div>
+      <div class="n-btns">${btns.map(([k, l]) => `<button class="btn small primary" data-k="${k}">${l}</button>`).join('')}<button class="btn small b">OK</button></div>`;
+    $('#notices').appendChild(el);
+    G.audio.sfx('fanfare');
+    const remove = () => { n.done = true; el.classList.add('out'); setTimeout(() => { el.remove(); this.flushNotices(); }, 250); };
+    $$('[data-k]', el).forEach((b) => b.onclick = () => {
+      remove();
+      if (b.dataset.k === 'castrate') this.openCastrate(calf);
+      else if (b.dataset.k === 'milk') this.openMilk();
+      else this.openDetail(calf.id);
+      this.refreshHud();
+      this.refreshOpenDetail();
+    });
+    $('.b', el).onclick = () => { remove(); this.refreshHud(); };
+  },
   doNotice(n) {
     if (!n) return;
+    if (n.type === 'digest') {
+      const d = this.DIGEST[n.kind];
+      if (n.kind !== 'breedable') n.items.forEach((i) => { i.done = true; });
+      this.openOffice(d.tab, d.pid);
+      this.refreshHud();
+      return;
+    }
     const a = G.S.animals[n.aid];
     if (n.type === 'diary') {
       n.done = true;
@@ -775,10 +839,7 @@ G.ui = {
   markNoticesDone(type, aid) {
     for (const n of G.S.notices) if (n.aid === aid && (!type || n.type === type)) n.done = true;
     $$('#notices .notice').forEach((el) => el.remove());
-    this.noticeQueue = this.noticeQueue.filter((n) => !n.done);
-    const pending = G.S.notices.filter((n) => !n.done && n.turn === G.S.turn);
-    this.noticeQueue = pending;
-    this.flushNotices();
+    this.buildNoticeQueue();
   },
 
   // ---------- ターン ----------
@@ -842,7 +903,7 @@ G.ui = {
     ov.className = 's' + season;
     ov.innerHTML = `<div class="season-card"><div class="season-emoji">${['🌸', '🌻', '🍁', '⛄'][season]}</div><div class="season-text">${G.dateText(S.turn)}</div></div>`;
     G.audio.sfx('season');
-    setTimeout(() => { ov.className = 'hidden'; this.holdNotices = false; this.noticeQueue = S.notices.filter((n) => !n.done && n.turn === S.turn); this.flushNotices(); this.dailyEvent(); }, 2200);
+    setTimeout(() => { ov.className = 'hidden'; this.holdNotices = false; this.buildNoticeQueue(); this.dailyEvent(); }, 2200);
   },
   dailyEvent() {
     const list = G.alive();

@@ -372,7 +372,7 @@ G.endTurn = () => {
     calf.bornTurn = S.turn + 1;
     newborns.push(calf);
     dam.lactation = { start: S.turn + 1 };
-    if (G.milk.slotOf(dam) < 0) G.notify('milkable', dam.id, `🐮 ${dam.name}が搾乳できるようになりました！`);
+    if (G.milk.slotOf(dam) < 0) G.notify('milkable', dam.id, `🐮 ${dam.name}が搾乳できるようになりました！`, { card: false });
   }
 
   // 死亡
@@ -448,8 +448,9 @@ G.endTurn = () => {
   S.noticeTurn = null;
   S.careLeft = G.C.carePerTurn;
   for (const a of newborns) {
-    G.notify('birth', a.id, `${a.name}（${a.sex === 'M' ? '♂' : '♀'}）`, { title: '新しい家族が生まれました！' });
-    if (a.sex === 'M') G.notify('castrate', a.id, `${G.spIcon(a)} ${a.name}が去勢を検討できる時期になりました！`);
+    const dam = S.animals[a.dam];
+    G.notify('birth', a.id, `${a.name}（${a.sex === 'M' ? '♂' : '♀'}）${dam ? `　母 ${dam.name}` : ''}`, { title: '新しい家族が生まれました！', dam: a.dam });
+    if (a.sex === 'M') G.notify('castrate', a.id, `${G.spIcon(a)} ${a.name}が去勢を検討できる時期になりました！`, { card: false });
   }
   // 経過日誌
   const due = S.pendingCourses.filter((c) => c.turn < S.turn);

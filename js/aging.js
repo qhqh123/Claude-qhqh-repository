@@ -51,7 +51,7 @@ G.applyAging = (a) => {
     a.flags.acqSeen[t.k] = true;
     const name = G.TRAITS[t.k].name;
     G.addHistory(a, `「${name}」が付く`);
-    G.notify('aging', a.id, `${G.spIcon(a)} ${a.name}に「${name}」が付きました`);
+    G.notify('aging', a.id, `${G.spIcon(a)} ${a.name}に「${name}」が付きました`, { badge: name });
   }
 };
 
