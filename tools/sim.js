@@ -76,10 +76,13 @@ const sellExtraBulls = () => {
   const best = bullOf();
   for (const b of G.alive().filter((a) => a.species === 'cattle' && G.isIntactMature(a))) if (b !== best) G.ship(b);
 };
-// 繁殖用の雌牛は5頭まで。余った若い雌は売る（普通のプレーヤーがすること）
+// 繁殖用の雌牛は6頭まで。余った若い雌は売る（普通のプレーヤーがすること）
+// FORM_PREF：新しいフォームほど残す。ケモミミ種は飼育枠を使わないので、繁殖用の上限に数えず全部残す
+let FORM_PREF = false;
+const formRank = (a) => G.FORM_KEYS.indexOf(a.form || 'normal');
 const manageHerd = () => {
-  const cows = G.alive().filter((a) => a.species === 'cattle' && a.sex === 'F');
-  const score = (a) => a.genes.length + a.genes.depth + a.genes.traits.reduce((t, x) => t + (G.TRAITS[x.k].demerit ? -x.r : x.r), 0);
+  const cows = G.alive().filter((a) => a.species === 'cattle' && a.sex === 'F' && !(FORM_PREF && G.formOf(a).slot === 0));
+  const score = (a) => a.genes.length + a.genes.depth + a.genes.traits.reduce((t, x) => t + (G.TRAITS[x.k].demerit ? -x.r : x.r), 0) + (FORM_PREF ? 3 * formRank(a) : 0);
   const fertile = (a) => G.fertMult(a) > 0;
   const keep = cows.filter(fertile).sort((x, y) => score(y) - score(x) || x.age - y.age).slice(0, 6);
   for (const a of cows) if (!keep.includes(a) && a.age >= 2 && !a.flags.simHeifer && !a.pregnancy) G.sell(a);
@@ -88,7 +91,7 @@ const manageHerd = () => {
 const cullOldCows = () => { for (const a of G.alive()) if (a.species === 'cattle' && G.isMature(a) && ['idle', 'peak'].includes(G.prodState(a))) G.ship(a); };
 const keepUnderCap = () => {
   const over = G.herdCount('cattle') - G.S.cattleSlots;
-  if (over > 0) G.alive().filter((a) => a.species === 'cattle' && a.sex === 'M' && a.castrated).sort((x, y) => y.age - x.age).slice(0, over).forEach((a) => (a.age >= 3 ? G.ship(a) : G.sell(a)));
+  if (over > 0) G.alive().filter((a) => a.species === 'cattle' && a.sex === 'M' && a.castrated && G.formOf(a).slot).sort((x, y) => y.age - x.age).slice(0, over).forEach((a) => (a.age >= 3 ? G.ship(a) : G.sell(a)));
 };
 
 // ---------- 余ったお世話と木材 ----------
@@ -145,6 +148,16 @@ const STRATEGIES = {
     }
     for (const a of G.alive()) if (a.flags.simHeifer && G.isMature(a)) { SIM.heiferSold += G.sell(a); SIM.heiferDone++; }
   },
+  // 市場に並んだ新品種の雌を買って繁殖に使う（新しいフォームほど優先）
+  '新品種を買う（基本＋市場の新品種の雌）': () => {
+    const S = G.S;
+    FORM_PREF = true;
+    STRATEGIES['基本（自然交配・標準去勢・出荷）']();
+    FORM_PREF = false;
+    const list = S.market.filter((x) => x.form && x.form !== 'normal' && (x.species || 'cattle') === 'cattle' && x.sex === 'F')
+      .sort((a, b) => G.FORM_KEYS.indexOf(b.form) - G.FORM_KEYS.indexOf(a.form));
+    for (const m of list) if (S.money > m.price + 1500000 && (G.FORMS[m.form].slot === 0 || G.hasRoom('cattle'))) G.buy(m);
+  },
   '農耕馬で商業作物': () => {
     const S = G.S;
     STRATEGIES['基本（自然交配・標準去勢・出荷）']();
@@ -196,11 +209,12 @@ for (const [name, play] of Object.entries(STRATEGIES)) {
 for (const [name, play, care] of PLAN) {
   if (process.env.ONLY && !name.includes(process.env.ONLY)) continue;
   CARE = care;
-  const r = { woodGot: [], woodBuy: [], workInc: [], builds: [], cap: [], y1short: [], y1ok: 0, paidYear: [], money: [], loan: [], firstS: [], borrowed: [], herd: [], raceIncome: [], shipped: [], milkIncome: [], milkSlotTurns: 0, milkTotal: 0, cropTurns: 0, cropTotal: 0, horseTurns: 0 };
+  const r = { yearNet: Array.from({ length: YEARS }, () => []), forms: {}, woodGot: [], woodBuy: [], workInc: [], builds: [], cap: [], y1short: [], y1ok: 0, paidYear: [], money: [], loan: [], firstS: [], borrowed: [], herd: [], raceIncome: [], shipped: [], milkIncome: [], milkSlotTurns: 0, milkTotal: 0, cropTurns: 0, cropTotal: 0, horseTurns: 0 };
   Object.assign(SIM, { heiferBought: 0, heiferSold: 0, heiferN: 0, heiferDone: 0 });
   for (let run = 0; run < RUNS; run++) {
     G.newGame();
     let borrowed = 0, raceInc = 0, milkInc = 0, paid = null, woodBuy = 0, workInc = 0;
+    const yNet = Array(YEARS).fill(0);
     SIM.woodGot = 0;
     for (let t = 0; t < YEARS * 4; t++) {
       play();
@@ -209,6 +223,7 @@ for (const [name, play, care] of PLAN) {
       const cropF = G.S.fields.filter((f) => f.open && f.use === 'crop' && f.horse).length;
       r.cropTurns += cropF;
       const s = G.endTurn();
+      yNet[Math.floor(t / 4)] += s.income - s.expense;
       for (const e of s.entries) { if (e.lines[0].startsWith('搾乳')) r.milkTotal += e.amount; if (e.lines[0].startsWith('畑')) r.cropTotal += e.amount; }
       borrowed += s.borrowed || 0;
       for (const e of s.entries) {
@@ -230,13 +245,15 @@ for (const [name, play, care] of PLAN) {
     r.woodGot.push(SIM.woodGot); r.woodBuy.push(woodBuy); r.workInc.push(workInc);
     r.builds.push(Object.keys(S.pastures).filter((p) => p !== 'p1' && S.pastures[p].open).length + Object.keys(S.pastures).reduce((t, p) => t + G.pastureStage(p), 0) + S.fields.filter((f) => f.open).length);
     r.cap.push(S.cattleSlots);
+    yNet.forEach((v, y) => r.yearNet[y].push(v));
+    for (const a of G.alive()) r.forms[a.form || 'normal'] = (r.forms[a.form || 'normal'] || 0) + 1;
   }
   r.heifer = Object.assign({}, SIM);
   results[name] = r;
 }
 
 console.log(`# 自動プレー結果（${RUNS}回 × ${YEARS}年）\n`);
-console.log('| 方針 | 1年目に全額返済 | 1年目の返済不足（中央値） | 完済した年（中央値） | 10年で完済した割合 | 最終の所持金（中央値） | 最終の借入金（中央値） | 自動借入の合計（中央値） | 出荷頭数（中央値） | 搾乳収入（累計中央値） | レース収支（累計中央値） | Sランク初作出（中央値） |');
+console.log(`| 方針 | 1年目に全額返済 | 1年目の返済不足（中央値） | 完済した年（中央値） | ${YEARS}年で完済した割合 | 最終の所持金（中央値） | 最終の借入金（中央値） | 自動借入の合計（中央値） | 出荷頭数（中央値） | 搾乳収入（累計中央値） | レース収支（累計中央値） | Sランク初作出（中央値） |`);
 console.log('|---|---|---|---|---|---|---|---|---|---|---|---|');
 for (const [name, r] of Object.entries(results)) {
   const paidRate = r.paidYear.filter((y) => y <= YEARS).length / RUNS;
@@ -252,6 +269,18 @@ console.log('|---|---|---|---|---|---|');
 for (const [name, r] of Object.entries(results)) {
   console.log(`| ${name} | ${pct(r.woodGot, 0.5)} | ${man(pct(r.woodBuy, 0.5))} | ${man(pct(r.workInc, 0.5))} | ${pct(r.builds, 0.5)} | ${pct(r.cap, 0.5)} |`);
 }
+
+// ---------- 年ごとの収支 ----------
+console.log('\n# 年ごとの収支（収入 − 支出、中央値。新品種の入荷：3年目 テレパシー種、5年目 タウル種、7年目 半獣人種、9年目 ケモミミ種）\n');
+console.log(`| 方針 | ${Array.from({ length: YEARS }, (_, y) => `${y + 1}年目`).join(' | ')} |`);
+console.log(`|---|${Array.from({ length: YEARS }, () => '---').join('|')}|`);
+for (const [name, r] of Object.entries(results)) console.log(`| ${name} | ${r.yearNet.map((a) => man(pct(a, 0.5))).join(' | ')} |`);
+
+// ---------- フォーム別の頭数 ----------
+console.log('\n# 最終の頭数（フォーム別、1回あたりの平均）\n');
+console.log(`| 方針 | ${G.FORM_KEYS.map((f) => G.FORMS[f].name).join(' | ')} |`);
+console.log(`|---|${G.FORM_KEYS.map(() => '---').join('|')}|`);
+for (const [name, r] of Object.entries(results)) console.log(`| ${name} | ${G.FORM_KEYS.map((f) => ((r.forms[f] || 0) / RUNS).toFixed(1)).join(' | ')} |`);
 
 // ---------- 施設の元が取れるまで ----------
 console.log('\n# 施設の収支（1枠・1ターンあたりの平均）\n');
