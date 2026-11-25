@@ -2,11 +2,15 @@
 // 拡張の費用は「通貨＋木材」。木材の割合は施設ごと（G.C.woodShare）
 G.woodCost = (base, kind) => {
   const share = G.C.woodShare[kind] || 0;
-  const wood = Math.round(base * share / G.C.woodValue);
+  const wood = Math.round(base * share / G.C.woodValue / G.C.woodRound) * G.C.woodRound;
   return { money: Math.round(base * (1 - share)), wood };
 };
 G.canPayCost = (c) => G.S.money >= c.money && (G.S.wood || 0) >= c.wood;
 G.costText = (c) => `${G.yen(c.money)}${c.wood ? `　🪵${c.wood}` : ''}`;
+// 木材が足りないとき、不足分を町の値段で買えば払えるか
+G.woodShort = (c) => Math.max(0, c.wood - (G.S.wood || 0));
+G.canBuyAndPay = (c) => G.woodShort(c) > 0 && G.S.money >= c.money + G.woodShort(c) * G.C.woodBuyPrice;
+G.buyShortWood = (c) => { const n = G.woodShort(c); return n > 0 ? G.buyWood(n) : true; };
 // 通貨は帳簿に、木材は同じ行に数量を書く
 G.payCost = (c, label) => {
   G.S.wood = (G.S.wood || 0) - c.wood;

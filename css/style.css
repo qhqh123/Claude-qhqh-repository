@@ -659,3 +659,4 @@ body.dev .dev-only { display: block; }
 .pill-box.wood { padding-left: 10px; }
 .work-sub { font-weight: 800; font-size: 13px; color: var(--ink-l); margin-top: 12px; }
 .lumber-body .work-btns { margin-top: 14px; }
+.btn.buywood small { display: block; font-size: 11px; opacity: .85; }

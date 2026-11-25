@@ -1,5 +1,6 @@
 // 自動プレーによるバランス検証
 // 使い方: node tools/sim.js [回数=200] [年数=10]
+//   ONLY='農耕' で名前に含む方針だけ実行（軽い確認用）
 // ゲームの計算部分（画面以外）をそのまま読み込み、方針の違うプレーヤーに遊ばせて集計する。
 const fs = require('fs');
 const path = require('path');
@@ -84,6 +85,37 @@ const keepUnderCap = () => {
   if (over > 0) G.alive().filter((a) => a.species === 'cattle' && a.sex === 'M' && a.castrated).sort((x, y) => y.age - x.age).slice(0, over).forEach((a) => (a.age >= 3 ? G.ship(a) : G.sell(a)));
 };
 
+// ---------- 余ったお世話と木材 ----------
+// CARE（方針ごとに切り替える）
+//   none   : 余ったお世話を使わない。拡張の木材は全部町で買う
+//   lumber : 木こり小屋で木材を貯める（WOOD_GOAL まで。超えたら手伝い）。木材は買わず、貯まるまで待つ
+//   work   : 手伝いで現金を得て、拡張のときに不足分の木材を町で買う
+let CARE = 'none';
+const WOOD_GOAL = 250;
+const spendCare = () => {
+  const n = G.S.careLeft;
+  if (!n || CARE === 'none') return;
+  if (CARE === 'lumber' && (G.S.wood || 0) < WOOD_GOAL) SIM.woodGot += G.lumberWork(n); else G.sideWork(n);
+};
+// 拡張する。木材が足りなければ（lumber 以外は）不足分を買う。予備の現金 reserve を残せるときだけ
+const build = (cost, fn, reserve) => {
+  if (!cost) return false;
+  const short = G.woodShort(cost);
+  if (short && CARE === 'lumber') return false;
+  if (G.S.money < cost.money + short * G.C.woodBuyPrice + reserve) return false;
+  if (!G.buyShortWood(cost)) return false;
+  return fn();
+};
+// 牛が上限に近づいたら、放牧地を拡張（安い段階から）→ なければ丘を開拓
+const growPastures = (reserveExpand, reserveOpen) => {
+  const S = G.S;
+  if (G.herdCount('cattle') < S.cattleSlots - 1) return;
+  const ps = G.openPastures('cattle').filter((p) => G.expandCost(p)).sort((a, b) => G.C.pastureExpandCost[G.pastureStage(a)] - G.C.pastureExpandCost[G.pastureStage(b)]);
+  if (ps.length && build(G.expandCost(ps[0]), () => G.expandPasture(ps[0]), reserveExpand)) return;
+  const hill = ['p2', 'p3', 'p4', 'p5'].find((p) => !S.pastures[p].open);
+  if (hill) build(G.pastureOpenCost(), () => G.openPasture(hill), reserveOpen);
+};
+
 const STRATEGIES = {
   '何もしない': () => {},
   '基本（自然交配・標準去勢・出荷）': () => {
@@ -95,9 +127,8 @@ const STRATEGIES = {
     const lact = G.alive().filter((a) => G.milk.canPlace(a) && G.milk.calc(a).income > 100000).length;
     if (lact > 0 && S.money > G.C.milkSlotCost + 1500000) G.milk.addSlot();
     const closed = S.fields.findIndex((f) => !f.open);
-    if (closed >= 0 && S.money > 2500000) G.field.open(closed);
-    const hill = ['p2', 'p3', 'p4', 'p5'].find((p) => !S.pastures[p].open);
-    if (hill && S.money > 5000000 && G.herdCount('cattle') >= S.cattleSlots - 1) G.openPasture(hill);
+    if (closed >= 0) build(G.field.openCost(), () => G.field.open(closed), 2000000);
+    growPastures(2000000, 3000000);
     keepUnderCap();
   },
   '育成牛を買って育てて売る': () => {
@@ -111,14 +142,14 @@ const STRATEGIES = {
   '農耕馬で商業作物': () => {
     const S = G.S;
     STRATEGIES['基本（自然交配・標準去勢・出荷）']();
-    if (!S.pastures.h1.open && S.money > G.C.pastureOpenCost + 1000000) G.openPasture('h1');
+    if (!S.pastures.h1.open) build(G.pastureOpenCost(), () => G.openPasture('h1'), 1000000);
     if (!S.pastures.h1.open) return;
     for (const m of S.market.filter((x) => x.species === 'horse' && x.age >= 6)) if (S.money > m.price + 800000 && G.hasRoom('horse') && G.herdCount('horse') < 3) G.buy(m);
     for (const h of G.alive().filter((a) => G.isHorse(a) && G.isMature(a))) {
       if (h.sex === 'M' && !h.castrated) G.castrate(h, 'surgical', 'direct');
       if (S.fields.some((f) => f.horse === h.id)) continue;
       let i = S.fields.findIndex((f) => f.open && !f.horse);
-      if (i < 0 && S.money > G.C.fieldOpenCost + 500000) { i = S.fields.findIndex((f) => !f.open); if (i >= 0) G.field.open(i); }
+      if (i < 0) { const j = S.fields.findIndex((f) => !f.open); if (j >= 0 && build(G.field.openCost(), () => G.field.open(j), 500000)) i = j; }
       if (i >= 0 && S.fields[i].open) { G.field.setUse(i, 'crop'); G.field.assign(i, h); }
     }
   },
@@ -126,7 +157,7 @@ const STRATEGIES = {
     const S = G.S;
     STRATEGIES['基本（自然交配・標準去勢・出荷）']();
     if (S.turn < 5) return;
-    if (!S.pastures.h1.open && S.money > 3000000) G.openPasture('h1');
+    if (!S.pastures.h1.open) build(G.pastureOpenCost(), () => G.openPasture('h1'), 1000000);
     if (S.pastures.h1.open) {
       for (const m of S.market.filter((x) => x.species === 'horse' && x.sex === 'F' && x.age >= 6)) if (S.money > m.price + 1000000 && G.hasRoom('horse')) G.buy(m);
       for (const a of G.alive()) {
@@ -149,21 +180,38 @@ const pct = (arr, p) => { const s = arr.slice().sort((a, b) => a - b); return s[
 const man = (v) => (v / 10000).toFixed(0) + '万';
 const results = {};
 const SIM = { heiferBought: 0, heiferSold: 0, heiferN: 0, heiferDone: 0 };
+const CARE_NAME = { none: 'お世話：使わない', lumber: '木こり小屋で木材', work: '手伝い＋木材購入' };
+const BUILDERS = ['改良と搾乳（人工授精・増設）', '農耕馬で商業作物', '競馬（2年目から）'];
+const PLAN = [];
 for (const [name, play] of Object.entries(STRATEGIES)) {
-  const r = { y1short: [], y1ok: 0, paidYear: [], money: [], loan: [], firstS: [], borrowed: [], herd: [], raceIncome: [], shipped: [], milkIncome: [], milkSlotTurns: 0, milkTotal: 0, cropTurns: 0, cropTotal: 0, horseTurns: 0 };
+  if (BUILDERS.includes(name)) for (const c of ['none', 'lumber', 'work']) PLAN.push([`${name}／${CARE_NAME[c]}`, play, c]);
+  else PLAN.push([name, play, 'none']);
+}
+for (const [name, play, care] of PLAN) {
+  if (process.env.ONLY && !name.includes(process.env.ONLY)) continue;
+  CARE = care;
+  const r = { woodGot: [], woodBuy: [], workInc: [], builds: [], cap: [], y1short: [], y1ok: 0, paidYear: [], money: [], loan: [], firstS: [], borrowed: [], herd: [], raceIncome: [], shipped: [], milkIncome: [], milkSlotTurns: 0, milkTotal: 0, cropTurns: 0, cropTotal: 0, horseTurns: 0 };
   Object.assign(SIM, { heiferBought: 0, heiferSold: 0, heiferN: 0, heiferDone: 0 });
   for (let run = 0; run < RUNS; run++) {
     G.newGame();
-    let borrowed = 0, raceInc = 0, milkInc = 0, paid = null;
+    let borrowed = 0, raceInc = 0, milkInc = 0, paid = null, woodBuy = 0, workInc = 0;
+    SIM.woodGot = 0;
     for (let t = 0; t < YEARS * 4; t++) {
       play();
+      spendCare();
       r.milkSlotTurns += G.S.milkSlots.filter((x) => x.aid).length;
       const cropF = G.S.fields.filter((f) => f.open && f.use === 'crop' && f.horse).length;
       r.cropTurns += cropF;
       const s = G.endTurn();
       for (const e of s.entries) { if (e.lines[0].startsWith('搾乳')) r.milkTotal += e.amount; if (e.lines[0].startsWith('畑')) r.cropTotal += e.amount; }
       borrowed += s.borrowed || 0;
-      for (const e of s.entries) { if (e.lines[0].startsWith('レース')) raceInc += e.amount; if (e.lines[0].startsWith('搾乳')) milkInc += e.amount; }
+      for (const e of s.entries) {
+        const l = e.lines[0];
+        if (l.startsWith('レース')) raceInc += e.amount;
+        if (l.startsWith('搾乳')) milkInc += e.amount;
+        if (l.startsWith('木材 購入')) woodBuy -= e.amount;
+        if (l.startsWith('手伝い')) workInc += e.amount;
+      }
       if (s.settlement && t === 3) { r.y1short.push(s.settlement.unpaid); if (!s.settlement.unpaid) r.y1ok++; }
       if (paid === null && G.S.loan <= 0) paid = Math.floor(t / 4) + 1;
     }
@@ -172,6 +220,10 @@ for (const [name, play] of Object.entries(STRATEGIES)) {
     r.firstS.push(G.S.records.rankS ? Math.floor((G.S.records.rankS.turn - 1) / 4) + 1 : 99);
     r.herd.push(G.alive().length); r.raceIncome.push(raceInc); r.milkIncome.push(milkInc);
     r.shipped.push(Object.values(G.S.animals).filter((a) => a.status === 'shipped').length);
+    const S = G.S;
+    r.woodGot.push(SIM.woodGot); r.woodBuy.push(woodBuy); r.workInc.push(workInc);
+    r.builds.push(Object.keys(S.pastures).filter((p) => p !== 'p1' && S.pastures[p].open).length + Object.keys(S.pastures).reduce((t, p) => t + G.pastureStage(p), 0) + S.fields.filter((f) => f.open).length);
+    r.cap.push(S.cattleSlots);
   }
   r.heifer = Object.assign({}, SIM);
   results[name] = r;
@@ -185,6 +237,14 @@ for (const [name, r] of Object.entries(results)) {
   const py = pct(r.paidYear, 0.5);
   const fs_ = pct(r.firstS, 0.5);
   console.log(`| ${name} | ${Math.round(r.y1ok / RUNS * 100)}% | ${man(pct(r.y1short, 0.5))} | ${py > YEARS ? '—' : py + '年目'} | ${Math.round(paidRate * 100)}% | ${man(pct(r.money, 0.5))} | ${man(pct(r.loan, 0.5))} | ${man(pct(r.borrowed, 0.5))} | ${pct(r.shipped, 0.5)} | ${man(pct(r.milkIncome, 0.5))} | ${man(pct(r.raceIncome, 0.5))} | ${fs_ > YEARS ? '—' : fs_ + '年目'} |`);
+}
+
+// ---------- 木材と拡張 ----------
+console.log('\n# 余ったお世話・木材と拡張（累計の中央値）\n');
+console.log('| 方針 | 木こり小屋で得た木材 | 木材の購入額 | 手伝いの収入 | 開拓・拡張の回数 | 最終の牛の上限 |');
+console.log('|---|---|---|---|---|---|');
+for (const [name, r] of Object.entries(results)) {
+  console.log(`| ${name} | ${pct(r.woodGot, 0.5)} | ${man(pct(r.woodBuy, 0.5))} | ${man(pct(r.workInc, 0.5))} | ${pct(r.builds, 0.5)} | ${pct(r.cap, 0.5)} |`);
 }
 
 // ---------- 施設の元が取れるまで ----------

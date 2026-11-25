@@ -74,7 +74,7 @@ Object.assign(G.ui, {
     if (!f.open) {
       detail = `<div class="f-detail waste"><div class="f-title">畑スロット${lab}<small>荒れ地</small></div>
         <div class="mini-stats"><div><span>開拓</span><b>${G.costText(G.field.openCost())}</b></div><div><span>維持費</span><b>+${G.yen(G.C.fieldUpkeep)}／ターン</b></div></div>
-        <div class="actions"><button class="btn primary open" ${G.canPayCost(G.field.openCost()) ? '' : 'disabled'}>開拓する</button></div></div>`;
+        <div class="actions">${this.costBtn(G.field.openCost(), '開拓する', 'open')}</div></div>`;
     } else {
       const m = G.field.mult(f), r = G.field.produce(f);
       const cands = G.alive().filter((h) => G.isHorse(h) && G.isMature(h) && (h.id === f.horse || G.field.canAssign(h)));
@@ -95,7 +95,7 @@ Object.assign(G.ui, {
     $$('.f-tile', body).forEach((t) => t.onclick = () => { G.audio.sfx('page'); this.renderField(w, +t.dataset.i); });
     const ob = $('.open', body);
     if (ob) ob.onclick = () => {
-      if (!G.field.open(focus)) return;
+      if (!this.payPrep(ob, G.field.openCost()) || !G.field.open(focus)) return;
       const rr = G.fieldRect(focus);
       for (let k = 0; k < 4; k++) setTimeout(() => G.map.burst(rr.x + Math.random() * rr.w, rr.y + Math.random() * rr.h, ['🌱', '✨', '🌾'], 8), k * 120);
       G.audio.sfx('fanfare');

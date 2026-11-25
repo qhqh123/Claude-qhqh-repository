@@ -97,6 +97,7 @@ G.C = {
   woodSellPrice: 3000,  // 町で売る値段（1木材）
   woodBuyPrice: 6000,   // 町で買う値段（1木材）
   woodValue: 4500,      // 拡張費用を木材に置き換えるときの換算（1木材）
+  woodRound: 10,        // 拡張に求める木材は10単位に四捨五入
   woodShare: { pasture: 0.5, field: 0.3, storage: 0.8 }, // 拡張費用のうち木材で求める割合
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）

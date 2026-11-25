@@ -184,7 +184,7 @@ Object.assign(G.ui, {
     const S = G.S;
     const items = S.storage.items.slice().reverse();
     body.innerHTML = `<div class="stat-strip"><div><span>保管</span><b>${G.store.used()}/${S.storage.cap}</b></div>
-      <div class="expand"><span>${G.costText(G.store.expandCost())}　+${G.C.storageExpandSlots}</span><button class="btn small primary" data-expand ${G.canPayCost(G.store.expandCost()) ? '' : 'disabled'}>増設</button></div></div>
+      <div class="expand"><span>${G.costText(G.store.expandCost())}　+${G.C.storageExpandSlots}</span>${this.costBtn(G.store.expandCost(), '増設', 'small', 'data-expand')}</div></div>
       <div class="item-grid">${items.map((it) => {
         const mem = G.store.price(it, 'memorial'), food = G.store.price(it, 'food');
         return `<div class="item-card ${it.kind}"><div class="item-icon">${G.ICONS[G.ITEMS[it.kind].icon]}</div>
@@ -196,6 +196,6 @@ Object.assign(G.ui, {
       if (G.store.sell(id, use)) { this.renderOffice(w, 'storage'); this.refreshHud(); }
     });
     const ex = $('[data-expand]', body);
-    if (ex) ex.onclick = () => { if (G.store.expand()) { G.audio.sfx('fanfare'); this.renderOffice(w, 'storage'); this.refreshHud(); } };
+    if (ex) ex.onclick = () => { if (this.payPrep(ex, G.store.expandCost()) && G.store.expand()) { G.audio.sfx('fanfare'); this.renderOffice(w, 'storage'); this.refreshHud(); } };
   },
 });

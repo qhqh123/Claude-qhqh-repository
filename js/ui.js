@@ -520,20 +520,30 @@ G.ui = {
       body.innerHTML = `<ul class="records">${G.RECORDS.map(([k, n]) => `<li class="${S.records[k] ? 'got' : ''}"><span class="medal">${S.records[k] ? '🏅' : '・'}</span>${S.records[k] ? n : '？？？'}<small>${S.records[k] ? G.dateText(S.records[k].turn) : ''}</small></li>`).join('')}</ul>`;
     }
   },
+  // 拡張ボタン：木材だけ足りないときは、不足分を買ってそのまま拡張できる
+  costBtn(cost, label, cls, attr = '') {
+    if (G.canPayCost(cost)) return `<button class="btn primary ${cls}" ${attr}>${label}</button>`;
+    if (G.canBuyAndPay(cost)) {
+      const n = G.woodShort(cost);
+      return `<button class="btn primary ${cls} buywood" ${attr} data-buywood="1">🪵${n}を買って${label}<small>${G.yen(n * G.C.woodBuyPrice)}</small></button>`;
+    }
+    return `<button class="btn primary ${cls}" ${attr} disabled>${label}</button>`;
+  },
+  // 木材を買う選択だったら、先に不足分を買う
+  payPrep(btn, cost) { return !btn.dataset.buywood || G.buyShortWood(cost); },
   openExpand(pid) {
     const S = G.S;
     if (S.pastures[pid].open) { this.openPasture(pid); return; }
     const horse = G.pastureSpecies(pid) === 'horse';
     const cost = G.pastureOpenCost();
-    const can = G.canPayCost(cost);
     const w = this.open(`<h2>⛰ ${G.HILL_LABEL[pid]}</h2>
       <div class="kv"><span>開拓</span><b>${G.costText(cost)}</b></div>
       <div class="kv"><span>${horse ? '飼育枠（馬）' : '飼育枠（牛）'}</span><b>+${G.C.pastureOpenSlots}</b></div>
       <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeep)}／ターン</b></div>
-      <div class="actions"><button class="btn primary ok" ${can ? '' : 'disabled'}>開拓する</button><button class="btn cancel">やめる</button></div>`, { size: 'small' });
+      <div class="actions">${this.costBtn(cost, '開拓する', 'ok')}<button class="btn cancel">やめる</button></div>`, { size: 'small' });
     $('.cancel', w).onclick = () => this.close(w);
-    $('.ok', w).onclick = () => {
-      if (!G.openPasture(pid)) return;
+    $('.ok', w).onclick = (e) => {
+      if (!this.payPrep(e.currentTarget, cost) || !G.openPasture(pid)) return;
       this.closeAll();
       G.map.buildBlocks();
       const p = G.MAP.pastures[pid];
@@ -574,10 +584,10 @@ G.ui = {
         ${cost !== undefined ? `<div class="kv"><span>拡張</span><b>${G.costText(cost)}</b></div>
         <div class="kv"><span>飼育枠</span><b>+${G.C.pastureExpandSlots}</b></div>
         <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeepPerStage)}／ターン</b></div>` : ''}
-        <div class="actions">${cost !== undefined ? `<button class="btn primary ok" ${G.canPayCost(cost) ? '' : 'disabled'}>拡張する</button>` : ''}<button class="btn list">個体一覧</button></div>`;
+        <div class="actions">${cost !== undefined ? `${this.costBtn(cost, '拡張する', 'ok')}` : ''}<button class="btn list">個体一覧</button></div>`;
       const ok = $('.ok', body);
       if (ok) ok.onclick = () => {
-        if (!G.expandPasture(pid)) return;
+        if (!this.payPrep(ok, cost) || !G.expandPasture(pid)) return;
         const p = G.MAP.pastures[pid];
         for (let i = 0; i < 4; i++) setTimeout(() => G.map.burst(p.barn.x + Math.random() * p.barn.w, p.barn.y + Math.random() * p.barn.h, ['✨', '🌾', '⭐'], 8), i * 120);
         G.audio.sfx('fanfare');
