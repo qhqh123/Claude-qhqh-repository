@@ -60,5 +60,29 @@
   "cond": {
    "species": "horse"
   }
+ },
+ "ship.voice.farewell.calm_01": {
+  "text": "［ship.voice.farewell.calm_01｜声・出荷］",
+  "speaker": "animal"
+ },
+ "ship.voice.farewell.sweet_01": {
+  "text": "［ship.voice.farewell.sweet_01｜声・出荷］",
+  "speaker": "animal"
+ },
+ "ship.voice.farewell.lively_01": {
+  "text": "［ship.voice.farewell.lively_01｜声・出荷］",
+  "speaker": "animal"
+ },
+ "ship.voice.farewell.curious_01": {
+  "text": "［ship.voice.farewell.curious_01｜声・出荷］",
+  "speaker": "animal"
+ },
+ "ship.voice.farewell.easy_01": {
+  "text": "［ship.voice.farewell.easy_01｜声・出荷］",
+  "speaker": "animal"
+ },
+ "ship.voice.farewell.stubborn_01": {
+  "text": "［ship.voice.farewell.stubborn_01｜声・出荷］",
+  "speaker": "animal"
  }
 }

@@ -72,5 +72,29 @@
  "senior.rescue_01": {
   "text": "［senior.rescue_01｜再建支援］",
   "speaker": "senior"
+ },
+ "daily.voice.calm_01": {
+  "text": "［daily.voice.calm_01｜声・日常］",
+  "speaker": "animal"
+ },
+ "daily.voice.sweet_01": {
+  "text": "［daily.voice.sweet_01｜声・日常］",
+  "speaker": "animal"
+ },
+ "daily.voice.lively_01": {
+  "text": "［daily.voice.lively_01｜声・日常］",
+  "speaker": "animal"
+ },
+ "daily.voice.curious_01": {
+  "text": "［daily.voice.curious_01｜声・日常］",
+  "speaker": "animal"
+ },
+ "daily.voice.easy_01": {
+  "text": "［daily.voice.easy_01｜声・日常］",
+  "speaker": "animal"
+ },
+ "daily.voice.stubborn_01": {
+  "text": "［daily.voice.stubborn_01｜声・日常］",
+  "speaker": "animal"
  }
 }

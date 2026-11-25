@@ -18,6 +18,7 @@ G.newGame = () => {
     nextNotice: 1,
     storage: { cap: G.C.storageCap, items: [], next: 1 },
     wood: 0,
+    formsIn: [],
     market: [],
     straws: [],
     strawCatalog: [],
@@ -203,7 +204,20 @@ G.randomMarketGenes = (sp) => {
   if (sp === 'horse' && G.chance(0.25)) genes.traits.push({ k: 'racer', r: 1 });
   return genes;
 };
+// 新しいフォームの入荷（年数で。初めて並んだときだけ通知）
+G.checkFormArrival = () => {
+  const S = G.S;
+  S.formsIn = S.formsIn || [];
+  const year = Math.floor((S.turn - 1) / 4) + 1;
+  let fresh = false;
+  for (const f of G.FORM_KEYS) {
+    const y = G.C.formArrival[f];
+    if (y && year >= y && !S.formsIn.includes(f)) { S.formsIn.push(f); fresh = true; }
+  }
+  if (fresh) G.notify('newform', null, '家畜市場に新しい品種が入りました');
+};
 G.refreshMarket = () => {
+  G.checkFormArrival();
   const list = [];
   const n = G.ri(3, 4) + 2;
   for (let i = 0; i < n; i++) {
@@ -216,6 +230,7 @@ G.refreshMarket = () => {
   for (const m of list) {
     const tmp = { genes: m.genes, age: m.age, species: m.species };
     m.price = G.marketValue(tmp);
+    if (G.S.formsIn.length && G.chance(G.C.formMarketRate)) m.form = G.pick(G.S.formsIn);
   }
   // 基礎的な若い雌牛（特筆は肉質・伸び/骨格・深み/肉付きのどれか1つだけ。安い）
   const nb = G.ri(1, 2);

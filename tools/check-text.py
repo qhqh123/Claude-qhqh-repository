@@ -37,6 +37,17 @@ for k in ['early', 'standard', 'late', 'mature', 'ring', 'burdizzo', 'surgical',
     REQUIRED.append(f'vet.advice.{k}')
 for c in ['brush', 'pet', 'exercise']:
     REQUIRED.append(f'care.{c}_*')
+# 声のステップ（No.24）：性格キー × 術式 × 場面
+PERS_KEYS = ['calm', 'sweet', 'lively', 'curious', 'easy', 'stubborn']
+for m in METHODS:
+    for sc in ['pre', 'act', 'react', 'after', 'course']:
+        for pk in PERS_KEYS:
+            REQUIRED.append(f'cas.voice.{m}.{sc}.{pk}_*')
+for sc in ['pre', 'act', 'after']:
+    for pk in PERS_KEYS:
+        REQUIRED.append(f'breed.voice.{sc}.{pk}_*')
+for pk in PERS_KEYS:
+    REQUIRED += [f'ship.voice.farewell.{pk}_*', f'daily.voice.{pk}_*']
 # 性格ごとに必ず候補があるべきもの
 PERSONALITY_COVER = [f'cas.{m}.react_' for m in METHODS] + [f'cas.{m}.pre_' for m in METHODS] + [f'care.{c}_' for c in ['brush', 'pet', 'exercise']]
 

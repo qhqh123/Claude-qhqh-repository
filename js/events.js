@@ -45,28 +45,34 @@ G.castrate = (a, methodSel, mode) => {
   const line2 = `　増体予測 −${GAIN_PRED[period]}kg/日（1ターン）${period !== 'early' ? '※月齢による' : ''}　格付予測 肉質 ${period === 'mature' ? '→' : '↑'}`;
   G.pay(cost, [line1, line2]);
   G.addHistory(a, `去勢（${short}・${modeName}）　${G.PERIOD_NAMES[period]}`);
-  S.pendingCourses.push({ aid: a.id, method, mode, incomplete, infection, turn: S.turn });
+  S.pendingCourses.push({ aid: a.id, method, mode, incomplete, infection, turn: S.turn, period });
   // 成熟雄を観血法・旧来手法で直接去勢したときは精巣を冷凍保存
   const keep = mode === 'direct' && period === 'mature' && !incomplete && (method === 'surgical' || method === 'traditional') ? G.store.addTestes(a, method) : null;
 
   if (mode !== 'direct') return null;
   const ctx = { species: a.species, method, personality: a.personality };
   const staff = G.staffFor(a);
+  const late = period === 'late' || period === 'mature';
+  const vo = (scene) => G.voiceStep(a, `cas.voice.${method}`, scene, late);
   const steps = [
     'cas.head',
     { pick: `cas.${method}.pre_` },
+    vo('pre'),
     `cas.${method}.tool`,
     `cas.${method}.locate`,
     `cas.${a.species}.function_sperm`,
     `cas.${a.species}.function_hormone`,
     `cas.${method}.act`,
+    vo('act'),
   ];
   if (!suitable) steps.push({ pick: `cas.${method}.mismatch_` });
   steps.push(
     { pick: `cas.${method}.react_` },
+    vo('react'),
     { pick: 'cas.react_projection_', p: 0.5 },
     { pick: `cas.staff_${staff}_`, p: 0.3 },
     `cas.${method}.after`,
+    vo('after'),
   );
   if (keep && keep.kept) steps.push({ pick: 'cas.keep_testes_' });
   const vars = G.textVars(a);
@@ -101,7 +107,7 @@ G.deliverCourse = (c) => {
     G.notify('castrate', a.id, `🐮 ${a.name}の去勢が不完全でした`);
   }
   if (c.mode === 'direct') {
-    const steps = [{ pick: `cas.${c.method}.course_` }];
+    const steps = [{ pick: `cas.${c.method}.course_` }, G.voiceStep(a, `cas.voice.${c.method}`, 'course', c.period === 'late' || c.period === 'mature')];
     if (c.incomplete) steps.push({ pick: 'cas.course_incomplete_' });
     if (c.infection) steps.push({ pick: 'cas.course_infection_' });
     const ev = { title: '経過日誌', paras: G.buildParas(steps, ctx), vars: G.textVars(a), ledger: null };
@@ -132,7 +138,7 @@ G.breed = (dam, partner) => {
     line = `自然交配　${dam.name} × ${bull.name}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = bull.name;
     const ctx = { species: dam.species, personality: dam.personality, partner_liked: G.likesAnimal(dam, bull) };
-    ev = { title: '交配', paras: G.buildParas(['breed.natural.head', { pick: 'breed.natural.act_' }, { pick: 'breed.natural.after_' }], ctx), vars, aid: dam.id };
+    ev = { title: '交配', paras: G.buildParas(['breed.natural.head', G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.natural.act_' }, G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.natural.after_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
     G.addHistory(dam, `自然交配　${bull.name}　${ok ? '受胎' : '不受胎'}`);
     G.addHistory(bull, `自然交配　${dam.name}　${ok ? '受胎' : '不受胎'}`);
   } else if (partner.type === 'stallion') {
@@ -144,9 +150,9 @@ G.breed = (dam, partner) => {
     line = `種付け　${dam.name} × ${st.name}（外部）${teaser ? `　当て馬 ${teaser.name}` : ''}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = st.name;
     const ctx = { species: dam.species, personality: dam.personality };
-    const steps = ['breed.stallion.head'];
+    const steps = ['breed.stallion.head', G.voiceStep(dam, 'breed.voice', 'pre')];
     if (teaser) steps.push({ pick: 'breed.teaser.act_' }, { pick: 'breed.teaser.after_' });
-    steps.push({ pick: 'breed.stallion.act_' }, { pick: 'breed.stallion.after_' });
+    steps.push({ pick: 'breed.stallion.act_' }, G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.stallion.after_' }, G.voiceStep(dam, 'breed.voice', 'after'));
     ev = { title: '種付け', paras: G.buildParas(steps, ctx), vars, aid: dam.id };
     G.addHistory(dam, `種付け　${st.name}（外部）　${ok ? '受胎' : '不受胎'}`);
     if (teaser) {
@@ -160,7 +166,7 @@ G.breed = (dam, partner) => {
     line = `人工授精　${dam.name}　精液ストロー ${straw.name}（${G.TRAITS[straw.main].name}期待${G.rankName(straw.rank)}）${G.yen(straw.price)}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     const near = G.partnerNear(dam);
     const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near };
-    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, 'breed.ai.act', { pick: 'breed.ai.after_partner_' }], ctx), vars, aid: dam.id };
+    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, 'breed.ai.act', G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.ai.after_partner_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
     G.addHistory(dam, `人工授精　${straw.name}　${ok ? '受胎' : '不受胎'}`);
   }
   if (ok) {
@@ -209,7 +215,7 @@ G.buy = (m) => {
   if (S.money < m.price || !G.hasRoom(sp)) return null;
   const pasture = G.pastureWithRoom(sp);
   if (!pasture) return null;
-  const a = G.makeAnimal({ species: sp, sex: m.sex, age: m.age, genes: m.genes, personality: m.personality, origin: 'market', pasture });
+  const a = G.makeAnimal({ species: sp, sex: m.sex, age: m.age, genes: m.genes, personality: m.personality, origin: 'market', pasture, form: m.form });
   if (G.isMature(a)) G.assignRelations(a);
   S.market = S.market.filter((x) => x !== m);
   G.addHistory(a, '購入');

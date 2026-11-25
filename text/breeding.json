@@ -85,5 +85,77 @@
   "cond": {
    "species": "horse"
   }
+ },
+ "breed.voice.pre.calm_01": {
+  "text": "［breed.voice.pre.calm_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.sweet_01": {
+  "text": "［breed.voice.pre.sweet_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.lively_01": {
+  "text": "［breed.voice.pre.lively_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.curious_01": {
+  "text": "［breed.voice.pre.curious_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.easy_01": {
+  "text": "［breed.voice.pre.easy_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.stubborn_01": {
+  "text": "［breed.voice.pre.stubborn_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.calm_01": {
+  "text": "［breed.voice.act.calm_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.sweet_01": {
+  "text": "［breed.voice.act.sweet_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.lively_01": {
+  "text": "［breed.voice.act.lively_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.curious_01": {
+  "text": "［breed.voice.act.curious_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.easy_01": {
+  "text": "［breed.voice.act.easy_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.stubborn_01": {
+  "text": "［breed.voice.act.stubborn_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.calm_01": {
+  "text": "［breed.voice.after.calm_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.sweet_01": {
+  "text": "［breed.voice.after.sweet_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.lively_01": {
+  "text": "［breed.voice.after.lively_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.curious_01": {
+  "text": "［breed.voice.after.curious_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.easy_01": {
+  "text": "［breed.voice.after.easy_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.stubborn_01": {
+  "text": "［breed.voice.after.stubborn_01｜声・交配後］",
+  "speaker": "animal"
  }
 }

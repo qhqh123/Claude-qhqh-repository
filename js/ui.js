@@ -612,11 +612,11 @@ G.ui = {
     const body = $('.town-body', w);
     if (tab === 'market') {
       body.innerHTML = `<div class="kv"><span>飼育枠</span><b>🐮 ${G.herdCount('cattle')}/${S.cattleSlots}　🐴 ${G.herdCount('horse')}/${S.horseSlots}</b></div>
-        <div class="cards">${S.market.map((m, i) => `<div class="card market"><canvas class="a-face" data-mk="${i}" width="96" height="96"></canvas><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${G.ageText(m.age)}　${m.personality}</small></div>
+        <div class="cards">${S.market.map((m, i) => `<div class="card market"><canvas class="a-face" data-mk="${i}" width="96" height="96"></canvas><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${m.form && m.form !== 'normal' ? G.FORMS[m.form].name + '　' : ''}${G.ageText(m.age)}　${m.personality}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || !G.hasRoom(m.species || 'cattle') || !G.pastureWithRoom(m.species || 'cattle') ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
-      $$('canvas[data-mk]', body).forEach((c) => { const m = S.market[+c.dataset.mk]; G.draw.portrait(c, { id: m.key, idNo: '', species: m.species || 'cattle', sex: m.sex, age: m.age, castrated: false, personality: m.personality }); });
+      $$('canvas[data-mk]', body).forEach((c) => { const m = S.market[+c.dataset.mk]; G.draw.portrait(c, { id: m.key, idNo: '', species: m.species || 'cattle', form: m.form, sex: m.sex, age: m.age, castrated: false, personality: m.personality }); });
       $$('[data-buy]', body).forEach((b) => b.onclick = () => {
         const a = G.buy(S.market[+b.dataset.buy]);
         if (a) { G.audio.sfx('coin'); this.renderTown(w, 'market'); this.refreshHud(); }
@@ -768,6 +768,7 @@ G.ui = {
     if (n.done) return n.type === 'diary' ? '読む' : (n.aid && G.S.animals[n.aid] ? '詳細' : '');
     if (n.type === 'rescue') return n.done ? '' : '町へ';
     if (n.type === 'crowd') return '個体一覧';
+    if (n.type === 'newform') return n.done ? '' : '家畜市場';
     return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け', idle: '詳細', peak: '詳細', aging: '詳細' }[n.type] || '';
   },
   // 同じ種類が2頭以上なら1枚にまとめる種類
@@ -885,6 +886,9 @@ G.ui = {
       this.openBreed(a);
     } else if (n.type === 'rescue') {
       this.openTown('senior');
+    } else if (n.type === 'newform') {
+      n.done = true;
+      this.openTown('market');
     } else if (n.type === 'crowd') {
       n.done = true;
       this.openOffice('list', n.pid);
@@ -976,9 +980,12 @@ G.ui = {
     const id = G.text.pick('daily.animal_', { personality: a.personality });
     if (!id) return;
     G.S.readTexts[id] = true;
+    const vs = G.voiceStep(a, 'daily.voice', '');
+    const vid = vs ? G.text.pick(`daily.voice.${G.PERS_KEY[a.personality]}_`, {}) : null;
+    if (vid) G.S.readTexts[vid] = true;
     const el = document.createElement('div');
     el.className = 'daily';
-    el.innerHTML = `<b>🐮 ${G.esc(a.name)}</b><span>${G.esc(G.text.fill(G.text.get(id).text, G.textVars(a)))}</span>${G.S.devMode ? `<code>${id}</code>` : ''}`;
+    el.innerHTML = `<b>${G.spIcon(a)} ${G.esc(a.name)}</b><span>${G.esc(G.text.fill(G.text.get(id).text, G.textVars(a)))}</span>${G.S.devMode ? `<code>${id}</code>` : ''}${vid ? `<span class="voice">${G.esc(G.text.fill(G.text.get(vid).text, G.textVars(a)))}</span>${G.S.devMode ? `<code>${vid}</code>` : ''}` : ''}`;
     $('#toasts').appendChild(el);
     setTimeout(() => el.classList.add('out'), 5000);
     setTimeout(() => el.remove(), 5500);

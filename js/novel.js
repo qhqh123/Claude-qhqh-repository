@@ -155,7 +155,7 @@ G.shipScreen = {
     G.audio.duck(true);
     const v = G.shipValue(a);
     const ctx = { species: a.species, personality: a.personality, meat_grade: v.q };
-    this.paras = G.buildParas([{ pick: 'ship.farewell_' }, { pick: 'ship.buyer_marbling_' }], ctx);
+    this.paras = G.buildParas([{ pick: 'ship.farewell_' }, G.voiceStep(a, 'ship.voice', 'farewell'), { pick: 'ship.buyer_marbling_' }], ctx);
     this.vars = G.textVars(a);
     this.i = -1;
     this.stage = 1;
@@ -172,7 +172,7 @@ G.shipScreen = {
         const e = G.text.get(id);
         const box = root.querySelector('.ship-text');
         box.classList.remove('hidden');
-        const sp = e.speaker === 'staff_girl' ? G.S.staff.girl.name : e.speaker === 'staff_boy' ? G.S.staff.boy.name : '';
+        const sp = e.speaker === 'staff_girl' ? G.S.staff.girl.name : e.speaker === 'staff_boy' ? G.S.staff.boy.name : e.speaker === 'animal' ? this.a.name : '';
         box.querySelector('.speaker').textContent = sp;
         box.querySelector('.speaker').classList.toggle('hidden', !sp);
         box.querySelector('.ntext').textContent = G.text.fill(e.text, this.vars);

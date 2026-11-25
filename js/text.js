@@ -96,14 +96,22 @@ G.staffFor = (a) => {
   return here.length ? G.pick(here) : G.pick(['girl', 'boy']);
 };
 
-// 段落リストを組み立てる。steps: 'id' | {pick, p} | {id, p}
+// 声のステップ（No.24）：声のある個体だけ。base.<場面>.<性格キー>_NN、late なら base.late.… を優先
+G.voiceStep = (a, base, scene, late) => {
+  if (!a || !G.formOf(a).voice) return null;
+  const pk = G.PERS_KEY[a.personality];
+  return { picks: (late ? [`${base}.late.${scene}.${pk}_`] : []).concat([`${base}.${scene}.${pk}_`]) };
+};
+
+// 段落リストを組み立てる。steps: 'id' | {pick, p} | {picks: [接頭辞…]} | {id, p} | null（飛ばす）
 G.buildParas = (steps, ctx) => {
   const out = [];
   for (const s of steps) {
+    if (!s) continue;
     const st = typeof s === 'string' ? { id: s } : s;
     if (st.p !== undefined && !G.chance(st.p)) continue;
     let id = null;
-    if (st.pick) id = G.text.pick(st.pick, ctx);
+    if (st.picks) { for (const pre of st.picks) { id = G.text.pick(pre, ctx); if (id) break; } } else if (st.pick) id = G.text.pick(st.pick, ctx);
     else if (G.text.has(st.id, ctx)) id = st.id;
     if (id) out.push(id);
   }

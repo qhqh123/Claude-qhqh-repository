@@ -99,6 +99,9 @@ G.C = {
   woodValue: 4500,      // 拡張費用を木材に置き換えるときの換算（1木材）
   woodRound: 10,        // 拡張に求める木材は10単位に四捨五入
   woodShare: { pasture: 0.5, field: 0.3, storage: 0.8 }, // 拡張費用のうち木材で求める割合
+  // フォームの入荷（No.24。仮）：何年目から家畜市場に並ぶか、並ぶ割合
+  formArrival: { telepathy: 3 },
+  formMarketRate: 0.3,
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
   acqRankMax: 3,           // 後天のデメリットバッジの上限（A）
@@ -174,6 +177,8 @@ G.SPECIES = {
 G.DIST_NAMES = { short: '短距離', mid: '中距離', long: '長距離' };
 G.RANKS = ['平凡', 'C', 'B', 'A', 'A+', 'S'];
 G.PERSONALITIES = ['おっとり', '甘えん坊', '活発', '好奇心旺盛', 'マイペース', '頑固'];
+// 文章IDで使う性格の英字キー（声のステップなど）
+G.PERS_KEY = { おっとり: 'calm', 甘えん坊: 'sweet', 活発: 'lively', 好奇心旺盛: 'curious', マイペース: 'easy', 頑固: 'stubborn' };
 G.ACTIVITIES = ['brush', 'pet', 'exercise'];
 G.ACTIVITY_NAMES = { brush: 'ブラッシング', pet: 'ふれあい', exercise: '運動' };
 G.METHOD_NAMES = { ring: 'ゴムリング法', burdizzo: '去勢鉗子法', surgical: '観血法', traditional: '旧来手法' };
