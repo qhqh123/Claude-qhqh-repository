@@ -1,7 +1,9 @@
 // ゲーム状態・帳簿・ターン進行
-G.newGame = () => {
+// route：'A' / 'B'（No.25）。B は開始時点で全フォームが入荷済み
+G.newGame = (route) => {
   G.S = {
     version: G.VERSION,
+    route: route === 'B' ? 'B' : 'A',
     turn: 1,
     money: G.C.startMoney,
     loan: G.C.startLoan,
@@ -18,7 +20,7 @@ G.newGame = () => {
     nextNotice: 1,
     storage: { cap: G.C.storageCap, items: [], next: 1 },
     wood: 0,
-    formsIn: [],
+    formsIn: route === 'B' ? G.FORM_KEYS.slice(1) : [],
     market: [],
     straws: [],
     strawCatalog: [],

@@ -249,4 +249,5 @@ G.FORMS = {
   kemomimi:  { name: 'ケモミミ種',   body: 'earsTail', voice: true,  arms: true,  face: true,  loco: 'biped', weight: 0.4, upkeep: 0.35, meatPlus: 2, meatDecline: 0.3, aging: 2, slot: 0 },
 };
 G.NPC_NAMES = { vet: '獣医', dealer: '家畜商', buyer: 'バイヤー' };
+G.isRouteB = () => !!(G.S && G.S.route === 'B');
 G.formOf = (a) => G.FORMS[(a && a.form) || 'normal'] || G.FORMS.normal;

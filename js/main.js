@@ -40,6 +40,13 @@ G.main = {
         G.ui.confirm('新規ゲーム', '', '新規ゲーム', () => this.newGame());
       } else this.newGame();
     };
+    // 新規ゲーム（B）：出現条件はテストプレーの後で決める。今は常に表示
+    t.querySelector('.new-b').onclick = () => {
+      this.startAudio();
+      if (G.save.hasAuto()) {
+        G.ui.confirm('新規ゲーム（B）', '', '新規ゲーム', () => this.newGame('B'));
+      } else this.newGame('B');
+    };
     cont.onclick = () => {
       this.startAudio();
       if (G.save.loadAuto()) this.startLoaded(); else G.ui.error('セーブデータを読み込めませんでした');
@@ -65,8 +72,8 @@ G.main = {
     document.getElementById('notices').innerHTML = '';
     G.ui.refreshHud();
   },
-  newGame() {
-    G.newGame();
+  newGame(route) {
+    G.newGame(route);
     G.recalcSlots();
     this.enterGame();
     G.ui.holdNotices = true;
