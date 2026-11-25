@@ -55,6 +55,7 @@ G.save = {
     if (!obj.pastures) obj.pastures = {};
     for (const pid of Object.keys(G.MAP.pastures)) if (!obj.pastures[pid]) obj.pastures[pid] = { open: pid === 'p1' };
     if (typeof obj.horseSlots !== 'number') obj.horseSlots = 0;
+    for (const p of Object.values(obj.pastures)) if (typeof p.stage !== 'number') p.stage = 0;
     for (const k of ['stallions', 'raceCard', 'raceEntries']) if (!Array.isArray(obj[k])) obj[k] = [];
     if (!Array.isArray(obj.milkSlots)) obj.milkSlots = Array.from({ length: G.C.startMilkSlots }, () => ({ aid: null }));
     if (!Array.isArray(obj.fields)) obj.fields = [];

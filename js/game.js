@@ -47,8 +47,25 @@ G.defaultPastures = () => {
 };
 G.herdCount = (sp) => G.alive().filter((a) => (a.species || 'cattle') === sp).length;
 G.slotsOf = (sp) => (sp === 'horse' ? G.S.horseSlots : G.S.cattleSlots);
+// 飼育枠の合計は放牧地ごとの上限から計算し直す（開拓・拡張・読み込みのたび）
+G.recalcSlots = () => {
+  const S = G.S;
+  S.cattleSlots = G.openPastures('cattle').reduce((s, p) => s + G.pastureCap(p), 0);
+  S.horseSlots = G.openPastures('horse').reduce((s, p) => s + G.pastureCap(p), 0);
+};
 // 放牧地ごとの上限（第1放牧地は最初の飼育枠、開拓した牛の放牧地・馬の放牧地はそれぞれの枠）
-G.pastureCap = (pid) => (pid === 'p1' ? G.C.startCattleSlots : G.pastureSpecies(pid) === 'horse' ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots);
+// 牛・馬とも同じ（第1放牧地は最初の飼育枠、開拓した放牧地は同じ頭数）。拡張1段階ごとに増える
+G.pastureCap = (pid) => (pid === 'p1' ? G.C.startCattleSlots : G.C.pastureOpenSlots) + G.C.pastureExpandSlots * ((G.S.pastures[pid] || {}).stage || 0);
+G.pastureStage = (pid) => (G.S.pastures[pid] || {}).stage || 0;
+G.expandCost = (pid) => G.C.pastureExpandCost[G.pastureStage(pid)];
+G.expandPasture = (pid) => {
+  const S = G.S, cost = G.expandCost(pid);
+  if (!S.pastures[pid].open || cost === undefined || S.money < cost) return false;
+  S.pastures[pid].stage = G.pastureStage(pid) + 1;
+  G.recalcSlots();
+  G.pay(cost, `放牧地 拡張　${G.MAP_LABEL[pid]}　段階${S.pastures[pid].stage}　${G.yen(cost)}　飼育枠 +${G.C.pastureExpandSlots}`);
+  return true;
+};
 G.pastureCount = (pid) => G.alive().filter((a) => a.pasture === pid).length;
 G.pastureExcess = (pid) => Math.max(0, G.pastureCount(pid) - G.pastureCap(pid));
 G.openPastures = (sp) => Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && (!sp || G.pastureSpecies(p) === sp));
@@ -275,11 +292,12 @@ G.sideWork = (n) => {
 G.openPasture = (pid) => {
   const S = G.S;
   const horse = G.pastureSpecies(pid) === 'horse';
-  const cost = horse ? G.C.horsePastureCost : G.C.pastureOpenCost;
+  const cost = G.C.pastureOpenCost;
   if (S.pastures[pid].open || S.money < cost) return false;
   S.pastures[pid].open = true;
-  if (horse) S.horseSlots += G.C.horseSlotsPerPasture; else S.cattleSlots += G.C.pastureOpenSlots;
-  G.pay(cost, `放牧地 開拓　${G.MAP_LABEL[pid]}　${G.yen(cost)}　飼育枠（${horse ? '馬' : '牛'}） +${horse ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots}`);
+  S.pastures[pid].stage = 0;
+  G.recalcSlots();
+  G.pay(cost, `放牧地 開拓　${G.MAP_LABEL[pid]}　${G.yen(cost)}　飼育枠（${horse ? '馬' : '牛'}） +${G.C.pastureOpenSlots}`);
   return true;
 };
 

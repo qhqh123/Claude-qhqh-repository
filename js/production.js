@@ -148,7 +148,8 @@ G.upkeepBreakdown = () => {
   const pastures = Object.values(S.pastures).filter((p) => p.open).length;
   const milk = S.milkSlots.length;
   const fields = S.fields.filter((f) => f.open).length;
-  return { pastures, milk, fields, total: pastures * G.C.pastureUpkeep + milk * G.C.milkSlotUpkeep + fields * G.C.fieldUpkeep };
+  const stages = Object.keys(S.pastures).filter((p) => S.pastures[p].open).reduce((s, p) => s + G.pastureStage(p), 0);
+  return { pastures, milk, fields, total: pastures * G.C.pastureUpkeep + stages * G.C.pastureUpkeepPerStage + milk * G.C.milkSlotUpkeep + fields * G.C.fieldUpkeep };
 };
 
 // ターン終了時の生産（年齢更新の前に、今季の状態で計算）

@@ -29,7 +29,8 @@ G.senior = {
     // 農耕馬：馬の放牧地がなければ1つ開けてもらう
     if (!Object.keys(S.pastures).some((p) => S.pastures[p].open && G.pastureSpecies(p) === 'horse')) {
       S.pastures.h1.open = true;
-      S.horseSlots += G.C.horseSlotsPerPasture;
+      S.pastures.h1.stage = 0;
+      G.recalcSlots();
       if (G.map && G.map.buildBlocks) G.map.buildBlocks();
     }
     const horse = G.makeAnimal({ species: 'horse', sex: 'M', age: G.ri(8, 12), genes: { length: 1, depth: 1, traits: [{ k: 'stamina', r: 2 }] }, pasture: G.pastureWithRoom('horse') || G.openPastures('horse')[0], origin: 'senior' });

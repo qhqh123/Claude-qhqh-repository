@@ -67,6 +67,7 @@ G.main = {
   },
   newGame() {
     G.newGame();
+    G.recalcSlots();
     this.enterGame();
     G.ui.holdNotices = true;
     for (const a of G.alive()) if (a.sex === 'M' && !a.castrated && a.age === 0) G.notify('castrate', a.id, `🐮 ${a.name}が去勢を検討できる時期になりました！`);
@@ -74,6 +75,7 @@ G.main = {
     G.ui.seasonChange();
   },
   startLoaded() {
+    G.recalcSlots();
     this.enterGame();
     G.ui.holdNotices = false;
     G.ui.noticeQueue = G.S.notices.filter((n) => !n.done && n.turn === G.S.turn);

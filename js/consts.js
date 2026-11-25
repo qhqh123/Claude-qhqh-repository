@@ -86,6 +86,9 @@ G.C = {
   marketDemeritRate: 0.30,
 
   carePerTurn: 5,
+  pastureExpandSlots: 3,                         // 拡張1段階で増える頭数（牛馬共通）
+  pastureExpandCost: [1000000, 1500000, 2000000], // 拡張の費用（段階ごと）
+  pastureUpkeepPerStage: 10000,                  // 拡張1段階ごとの維持費の上乗せ
   crowdStress: 4,          // 過密な放牧地の個体に毎ターン加わるストレス
   crowdUpkeepPerHead: 0.05, // 上限を超えた1頭ごとに維持費（飼料費・施設維持費）+5%
   sideWorkWage: 25000, // 他の牧場の手伝い：お世話1回あたりの賃金（仮）
@@ -115,8 +118,6 @@ G.C = {
   horseLifeMax: 120,
   horseDeclineAge: 40,
   teaserBonus: 0.15,
-  horseSlotsPerPasture: 4,
-  horsePastureCost: 2000000,
   marketFoal: [400000, 900000],
   marketHorse: [700000, 1500000],
   stallionFee: { farm3: 150000, race3: 500000, race4: 2000000 },

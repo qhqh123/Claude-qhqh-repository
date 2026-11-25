@@ -360,7 +360,7 @@ G.map = {
       case 'animal': G.ui.animalMenu(t.a, t.d < 120); break;
       case 'office': G.ui.openOffice(); break;
       case 'town': G.ui.openTown(); break;
-      case 'barn': G.ui.openOffice('list', t.pid); break;
+      case 'barn': G.ui.openPasture(t.pid); break;
       case 'hill': G.ui.openExpand(t.pid); break;
       case 'field': G.ui.openField(t.i); break;
       case 'milk': G.ui.openMilk(); break;
@@ -503,7 +503,12 @@ G.map = {
     items.push({ y: M.office.y + M.office.h, f: () => this.drawOffice() });
     items.push({ y: M.town.y + M.town.h, f: () => this.drawTown() });
     items.push({ y: M.milk.y + M.milk.h, f: () => this.drawMilk() });
-    for (const pid of Object.keys(M.pastures)) if (G.S.pastures[pid].open) { const b = M.pastures[pid].barn; const sp = M.pastures[pid].species; items.push({ y: b.y + b.h, f: () => this.drawBarn(b, sp) }); }
+    for (const pid of Object.keys(M.pastures)) if (G.S.pastures[pid].open) { const b = M.pastures[pid].barn; const sp = M.pastures[pid].species; items.push({ y: b.y + b.h, f: () => {
+      // 拡張の段階に合わせて畜舎（馬房）が大きくなる
+      const k = 1 + 0.12 * G.pastureStage(pid);
+      ctx.save(); ctx.translate(b.x + b.w / 2, b.y + b.h); ctx.scale(k, k); ctx.translate(-(b.x + b.w / 2), -(b.y + b.h));
+      this.drawBarn(b, sp); ctx.restore();
+    } }); }
     M.signs.forEach((s) => items.push({ y: s.y, f: () => this.drawSign(s.x, s.y) }));
     for (const tr of this.deco.trees) if (vis(tr.x, tr.y, 60)) items.push({ y: tr.y, f: () => this.drawTree(tr, pal) });
     for (const a of G.alive()) {
@@ -562,11 +567,14 @@ G.map = {
     ctx.fillStyle = '#9c7a5b'; G.roundRect(ctx, wx - 6, wy - 6, 92, 34, 10); ctx.fill();
     ctx.fillStyle = (G.S.turn - 1) % 4 === 3 ? '#dff3fa' : '#7ccbf0'; G.roundRect(ctx, wx, wy, 80, 22, 8); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(wx + 10, wy + 5, 30, 3);
-    // 干し草
-    ctx.fillStyle = '#f2d27a';
-    ctx.beginPath(); ctx.ellipse(p.x + p.w - 80, p.y + 70, 30, 22, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#d9b14f'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(p.x + p.w - 100, p.y + 64); ctx.lineTo(p.x + p.w - 60, p.y + 66); ctx.moveTo(p.x + p.w - 98, p.y + 76); ctx.lineTo(p.x + p.w - 62, p.y + 78); ctx.stroke();
+    // 干し草（拡張の段階ごとに増える）
+    for (let k = 0; k <= G.pastureStage(pid); k++) {
+      const hx = p.x + p.w - 80 - k * 72;
+      ctx.fillStyle = '#f2d27a';
+      ctx.beginPath(); ctx.ellipse(hx, p.y + 70, 30, 22, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#d9b14f'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(hx - 20, p.y + 64); ctx.lineTo(hx + 20, p.y + 66); ctx.moveTo(hx - 18, p.y + 76); ctx.lineTo(hx + 18, p.y + 78); ctx.stroke();
+    }
     // 柵
     const g = G.gateOf(pid);
     ctx.strokeStyle = '#b98b5e'; ctx.lineWidth = 5; ctx.lineCap = 'round';

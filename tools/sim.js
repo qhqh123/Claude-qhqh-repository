@@ -111,7 +111,7 @@ const STRATEGIES = {
   '農耕馬で商業作物': () => {
     const S = G.S;
     STRATEGIES['基本（自然交配・標準去勢・出荷）']();
-    if (!S.pastures.h1.open && S.money > G.C.horsePastureCost + 1000000) G.openPasture('h1');
+    if (!S.pastures.h1.open && S.money > G.C.pastureOpenCost + 1000000) G.openPasture('h1');
     if (!S.pastures.h1.open) return;
     for (const m of S.market.filter((x) => x.species === 'horse' && x.age >= 6)) if (S.money > m.price + 800000 && G.hasRoom('horse') && G.herdCount('horse') < 3) G.buy(m);
     for (const h of G.alive().filter((a) => G.isHorse(a) && G.isMature(a))) {

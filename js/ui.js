@@ -490,7 +490,7 @@ G.ui = {
       body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.herdCount('cattle')}/${S.cattleSlots}</b></div>
         <div class="kv"><span>飼育枠（馬）</span><b>${G.herdCount('horse')}/${S.horseSlots}</b></div>
         <h3>放牧地・畜舎</h3>
-        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span class="${G.pastureExcess(p) ? 'crowd-text' : ''}">${G.pastureCount(p)}/${G.pastureCap(p)}頭${G.pastureExcess(p) ? '　過密' : ''}</span>` : `<span>${G.pastureSpecies(p) === 'horse' ? `${G.yen(G.C.horsePastureCost)}　飼育枠（馬） +${G.C.horseSlotsPerPasture}` : `${G.yen(G.C.pastureOpenCost)}　飼育枠（牛） +${G.C.pastureOpenSlots}`}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
+        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span class="${G.pastureExcess(p) ? 'crowd-text' : ''}">${G.pastureCount(p)}/${G.pastureCap(p)}頭　段階${G.pastureStage(p)}${G.pastureExcess(p) ? '　過密' : ''}</span><button class="btn small" data-open="${p}">${G.expandCost(p) !== undefined ? '拡張' : '開く'}</button>` : `<span>${G.yen(G.C.pastureOpenCost)}　飼育枠 +${G.C.pastureOpenSlots}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
         <h3>搾乳施設</h3>
         <div class="kv"><span>スロット</span><b>${S.milkSlots.filter((x) => x.aid).length}/${S.milkSlots.length}　<button class="btn small" data-go="milk">開く</button></b></div>
         <h3>畑</h3>
@@ -521,13 +521,13 @@ G.ui = {
   },
   openExpand(pid) {
     const S = G.S;
-    if (S.pastures[pid].open) { this.openOffice('list', pid); return; }
+    if (S.pastures[pid].open) { this.openPasture(pid); return; }
     const horse = G.pastureSpecies(pid) === 'horse';
-    const cost = horse ? G.C.horsePastureCost : G.C.pastureOpenCost;
+    const cost = G.C.pastureOpenCost;
     const can = S.money >= cost;
     const w = this.open(`<h2>⛰ ${G.HILL_LABEL[pid]}</h2>
       <div class="kv"><span>開拓</span><b>${G.yen(cost)}</b></div>
-      <div class="kv"><span>${horse ? '飼育枠（馬）' : '飼育枠（牛）'}</span><b>+${horse ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots}</b></div>
+      <div class="kv"><span>${horse ? '飼育枠（馬）' : '飼育枠（牛）'}</span><b>+${G.C.pastureOpenSlots}</b></div>
       <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeep)}／ターン</b></div>
       <div class="actions"><button class="btn primary ok" ${can ? '' : 'disabled'}>開拓する</button><button class="btn cancel">やめる</button></div>`, { size: 'small' });
     $('.cancel', w).onclick = () => this.close(w);
@@ -540,6 +540,32 @@ G.ui = {
       G.audio.sfx('fanfare');
       this.refreshHud();
     };
+  },
+
+  // 開拓済みの放牧地：頭数・段階・拡張
+  openPasture(pid) {
+    const S = G.S;
+    const w = this.open('<div class="pasture-body"></div>', { size: 'small' });
+    const render = () => {
+      const cost = G.expandCost(pid);
+      const body = $('.pasture-body', w);
+      body.innerHTML = `<h2>${G.pastureSpecies(pid) === 'horse' ? '🐴' : '🐮'} ${G.MAP_LABEL[pid]}</h2>
+        <div class="stat-strip"><div><span>頭数</span><b class="${G.pastureExcess(pid) ? 'crowd-text' : ''}">${G.pastureCount(pid)}/${G.pastureCap(pid)}</b></div><div><span>段階</span><b>${G.pastureStage(pid)}/${G.C.pastureExpandCost.length}</b></div></div>
+        ${cost !== undefined ? `<div class="kv"><span>拡張</span><b>${G.yen(cost)}</b></div>
+        <div class="kv"><span>飼育枠</span><b>+${G.C.pastureExpandSlots}</b></div>
+        <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeepPerStage)}／ターン</b></div>` : ''}
+        <div class="actions">${cost !== undefined ? `<button class="btn primary ok" ${S.money < cost ? 'disabled' : ''}>拡張する</button>` : ''}<button class="btn list">個体一覧</button></div>`;
+      const ok = $('.ok', body);
+      if (ok) ok.onclick = () => {
+        if (!G.expandPasture(pid)) return;
+        const p = G.MAP.pastures[pid];
+        for (let i = 0; i < 4; i++) setTimeout(() => G.map.burst(p.barn.x + Math.random() * p.barn.w, p.barn.y + Math.random() * p.barn.h, ['✨', '🌾', '⭐'], 8), i * 120);
+        G.audio.sfx('fanfare');
+        render(); this.refreshHud(); this.refreshOpenDetail();
+      };
+      $('.list', body).onclick = () => { this.close(w); this.openOffice('list', pid); };
+    };
+    render();
   },
 
   // ---------- 町 ----------
