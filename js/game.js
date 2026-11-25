@@ -46,7 +46,7 @@ G.defaultPastures = () => {
   for (const pid of Object.keys(G.MAP.pastures)) out[pid] = { open: pid === 'p1' };
   return out;
 };
-G.herdCount = (sp) => G.alive().filter((a) => (a.species || 'cattle') === sp).length;
+G.herdCount = (sp) => G.alive().filter((a) => (a.species || 'cattle') === sp).reduce((s, a) => s + G.formOf(a).slot, 0);
 G.slotsOf = (sp) => (sp === 'horse' ? G.S.horseSlots : G.S.cattleSlots);
 // 飼育枠の合計は放牧地ごとの上限から計算し直す（開拓・拡張・読み込みのたび）
 G.recalcSlots = () => {
@@ -71,7 +71,7 @@ G.expandPasture = (pid) => {
   G.payCost(cost, `放牧地 拡張　${G.MAP_LABEL[pid]}　段階${S.pastures[pid].stage}　飼育枠 +${G.C.pastureExpandSlots}`);
   return true;
 };
-G.pastureCount = (pid) => G.alive().filter((a) => a.pasture === pid).length;
+G.pastureCount = (pid) => G.alive().filter((a) => a.pasture === pid).reduce((s, a) => s + G.formOf(a).slot, 0);
 G.pastureExcess = (pid) => Math.max(0, G.pastureCount(pid) - G.pastureCap(pid));
 G.openPastures = (sp) => Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && (!sp || G.pastureSpecies(p) === sp));
 G.totalExcess = () => G.openPastures().reduce((s, p) => s + G.pastureExcess(p), 0);

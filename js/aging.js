@@ -17,16 +17,17 @@ G.AGING = {
 // 今の後天バッジ [{ k, r }]
 G.acqList = (a) => {
   const A = G.AGING[a.species || 'cattle'];
+  const k2 = G.formOf(a).aging;
   const out = [];
   const fertile = a.sex === 'F' || !a.castrated;
   if (fertile && G.isMature(a)) {
-    const [half, none] = A.fert[a.sex];
+    const [half, none] = A.fert[a.sex].map((x) => x * k2);
     if (a.age >= none) out.push({ k: a.sex === 'F' ? 'infertileF' : 'infertileM', r: 1 });
     else if (a.age >= half) out.push({ k: a.sex === 'F' ? 'fertDownF' : 'fertDownM', r: 1 });
   }
   for (const [k, start, sex] of A.ranked) {
     if (sex && a.sex !== sex) continue;
-    if (a.age >= start) out.push({ k, r: Math.min(G.C.acqRankMax, 1 + Math.floor((a.age - start) / 4)) });
+    if (a.age >= start * k2) out.push({ k, r: Math.min(G.C.acqRankMax, 1 + Math.floor((a.age - start * k2) / (4 * k2))) });
   }
   return out;
 };
@@ -67,7 +68,7 @@ G.rollInjury = (a) => {
 
 // ---------- 生産の状態 ----------
 G.upkeepOf = (a) => {
-  const units = G.isMature(a) ? G.C.feedUnitsAdult : G.C.feedUnitsYoung;
+  const units = (G.isMature(a) ? G.C.feedUnitsAdult : G.C.feedUnitsYoung) * G.formOf(a).upkeep;
   return Math.round(units * G.C.feedUnitPrice * G.C.feedSeason[(G.S.turn - 1) % 4]);
 };
 G.nextShipValue = (a) => {

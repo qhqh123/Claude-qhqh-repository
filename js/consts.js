@@ -222,3 +222,18 @@ G.NAMES_M = ['ゴロウ', 'タロウ', 'ゴンタ', 'クロ', 'マメ', 'ジロ�
 
 G.STRAW_MAIN = ['meat', 'growth', 'milk', 'milkq'];
 G.STRAW_NAMES = ['北の誉', '福光', '安美', '茂勝', '百合花', '勝早', '糸桜', '照久', '金幸', '平茂', '美津照', '藤良'];
+
+// ---------- フォーム（No.24）：同じ種の中での見た目と感情の表現方法の違い ----------
+// body：獣の体の振る舞い（full あり／head 頭が牛・馬／earsTail 耳と尾）
+// voice 声、arms 腕、face 表情。loco：quad 四足／biped 二足
+// 経済の倍率（仮）：weight 体重、upkeep 維持費（飼料）、meatPlus 遺伝の肉質ランクへの加算（上限S）、
+//   meatDecline 【肉質低下】の効き目、aging 後天バッジの年齢の倍率、slot 飼育枠の消費
+G.FORM_KEYS = ['normal', 'telepathy', 'taur', 'halfbeast', 'kemomimi'];
+G.FORMS = {
+  normal:    { name: '普通',       body: 'full',     voice: false, arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 1.0,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  telepathy: { name: 'テレパシー種', body: 'full',     voice: true,  arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 0.9,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  taur:      { name: 'タウル種',     body: 'full',     voice: true,  arms: true,  face: true,  loco: 'quad',  weight: 1.0, upkeep: 0.8,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  halfbeast: { name: '半獣人種',     body: 'head',     voice: false, arms: true,  face: false, loco: 'biped', weight: 0.6, upkeep: 0.5,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  kemomimi:  { name: 'ケモミミ種',   body: 'earsTail', voice: true,  arms: true,  face: true,  loco: 'biped', weight: 0.4, upkeep: 0.35, meatPlus: 2, meatDecline: 0.3, aging: 2, slot: 0 },
+};
+G.formOf = (a) => G.FORMS[(a && a.form) || 'normal'] || G.FORMS.normal;

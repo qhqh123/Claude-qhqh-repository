@@ -1,6 +1,7 @@
 // 自動プレーによるバランス検証
 // 使い方: node tools/sim.js [回数=200] [年数=10]
 //   ONLY='農耕' で名前に含む方針だけ実行（軽い確認用）
+//   SEED=123 で乱数の種を固定
 // ゲームの計算部分（画面以外）をそのまま読み込み、方針の違うプレーヤーに遊ばせて集計する。
 const fs = require('fs');
 const path = require('path');
@@ -9,6 +10,11 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 global.window = global;
 global.G = {};
+// 乱数の種：SEED=123 node tools/sim.js で、同じ結果を再現できる
+if (process.env.SEED) {
+  let t = +process.env.SEED >>> 0;
+  Math.random = () => { t = (t + 0x6D2B79F5) >>> 0; let x = t; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+}
 const files = ['consts', 'util', 'text-data', 'text', 'look', 'animals', 'game', 'events', 'production', 'race', 'relations', 'storage', 'wood', 'senior', 'aging', 'save', 'map'];
 for (const f of files) vm.runInThisContext(fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8'), { filename: f + '.js' });
 G.text.setFromBundle(window.TEXT_DATA);

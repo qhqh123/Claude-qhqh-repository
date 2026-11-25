@@ -122,7 +122,7 @@ G.breed = (dam, partner) => {
   const S = G.S;
   dam.bredTurn = S.turn;
   const season = (S.turn - 1) % 4;
-  const feed = Math.round(G.C.feedUnitsAdult * G.C.feedUnitPrice * G.C.feedSeason[(season + 1) % 4]);
+  const feed = Math.round(G.C.feedUnitsAdult * G.formOf(dam).upkeep * G.C.feedUnitPrice * G.C.feedSeason[(season + 1) % 4]);
   let sire, ok, line, ev;
   const vars = G.textVars(dam);
   if (partner.type === 'bull') {

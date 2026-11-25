@@ -75,6 +75,7 @@ G.save = {
       if (typeof a.trained !== 'number') a.trained = 0;
       if (!Array.isArray(a.races)) a.races = [];
       if (!a.affinity) a.affinity = { player: 10, girl: 20, boy: 20 };
+      if (!a.form) a.form = 'normal';
       if (!a.genes) a.genes = { length: 0, depth: 0, traits: [] };
       if (!a.genes.traits) a.genes.traits = [];
     }

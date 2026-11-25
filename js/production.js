@@ -137,7 +137,7 @@ G.feedBalance = () => {
   const herd = G.alive();
   const adults = herd.filter((a) => G.isMature(a)).length;
   const young = herd.length - adults;
-  const need = adults * G.C.feedUnitsAdult + young * G.C.feedUnitsYoung;
+  const need = herd.reduce((s, a) => s + (G.isMature(a) ? G.C.feedUnitsAdult : G.C.feedUnitsYoung) * G.formOf(a).upkeep, 0);
   const self = G.S.fields.reduce((s, f) => s + G.field.produce(f).units, 0);
   const season = (G.S.turn - 1) % 4;
   const buy = Math.max(0, need - self);

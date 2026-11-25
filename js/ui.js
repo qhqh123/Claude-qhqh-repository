@@ -250,6 +250,7 @@ G.ui = {
       <div class="info-col">
         ${archive}
         ${alive ? `<div class="kv"><span>個体識別番号</span><b>${a.idNo}</b></div>` : ''}
+        <div class="kv"><span>品種</span><b>${G.formOf(a).name}</b></div>
         <div class="kv"><span>性格</span><b>${a.personality}</b></div>
         <div class="kv"><span>好きなお世話</span><b>${G.ACTIVITY_NAMES[a.favorite]}</b></div>
         ${alive ? this.bar('健康', a.health, 'health') + this.bar('幸福度', a.happiness, 'happy') + this.bar('ストレス', a.stress, 'stress') + this.bar('なつき度', a.affinity.player, 'aff') + (G.isHorse(a) ? this.bar('当代能力', a.trained || 0, 'train') : '') : ''}
@@ -696,6 +697,27 @@ G.ui = {
     $$('[data-w]', w).forEach((b) => b.onclick = () => { const d = dests[+b.dataset.w]; this.close(w); G.map.warp(d[1], d[2]); });
   },
 
+  // 開発者モード：フォームの個体を作る（子・空きのある放牧地へ）
+  openDevForm() {
+    const st = { species: 'cattle', form: 'telepathy', sex: 'F' };
+    const w = this.open('<h2>フォームの個体を作る</h2><div class="dev-form"></div>', { size: 'small' });
+    const render = () => {
+      const chips = (k, list) => `<div class="chips">${list.map(([v, l]) => `<button class="chip ${st[k] === v ? 'on' : ''}" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
+      $('.dev-form', w).innerHTML = chips('species', [['cattle', G.SPECIES.cattle.name], ['horse', G.SPECIES.horse.name]])
+        + chips('form', G.FORM_KEYS.map((f) => [f, G.FORMS[f].name]))
+        + chips('sex', [['F', '♀'], ['M', '♂']])
+        + '<div class="actions"><button class="btn primary ok">作る</button></div>';
+      $$('[data-k]', w).forEach((b) => b.onclick = () => { st[b.dataset.k] = b.dataset.v; render(); });
+      $('.ok', w).onclick = () => {
+        const pid = G.pastureWithRoom(st.species) || G.openPastures(st.species)[0];
+        if (!pid) return;
+        const a = G.makeAnimal({ species: st.species, form: st.form, sex: st.sex, age: 0, genes: G.randomGenes ? G.randomGenes(0) : { length: 1, depth: 1, traits: [] }, pasture: pid });
+        G.addHistory(a, '開発者モードで作成');
+        this.close(w); this.refreshHud(); this.openDetail(a.id);
+      };
+    };
+    render();
+  },
   // ---------- メニュー ----------
   openMenu() {
     const dev = G.S.devMode;
@@ -705,7 +727,7 @@ G.ui = {
       <button class="btn" data-m="import">セーブデータを読み込む</button>
       <button class="btn" data-m="title">タイトル画面に戻る</button>
       <button class="btn ${dev ? 'on' : ''}" data-m="dev">開発者モードの切り替え</button>
-      ${dev ? `<button class="btn dev-only" data-m="text">文章データを読み込む</button><button class="btn dev-only" data-m="reload">文章データを再読み込み</button><button class="btn dev-only" data-m="skin">スキン：${G.skin.label(G.skin.name)}</button>` : ''}
+      ${dev ? `<button class="btn dev-only" data-m="text">文章データを読み込む</button><button class="btn dev-only" data-m="reload">文章データを再読み込み</button><button class="btn dev-only" data-m="form">フォームの個体を作る</button><button class="btn dev-only" data-m="skin">スキン：${G.skin.label(G.skin.name)}</button>` : ''}
       </div>`, { size: 'small' });
     $$('[data-m]', w).forEach((b) => b.onclick = async () => {
       const m = b.dataset.m;
@@ -720,6 +742,7 @@ G.ui = {
       if (m === 'text') this.pickFile('.json,application/json', async (f) => {
         try { const n = await G.text.importFile(f); this.toast(`${f.name}　${n}`); } catch (e) { this.error('文章データを読み込めませんでした'); }
       });
+      if (m === 'form') { this.close(w); this.openDevForm(); }
       if (m === 'reload') { await G.text.load(); this.toast('文章データ ' + Object.keys(G.text.data).length); }
       if (m === 'skin') {
         const ns = G.skin.names();

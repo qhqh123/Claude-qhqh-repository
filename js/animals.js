@@ -90,6 +90,7 @@ G.makeAnimal = (o) => {
     genes: o.genes,
     sire: o.sire || null, // { id } または { external:true, name, genes }
     dam: o.dam || null,   // id
+    form: o.form || 'normal',
     children: [],
     castrated: false,
     castration: null,
@@ -144,7 +145,7 @@ G.weightCap = (a) => {
   if (a.sex === 'F') cap *= 0.9;
   else if (!a.castrated) cap *= 1.15;
   else cap *= ({ early: 1.0, standard: 1.04, late: 1.08, mature: 1.12 })[a.castration.period] || 1;
-  return cap;
+  return cap * G.formOf(a).weight;
 };
 
 G.growWeight = (a, init) => {
@@ -162,11 +163,12 @@ G.growWeight = (a, init) => {
 
 // 出荷時の肉質評価（内部数値）
 G.meatEval = (a) => {
-  let v = G.traitRank(a, 'meat');
+  const fm = G.formOf(a);
+  let v = Math.min(5, G.traitRank(a, 'meat') + fm.meatPlus);
   if (a.sex === 'F') v += 0.2;
   if (a.castrated) v += a.castBonus;
   v += Math.min(0.6, Math.max(0, a.age - 2) * 0.15);
-  v -= G.C.meatDeclinePerRank * G.acqRank(a, 'meatDecline');
+  v -= G.C.meatDeclinePerRank * G.acqRank(a, 'meatDecline') * fm.meatDecline;
   if (a.stress > 70) v -= 0.3;
   if (a.health < 60) v -= 0.3;
   return v;
