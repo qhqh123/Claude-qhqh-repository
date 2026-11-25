@@ -62,6 +62,9 @@ for sc in ['cas_pre', 'cas_act', 'cas_react', 'cas_after', 'cas_course', 'breed_
 for sc in ['cas_staff', 'breed_staff', 'match']:
     for pk in PERS_KEYS:
         REQUIRED.append(f'b.reply.{sc}.{pk}_*')
+for k in ['flower_crown', 'flower_give', 'flower_carry', 'sing', 'nestle', 'greet_staff']:
+    REQUIRED.append(f'b.behavior.{k}_*')
+REQUIRED += ['b.npc_on_behavior.staff_girl_*', 'b.npc_on_behavior.staff_boy_*']
 # 性格ごとに必ず候補があるべきもの
 PERSONALITY_COVER = [f'cas.{m}.react_biped_' for m in METHODS] + [f'cas.{m}.react_' for m in METHODS] + [f'cas.{m}.pre_' for m in METHODS] + [f'care.{c}_' for c in ['brush', 'pet', 'exercise']]
 

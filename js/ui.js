@@ -993,6 +993,7 @@ G.ui = {
     const list = G.alive();
     if (!list.length) return;
     const a = G.pick(list);
+    if (G.isRouteB() && G.chance(G.C.bBehaviorRate) && this.behaviorEvent(a)) return;
     const id = G.text.pick('daily.animal_', { personality: a.personality });
     if (!id) return;
     G.S.readTexts[id] = true;
@@ -1004,6 +1005,23 @@ G.ui = {
     $('#toasts').appendChild(el);
     setTimeout(() => el.classList.add('out'), 5000);
     setTimeout(() => el.remove(), 5500);
+  },
+
+  // B：家畜の行動と、厩務員の反応（日常イベントの吹き出しで出す）
+  behaviorEvent(a) {
+    const b = G.behavior(a);
+    if (!b) return false;
+    const dev = G.S.devMode;
+    G.S.readTexts[b.id] = true;
+    if (b.rid) G.S.readTexts[b.rid] = true;
+    const el = document.createElement('div');
+    el.className = 'daily';
+    el.innerHTML = `<b>${G.spIcon(a)} ${G.esc(a.name)}</b><span>${G.esc(G.text.fill(G.text.get(b.id).text, b.vars))}</span>${dev ? `<code>${b.id}</code>` : ''}`
+      + (b.rid ? `<span class="voice"><b>${G.esc(b.staffName)}</b>　${G.esc(G.text.fill(G.text.get(b.rid).text, b.vars))}</span>${dev ? `<code>${b.rid}</code>` : ''}` : '');
+    $('#toasts').appendChild(el);
+    setTimeout(() => el.classList.add('out'), 6000);
+    setTimeout(() => el.remove(), 6500);
+    return true;
   },
 
   // ---------- ツールチップ ----------
