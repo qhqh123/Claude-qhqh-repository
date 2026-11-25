@@ -49,6 +49,7 @@ Object.assign(G.ui, {
           { value: 'direct', icon: G.ICONS.direct, title: '直接対応' },
           { value: 'outsource', icon: G.ICONS.outsource, title: '外部委託', sub: `委託費 ${G.yen(out.cost)}` },
         ], 'slim')}
+        <div class="vet-line hidden">${this.npcLineHtml('vet')}</div>
       </div>
       <div class="sheet-sec methods collapsed"><div class="sec-label">術式</div>
         ${this.choiceGrid('method', methods.map((m) => {
@@ -61,6 +62,7 @@ Object.assign(G.ui, {
     G.draw.portrait($('.mini-portrait', w), a);
     const upd = () => {
       $('.methods', w).classList.toggle('collapsed', st.mode !== 'direct');
+      $('.vet-line', w).classList.toggle('hidden', st.mode !== 'outsource');
       let cost = null;
       if (st.mode === 'outsource') cost = out.cost;
       if (st.mode === 'direct' && st.method) { const c = G.castCost(a, st.method, 'direct'); cost = c.cost + c.tool; }

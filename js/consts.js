@@ -100,7 +100,11 @@ G.C = {
   woodRound: 10,        // 拡張に求める木材は10単位に四捨五入
   woodShare: { pasture: 0.5, field: 0.3, storage: 0.8 }, // 拡張費用のうち木材で求める割合
   // フォームの入荷（No.24。仮）：何年目から家畜市場に並ぶか、並ぶ割合
-  formArrival: { telepathy: 3 },
+  formArrival: { telepathy: 3, taur: 5, halfbeast: 7 },
+  // タウル種の出荷（No.24。仮）：上半身の体重の割合、ペットフード原料の単価、埋葬費
+  taurUpperShare: 0.1,
+  petfoodPerKg: 300,
+  burialCost: 50000,
   formMarketRate: 0.3,
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
@@ -241,4 +245,5 @@ G.FORMS = {
   halfbeast: { name: '半獣人種',     body: 'head',     voice: false, arms: true,  face: false, loco: 'biped', weight: 0.6, upkeep: 0.5,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
   kemomimi:  { name: 'ケモミミ種',   body: 'earsTail', voice: true,  arms: true,  face: true,  loco: 'biped', weight: 0.4, upkeep: 0.35, meatPlus: 2, meatDecline: 0.3, aging: 2, slot: 0 },
 };
+G.NPC_NAMES = { vet: '獣医', dealer: '家畜商', buyer: 'バイヤー' };
 G.formOf = (a) => G.FORMS[(a && a.form) || 'normal'] || G.FORMS.normal;

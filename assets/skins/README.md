@@ -24,6 +24,8 @@
 個体は「フォーム」を持ちます。今の牛・馬は `normal` です。別のフォーム（例：`highland`）の絵を用意するときは、
 ファイル名の `<種>` の部分を `<種>-<フォーム>` にします（例：`cattle-highland_adult_coat0_walk.png`）。
 そのフォームの画像がない部分は、その種の標準の絵（プログラムで描く絵）で表示されます。
+フォームは `normal`（普通）・`telepathy`（テレパシー種）・`taur`（タウル種）・`halfbeast`（半獣人種）・`kemomimi`（ケモミミ種）です。
+二足歩行の `halfbeast` と `kemomimi` は、歩き絵の枠が縦長です（`index.js` の `sprite` に `cattle-halfbeast` などで枠の大きさを書きます）。
 
 ## 画像の決まり
 

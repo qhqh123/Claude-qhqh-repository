@@ -435,7 +435,7 @@ G.map = {
       id = G.text.pick(`staff.match_${who}_`, { personality: a.personality, species: a.species });
       if (id) vars = G.textVars(a, { staff: G.S.staff[who].name });
     }
-    if (!id) id = G.text.pick(`daily.staff_${who}_`, {});
+    if (!id) id = G.npcLine(`staff_${who}`, [`daily.staff_${who}_`]);
     if (!id) return;
     const e = G.text.get(id);
     s.say = G.text.fill(e.text, vars);

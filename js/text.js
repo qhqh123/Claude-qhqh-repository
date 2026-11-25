@@ -74,6 +74,14 @@ G.text = {
   },
 };
 
+// 人物の評価の台詞（No.24）。prefixes の候補に、牧場にいるフォームの npc.<form>.<人物>_ を加えて1つ選ぶ
+G.farmForms = () => [...new Set(G.alive().map((a) => a.form || 'normal'))];
+G.npcLine = (person, prefixes, ctx) => {
+  const pres = (prefixes || []).concat(G.farmForms().map((f) => `npc.${f}.${person}_`));
+  const ids = Object.keys(G.text.data).filter((id) => pres.some((p) => id.startsWith(p)) && G.text.match(G.text.data[id].cond, ctx || {}));
+  return ids.length ? G.pick(ids) : null;
+};
+
 // 文章イベント用の差し込み変数
 G.textVars = (a, extra) => {
   const S = G.S;

@@ -1849,6 +1849,198 @@ window.TEXT_DATA = {
   "ship.voice.farewell.stubborn_01": {
    "text": "［ship.voice.farewell.stubborn_01｜声・出荷］",
    "speaker": "animal"
+  },
+  "npc.normal.senior_01": {
+   "text": "［npc.normal.senior_01｜先輩牧場主・普通の評価］",
+   "speaker": "senior"
+  },
+  "npc.normal.senior_02": {
+   "text": "［npc.normal.senior_02｜先輩牧場主・普通の評価］",
+   "speaker": "senior"
+  },
+  "npc.normal.vet_01": {
+   "text": "［npc.normal.vet_01｜獣医・普通の評価］",
+   "speaker": "vet"
+  },
+  "npc.normal.vet_02": {
+   "text": "［npc.normal.vet_02｜獣医・普通の評価］",
+   "speaker": "vet"
+  },
+  "npc.normal.dealer_01": {
+   "text": "［npc.normal.dealer_01｜家畜商・普通の評価］",
+   "speaker": "dealer"
+  },
+  "npc.normal.dealer_02": {
+   "text": "［npc.normal.dealer_02｜家畜商・普通の評価］",
+   "speaker": "dealer"
+  },
+  "npc.normal.buyer_01": {
+   "text": "［npc.normal.buyer_01｜バイヤー・普通の評価］",
+   "speaker": "buyer"
+  },
+  "npc.normal.buyer_02": {
+   "text": "［npc.normal.buyer_02｜バイヤー・普通の評価］",
+   "speaker": "buyer"
+  },
+  "npc.normal.staff_girl_01": {
+   "text": "［npc.normal.staff_girl_01｜厩務員ガール・普通の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.normal.staff_girl_02": {
+   "text": "［npc.normal.staff_girl_02｜厩務員ガール・普通の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.normal.staff_boy_01": {
+   "text": "［npc.normal.staff_boy_01｜厩務員ボーイ・普通の評価］",
+   "speaker": "staff_boy"
+  },
+  "npc.normal.staff_boy_02": {
+   "text": "［npc.normal.staff_boy_02｜厩務員ボーイ・普通の評価］",
+   "speaker": "staff_boy"
+  },
+  "npc.telepathy.senior_01": {
+   "text": "［npc.telepathy.senior_01｜先輩牧場主・テレパシー種の評価］",
+   "speaker": "senior"
+  },
+  "npc.telepathy.senior_02": {
+   "text": "［npc.telepathy.senior_02｜先輩牧場主・テレパシー種の評価］",
+   "speaker": "senior"
+  },
+  "npc.telepathy.vet_01": {
+   "text": "［npc.telepathy.vet_01｜獣医・テレパシー種の評価］",
+   "speaker": "vet"
+  },
+  "npc.telepathy.vet_02": {
+   "text": "［npc.telepathy.vet_02｜獣医・テレパシー種の評価］",
+   "speaker": "vet"
+  },
+  "npc.telepathy.dealer_01": {
+   "text": "［npc.telepathy.dealer_01｜家畜商・テレパシー種の評価］",
+   "speaker": "dealer"
+  },
+  "npc.telepathy.dealer_02": {
+   "text": "［npc.telepathy.dealer_02｜家畜商・テレパシー種の評価］",
+   "speaker": "dealer"
+  },
+  "npc.telepathy.buyer_01": {
+   "text": "［npc.telepathy.buyer_01｜バイヤー・テレパシー種の評価］",
+   "speaker": "buyer"
+  },
+  "npc.telepathy.buyer_02": {
+   "text": "［npc.telepathy.buyer_02｜バイヤー・テレパシー種の評価］",
+   "speaker": "buyer"
+  },
+  "npc.telepathy.staff_girl_01": {
+   "text": "［npc.telepathy.staff_girl_01｜厩務員ガール・テレパシー種の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.telepathy.staff_girl_02": {
+   "text": "［npc.telepathy.staff_girl_02｜厩務員ガール・テレパシー種の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.telepathy.staff_boy_01": {
+   "text": "［npc.telepathy.staff_boy_01｜厩務員ボーイ・テレパシー種の評価］",
+   "speaker": "staff_boy"
+  },
+  "npc.telepathy.staff_boy_02": {
+   "text": "［npc.telepathy.staff_boy_02｜厩務員ボーイ・テレパシー種の評価］",
+   "speaker": "staff_boy"
+  },
+  "npc.taur.senior_01": {
+   "text": "［npc.taur.senior_01｜先輩牧場主・タウル種の評価］",
+   "speaker": "senior"
+  },
+  "npc.taur.senior_02": {
+   "text": "［npc.taur.senior_02｜先輩牧場主・タウル種の評価］",
+   "speaker": "senior"
+  },
+  "npc.taur.vet_01": {
+   "text": "［npc.taur.vet_01｜獣医・タウル種の評価］",
+   "speaker": "vet"
+  },
+  "npc.taur.vet_02": {
+   "text": "［npc.taur.vet_02｜獣医・タウル種の評価］",
+   "speaker": "vet"
+  },
+  "npc.taur.dealer_01": {
+   "text": "［npc.taur.dealer_01｜家畜商・タウル種の評価］",
+   "speaker": "dealer"
+  },
+  "npc.taur.dealer_02": {
+   "text": "［npc.taur.dealer_02｜家畜商・タウル種の評価］",
+   "speaker": "dealer"
+  },
+  "npc.taur.buyer_01": {
+   "text": "［npc.taur.buyer_01｜バイヤー・タウル種の評価］",
+   "speaker": "buyer"
+  },
+  "npc.taur.buyer_02": {
+   "text": "［npc.taur.buyer_02｜バイヤー・タウル種の評価］",
+   "speaker": "buyer"
+  },
+  "npc.taur.staff_girl_01": {
+   "text": "［npc.taur.staff_girl_01｜厩務員ガール・タウル種の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.taur.staff_girl_02": {
+   "text": "［npc.taur.staff_girl_02｜厩務員ガール・タウル種の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.taur.staff_boy_01": {
+   "text": "［npc.taur.staff_boy_01｜厩務員ボーイ・タウル種の評価］",
+   "speaker": "staff_boy"
+  },
+  "npc.taur.staff_boy_02": {
+   "text": "［npc.taur.staff_boy_02｜厩務員ボーイ・タウル種の評価］",
+   "speaker": "staff_boy"
+  },
+  "npc.halfbeast.senior_01": {
+   "text": "［npc.halfbeast.senior_01｜先輩牧場主・半獣人種の評価］",
+   "speaker": "senior"
+  },
+  "npc.halfbeast.senior_02": {
+   "text": "［npc.halfbeast.senior_02｜先輩牧場主・半獣人種の評価］",
+   "speaker": "senior"
+  },
+  "npc.halfbeast.vet_01": {
+   "text": "［npc.halfbeast.vet_01｜獣医・半獣人種の評価］",
+   "speaker": "vet"
+  },
+  "npc.halfbeast.vet_02": {
+   "text": "［npc.halfbeast.vet_02｜獣医・半獣人種の評価］",
+   "speaker": "vet"
+  },
+  "npc.halfbeast.dealer_01": {
+   "text": "［npc.halfbeast.dealer_01｜家畜商・半獣人種の評価］",
+   "speaker": "dealer"
+  },
+  "npc.halfbeast.dealer_02": {
+   "text": "［npc.halfbeast.dealer_02｜家畜商・半獣人種の評価］",
+   "speaker": "dealer"
+  },
+  "npc.halfbeast.buyer_01": {
+   "text": "［npc.halfbeast.buyer_01｜バイヤー・半獣人種の評価］",
+   "speaker": "buyer"
+  },
+  "npc.halfbeast.buyer_02": {
+   "text": "［npc.halfbeast.buyer_02｜バイヤー・半獣人種の評価］",
+   "speaker": "buyer"
+  },
+  "npc.halfbeast.staff_girl_01": {
+   "text": "［npc.halfbeast.staff_girl_01｜厩務員ガール・半獣人種の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.halfbeast.staff_girl_02": {
+   "text": "［npc.halfbeast.staff_girl_02｜厩務員ガール・半獣人種の評価］",
+   "speaker": "staff_girl"
+  },
+  "npc.halfbeast.staff_boy_01": {
+   "text": "［npc.halfbeast.staff_boy_01｜厩務員ボーイ・半獣人種の評価］",
+   "speaker": "staff_boy"
+  },
+  "npc.halfbeast.staff_boy_02": {
+   "text": "［npc.halfbeast.staff_boy_02｜厩務員ボーイ・半獣人種の評価］",
+   "speaker": "staff_boy"
   }
  }
 };

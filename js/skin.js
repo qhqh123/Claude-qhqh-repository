@@ -82,7 +82,8 @@ G.skin = {
     const action = st.mode === 'walk' ? 'walk' : st.mode === 'graze' ? 'graze' : 'idle';
     const im = this.img(G.SKIN_FILES.sprite(look, action));
     if (!im) { (look.species === 'horse' ? G.std.horseSprite : G.std.cowSprite)(ctx, look, x, y, st, t); return; }
-    this.drawFrame(ctx, im, this.manifest().sprite[look.species], action, x, y, st.facing, t, look.seed);
+    const sp = this.manifest().sprite;
+    this.drawFrame(ctx, im, sp[G.lookKey(look)] || sp[look.species], action, x, y, st.facing, t, look.seed);
   },
   person(ctx, kind, x, y, facing, walking, t) {
     const action = walking ? 'walk' : 'idle';

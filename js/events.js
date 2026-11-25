@@ -183,7 +183,7 @@ G.breed = (dam, partner) => {
 };
 
 // ---------- 出荷・売買 ----------
-G.ship = (a) => {
+G.ship = (a, opt) => {
   const S = G.S;
   const v = G.shipValue(a);
   a.status = 'shipped';
@@ -192,6 +192,14 @@ G.ship = (a) => {
   a.shipped = { turn: S.turn, carcass: v.carcass, q: v.q, yieldRank: v.yieldRank, sales: v.sales };
   G.addHistory(a, '出荷');
   G.earn(v.sales, `出荷　個体識別番号 ${a.idNo}　枝肉 ${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}　売上 ${G.yen(v.sales)}`);
+  // タウル種：上半身は枝肉にならない。ペットフード原料として売るか、埋葬する
+  if (a.form === 'taur') {
+    if ((opt && opt.upper) === 'burial') G.pay(G.C.burialCost, `埋葬費　${G.yen(G.C.burialCost)}`);
+    else {
+      const pf = Math.round(a.weight * G.C.taurUpperShare * G.C.petfoodPerKg / 1000) * 1000;
+      G.earn(pf, `副産物　ペットフード原料　${G.yen(pf)}`);
+    }
+  }
   G.record('firstShip');
   G.senior && G.senior.check();
   if (v.q >= 3) G.record('meatA');

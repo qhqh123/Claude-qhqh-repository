@@ -47,7 +47,7 @@ G.senior = {
     return { title: '再建支援', paras: G.buildParas([{ pick: 'senior.rescue_' }], {}), vars, ledger: [line] };
   },
   advice() {
-    const id = G.text.pick('senior.advice_', {});
+    const id = G.npcLine('senior', ['senior.advice_']);
     return { title: '先輩牧場主', paras: id ? [id] : [], vars: { date: G.dateText(G.S.turn) }, ledger: null };
   },
 };

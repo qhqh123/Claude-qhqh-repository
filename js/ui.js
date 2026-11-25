@@ -380,6 +380,14 @@ G.ui = {
 
   // 去勢・交配の画面は ui-choice.js
 
+  // 人物の1行（窓の中に出す）
+  npcLineHtml(person) {
+    const id = G.npcLine(person);
+    if (!id) return '';
+    G.S.readTexts[id] = true;
+    return `<div class="npc-line"><b>${G.NPC_NAMES[person]}</b><span>${G.esc(G.text.fill(G.text.get(id).text, { date: G.dateText(G.S.turn) }))}</span>${G.S.devMode ? `<code>${id}</code>` : ''}</div>`;
+  },
+
   // ---------- 出荷・売却 ----------
   confirmShip(a) {
     const v = G.shipValue(a);
@@ -388,12 +396,19 @@ G.ui = {
       <div class="kv"><span>枝肉（予測）</span><b>${v.carcass}kg</b></div>
       <div class="kv"><span>肉量</span><b>${G.rankName(v.yieldRank)}</b></div><div class="kv"><span>肉質</span><b>${G.rankName(v.q)}</b></div>
       <div class="kv"><span>売上（予測）</span><b>${G.yen(v.sales)}</b></div></div></div>
-      <div class="actions"><button class="btn primary ok">出荷する</button><button class="btn cancel">やめる</button></div>`, { size: 'medium' });
+      ${a.form === 'taur' ? `<div class="sheet-sec"><div class="sec-label">上半身</div>${this.pickChips([{ value: 'petfood', label: 'ペットフード原料' }, { value: 'burial', label: '埋葬' }], 'data-upper')}</div>` : ''}
+      <div class="actions"><button class="btn primary ok" ${a.form === 'taur' ? 'disabled' : ''}>出荷する</button><button class="btn cancel">やめる</button></div>`, { size: 'medium' });
     G.draw.portrait($('canvas', w), a);
+    let upper = null;
+    $$('[data-upper]', w).forEach((b) => b.onclick = () => {
+      upper = b.dataset.upper;
+      $$('[data-upper]', w).forEach((x) => x.classList.toggle('on', x === b));
+      $('.ok', w).disabled = false;
+    });
     $('.cancel', w).onclick = () => this.close(w);
     $('.ok', w).onclick = () => {
       this.closeAll();
-      G.shipScreen.start(a);
+      G.shipScreen.start(a, { upper });
     };
   },
   confirmSell(a) {
@@ -611,7 +626,8 @@ G.ui = {
     $$('.town-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderTown(w, b.dataset.tab); });
     const body = $('.town-body', w);
     if (tab === 'market') {
-      body.innerHTML = `<div class="kv"><span>飼育枠</span><b>🐮 ${G.herdCount('cattle')}/${S.cattleSlots}　🐴 ${G.herdCount('horse')}/${S.horseSlots}</b></div>
+      if (!w.dataset.dealer) w.dataset.dealer = this.npcLineHtml('dealer') || ' ';
+      body.innerHTML = `${w.dataset.dealer.trim()}<div class="kv"><span>飼育枠</span><b>🐮 ${G.herdCount('cattle')}/${S.cattleSlots}　🐴 ${G.herdCount('horse')}/${S.horseSlots}</b></div>
         <div class="cards">${S.market.map((m, i) => `<div class="card market"><canvas class="a-face" data-mk="${i}" width="96" height="96"></canvas><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${m.form && m.form !== 'normal' ? G.FORMS[m.form].name + '　' : ''}${G.ageText(m.age)}　${m.personality}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits({ sex: m.sex, castrated: false }, m.genes, true)}</div>
@@ -927,8 +943,8 @@ G.ui = {
     this.showSummary(sum);
   },
   summaryCat(line, inc) {
-    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース'], ['手伝い', '🧺', '手伝い'], ['木材 売却', '🪵', '木材']]
-      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['放牧地 開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設'], ['倉庫 増設', '⛏', '開拓・増設'], ['けがの治療', '🩹', '治療'], ['木材 購入', '🪵', '木材']];
+    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース'], ['手伝い', '🧺', '手伝い'], ['木材 売却', '🪵', '木材'], ['副産物', '🦴', '副産物']]
+      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['放牧地 開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設'], ['倉庫 増設', '⛏', '開拓・増設'], ['けがの治療', '🩹', '治療'], ['木材 購入', '🪵', '木材'], ['埋葬費', '🕯', '埋葬費']];
     let best = null;
     for (const c of cats) if (line.startsWith(c[0]) && (!best || c[0].length > best[0].length)) best = c;
     return best ? { icon: best[1], name: best[2] } : { icon: '📒', name: 'その他' };

@@ -11,7 +11,7 @@ python3 tools/check-text.py
 import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal', 'senior'}
+SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal', 'senior', 'vet', 'dealer', 'buyer'}
 COND_KEYS = {'species', 'method', 'personality', 'partner_in_pasture', 'partner_liked', 'meat_grade_min', 'locomotion'}
 LOCOMOTION = ['quad', 'biped']
 PLACEHOLDERS = {'name', 'sex', 'age', 'species', 'staff', 'partner', 'date', 'id_number'}

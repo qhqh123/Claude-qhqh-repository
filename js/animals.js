@@ -175,7 +175,7 @@ G.meatEval = (a) => {
 };
 
 G.shipValue = (a) => {
-  const carcass = Math.round(a.weight * G.C.carcassRatio);
+  const carcass = Math.round(a.weight * G.C.carcassRatio * (a.form === 'taur' ? 1 - G.C.taurUpperShare : 1));
   const q = G.clamp(Math.floor(G.meatEval(a) + 1e-6), 0, 5);
   const yieldRank = G.clamp(a.genes.depth | 0, 0, 5);
   const unit = G.C.carcassUnit[q];

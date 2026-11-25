@@ -13,6 +13,11 @@ window.SKINS = {
       sprite: {
         cattle: { w: 128, h: 96, ax: 64, ay: 90 },
         horse: { w: 128, h: 112, ax: 64, ay: 106 },
+        // 二足歩行のフォームは縦長の枠
+        'cattle-halfbeast': { w: 64, h: 128, ax: 32, ay: 124 },
+        'cattle-kemomimi': { w: 64, h: 128, ax: 32, ay: 124 },
+        'horse-halfbeast': { w: 64, h: 136, ax: 32, ay: 132 },
+        'horse-kemomimi': { w: 64, h: 136, ax: 32, ay: 132 },
         person: { w: 64, h: 96, ax: 32, ay: 92 },
       },
     },
