@@ -86,6 +86,8 @@ G.C = {
   marketDemeritRate: 0.30,
 
   carePerTurn: 5,
+  crowdStress: 4,          // 過密な放牧地の個体に毎ターン加わるストレス
+  crowdUpkeepPerHead: 0.05, // 上限を超えた1頭ごとに維持費（飼料費・施設維持費）+5%
   sideWorkWage: 25000, // 他の牧場の手伝い：お世話1回あたりの賃金（仮）
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）

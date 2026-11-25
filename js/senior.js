@@ -18,7 +18,7 @@ G.senior = {
     const S = G.S;
     if (!this.needed()) return null;
     const lowGenes = () => ({ length: G.ri(0, 1), depth: G.ri(0, 1), traits: G.chance(0.5) ? [{ k: G.pick(['meat', 'milk', 'milkq']), r: 1 }] : [] });
-    const pasture = G.pastureWithRoom('cattle') || 'p1';
+    const pasture = G.pastureWithRoom('cattle') || 'p1'; // 救済なので満杯でも入れる
     const cow = G.makeAnimal({ sex: 'F', age: G.ri(8, 12), genes: lowGenes(), pasture, origin: 'senior' });
     const calf = G.makeAnimal({ sex: G.chance(0.5) ? 'M' : 'F', age: 0, genes: G.inherit({ length: 1, depth: 1, traits: [] }, cow.genes), dam: cow.id, pasture, origin: 'senior' });
     calf.motherBond = { id: cow.id, v: G.ri(2, 3) };
@@ -32,7 +32,7 @@ G.senior = {
       S.horseSlots += G.C.horseSlotsPerPasture;
       if (G.map && G.map.buildBlocks) G.map.buildBlocks();
     }
-    const horse = G.makeAnimal({ species: 'horse', sex: 'M', age: G.ri(8, 12), genes: { length: 1, depth: 1, traits: [{ k: 'stamina', r: 2 }] }, pasture: G.pastureWithRoom('horse'), origin: 'senior' });
+    const horse = G.makeAnimal({ species: 'horse', sex: 'M', age: G.ri(8, 12), genes: { length: 1, depth: 1, traits: [{ k: 'stamina', r: 2 }] }, pasture: G.pastureWithRoom('horse') || G.openPastures('horse')[0], origin: 'senior' });
     horse.castrated = true;
     horse.castration = { period: 'mature', method: 'surgical', mode: 'outsource', turn: S.turn - 10 };
     horse.breedInterest = 0;

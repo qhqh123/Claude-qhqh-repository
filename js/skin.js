@@ -4,12 +4,13 @@
 // 画像がない組み合わせは、標準スキンで代わりに描く（一部だけ差し替えても動く）。
 
 // ファイル名の決まり（assets/skins/README.md と tools/export-skin.js も同じ）
+// <種> は 'cattle' / 'horse'。normal 以外のフォームは 'cattle-<フォーム>' のようになる（G.lookKey）
 G.SKIN_FILES = {
-  sprite: (look, action) => `${look.species}_${look.stage}_coat${look.coat}_${action}.png`,
-  portraitBase: (look) => `${look.species}_coat${look.coat}_base.png`,
-  portraitExprCoat: (look) => `${look.species}_coat${look.coat}_expr_${look.expr}.png`,
-  portraitExpr: (look) => `${look.species}_expr_${look.expr}.png`,
-  portraitHorns: (look) => `${look.species}_horns_${look.horns}.png`,
+  sprite: (look, action) => `${G.lookKey(look)}_${look.stage}_coat${look.coat}_${action}.png`,
+  portraitBase: (look) => `${G.lookKey(look)}_coat${look.coat}_base.png`,
+  portraitExprCoat: (look) => `${G.lookKey(look)}_coat${look.coat}_expr_${look.expr}.png`,
+  portraitExpr: (look) => `${G.lookKey(look)}_expr_${look.expr}.png`,
+  portraitHorns: (look) => `${G.lookKey(look)}_horns_${look.horns}.png`,
   person: (kind, action) => `person_${kind}_${action}.png`,
   personPortrait: (kind) => `person_${kind}_portrait.png`,
 };
@@ -35,7 +36,10 @@ G.skin = {
     if (remember !== false) { try { localStorage.setItem('inochi-farm-skin', this.name); } catch (e) { /* */ } }
     return this.preload();
   },
-  // 決まった名前の画像を全部読みにいく（無いものは標準で描く）
+  // 置いた画像の一覧（assets/skins/files.js。node tools/skin-files.js で作り直す）
+  // 一覧にある画像だけを読む。一覧にない絵は、その種の標準の絵で描く
+  fileList() { return ((window.SKIN_FILE_LIST || {})[this.name]) || []; },
+  // 決まった名前の一覧（下絵の書き出しで使う）
   allFiles() {
     const F = G.SKIN_FILES, out = [];
     for (const species of ['cattle', 'horse']) {
@@ -53,7 +57,7 @@ G.skin = {
   preload() {
     const m = this.manifest();
     if (!m) return Promise.resolve();
-    const jobs = this.allFiles().map((f) => new Promise((res) => {
+    const jobs = this.fileList().map((f) => new Promise((res) => {
       const key = this.name + '/' + f;
       if (this.imgs[key] !== undefined) { res(); return; }
       const im = new Image();

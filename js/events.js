@@ -227,16 +227,8 @@ G.buyStraw = (s) => {
   return true;
 };
 
-G.pastureWithRoom = (sp) => {
-  const open = Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && G.pastureSpecies(p) === (sp || 'cattle'));
-  if (!open.length) return null;
-  let best = open[0], min = 1e9;
-  for (const p of open) {
-    const n = G.alive().filter((a) => a.pasture === p).length;
-    if (n < min) { min = n; best = p; }
-  }
-  return best;
-};
+// 空きのある放牧地のうち、番号の若いところ（なければ null）
+G.pastureWithRoom = (sp) => G.openPastures(sp || 'cattle').find((p) => G.pastureCount(p) < G.pastureCap(p)) || null;
 
 // S ランク個体の作出（出生時）
 G.checkRankS = (a) => {

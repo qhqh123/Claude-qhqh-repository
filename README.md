@@ -26,6 +26,7 @@ python3 tools/build-text.py
 | `python3 tools/text-sheet.py` | 執筆用の台帳 `docs/文章台帳.md` を作り直す |
 | `node tools/sim.js [回数] [年数]` | 自動プレーでのバランス検証（結果は `docs/バランス検証.md`） |
 | `node tools/export-skin.js` | 標準の絵を下絵の画像（`assets/skins/template/`）に書き出す |
+| `node tools/skin-files.js` | スキンの画像を足したり消したりしたあと、置いた画像の一覧を作り直す |
 | `python3 tools/build-artifact.py 出力.html` | 1つのHTMLにまとめる（共有ページ用） |
 
 ## 資料

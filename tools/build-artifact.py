@@ -22,6 +22,8 @@ def inline_script(m):
     if src == 'assets/skins/index.js':
         # 共有ページでは画像を置けないので、標準スキンだけにする
         return "<script>window.SKINS = { active: 'standard', list: {} };</script>"
+    if src == 'assets/skins/files.js':
+        return "<script>window.SKIN_FILE_LIST = {};</script>"
     code = open(os.path.join(root, src), encoding='utf-8').read()
     if '</script' in code.lower():
         sys.exit(f'{src} に </script が含まれています')

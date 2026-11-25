@@ -70,6 +70,7 @@ G.save = {
       if (!a.flags) a.flags = {};
       if (!a.species) a.species = 'cattle';
       if (typeof a.coat !== 'number') a.coat = G.defaultCoat(a);
+      if (!a.form) a.form = 'normal';
       if (typeof a.trained !== 'number') a.trained = 0;
       if (!Array.isArray(a.races)) a.races = [];
       if (!a.affinity) a.affinity = { player: 10, girl: 20, boy: 20 };

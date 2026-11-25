@@ -265,7 +265,7 @@ G.ui = {
         <div class="kv"><span>売上（予測）</span><b>${G.yen(v.sales)}${v.pen > 0 ? `　<small>未去勢 −${Math.round(v.pen * 100)}%</small>` : ''}</b></div>
         <div class="kv"><span>見込み売上（次のターン）</span><b>${G.yen(G.nextShipValue(a))} ${['↓', '→', '↑'][G.valueTrend(a) + 1]}</b></div>
         <div class="kv"><span>維持費（1ターン）</span><b>${G.yen(G.upkeepOf(a))}</b></div>
-        <div class="kv"><span>放牧地</span><b>${pastures.length > 1 ? '' : G.MAP_LABEL[a.pasture]}</b></div>${pastures.length > 1 ? this.pickChips(pastures.map((p) => ({ value: p, label: G.MAP_LABEL[p], on: p === a.pasture })), 'data-move') : ''}` : ''}
+        <div class="kv"><span>放牧地</span><b>${pastures.length > 1 ? '' : G.MAP_LABEL[a.pasture]}</b></div>${pastures.length > 1 ? this.pickChips(pastures.map((p) => ({ value: p, label: `${G.MAP_LABEL[p]} ${G.pastureCount(p)}/${G.pastureCap(p)}`, on: p === a.pasture, disabled: p !== a.pasture && G.pastureCount(p) >= G.pastureCap(p) })), 'data-move') : ''}` : ''}
       </div></div>
       ${alive ? `<div class="actions">
         ${G.canBreed(a) ? '<button class="btn primary" data-act="breed">💞 交配</button>' : ''}
@@ -439,7 +439,7 @@ G.ui = {
       const filt = pid && S.pastures[pid] ? pid : '';
       const idleOnly = pid === 'idle';
       const list = G.alive().filter((a) => (idleOnly ? ['idle', 'peak'].includes(G.prodState(a)) : (!filt || a.pasture === filt))).sort((x, y) => x.pasture.localeCompare(y.pasture) || y.age - x.age);
-      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt && !idleOnly ? 'on' : ''}" data-p="${p}">${p ? G.MAP_LABEL[p] : 'すべて'}</button>`).join('')}<button class="chip ${idleOnly ? 'on' : ''}" data-p="idle">生産なし</button><span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
+      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt && !idleOnly ? 'on' : ''} ${p && G.pastureExcess(p) ? 'crowd' : ''}" data-p="${p}">${p ? `${G.MAP_LABEL[p]} ${G.pastureCount(p)}/${G.pastureCap(p)}` : 'すべて'}</button>`).join('')}<button class="chip ${idleOnly ? 'on' : ''}" data-p="idle">生産なし</button><span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
         <div class="a-list">${list.map((a) => { const ps = G.prodState(a); return this.animalRow(a, `<span class="st">${this.breedStatus(a)}</span><span class="row-pills">${ps === 'idle' || ps === 'peak' ? '<span class="pill idle">生産なし</span>' : ''}${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '<span class="pill">出荷適期</span>' : ''}<span class="trend t${G.valueTrend(a)}">見込み ${['↓', '→', '↑'][G.valueTrend(a) + 1]}</span></span>`); }).join('') || '<div class="muted">—</div>'}</div>`;
       this.drawFaces(body);
       $$('.a-row', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
@@ -463,8 +463,10 @@ G.ui = {
     }
     if (tab === 'money') {
       const fb = G.feedBalance();
-      const feed = fb.cost;
+      const cm = G.crowdMult();
+      const feed = Math.round(fb.cost * cm);
       const up = G.upkeepBreakdown();
+      up.total = Math.round(up.total * cm);
       const milkInc = S.milkSlots.reduce((s, x) => s + (x.aid && S.animals[x.aid] ? G.milk.calc(S.animals[x.aid]).income : 0), 0);
       const cropInc = S.fields.reduce((s, f) => s + G.field.produce(f).money, 0);
       const thisTurn = S.ledger.filter((e) => e.turn === S.turn);
@@ -488,7 +490,7 @@ G.ui = {
       body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.herdCount('cattle')}/${S.cattleSlots}</b></div>
         <div class="kv"><span>飼育枠（馬）</span><b>${G.herdCount('horse')}/${S.horseSlots}</b></div>
         <h3>放牧地・畜舎</h3>
-        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span>${G.alive().filter((a) => a.pasture === p).length}頭</span>` : `<span>${G.pastureSpecies(p) === 'horse' ? `${G.yen(G.C.horsePastureCost)}　飼育枠（馬） +${G.C.horseSlotsPerPasture}` : `${G.yen(G.C.pastureOpenCost)}　飼育枠（牛） +${G.C.pastureOpenSlots}`}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
+        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span class="${G.pastureExcess(p) ? 'crowd-text' : ''}">${G.pastureCount(p)}/${G.pastureCap(p)}頭${G.pastureExcess(p) ? '　過密' : ''}</span>` : `<span>${G.pastureSpecies(p) === 'horse' ? `${G.yen(G.C.horsePastureCost)}　飼育枠（馬） +${G.C.horseSlotsPerPasture}` : `${G.yen(G.C.pastureOpenCost)}　飼育枠（牛） +${G.C.pastureOpenSlots}`}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
         <h3>搾乳施設</h3>
         <div class="kv"><span>スロット</span><b>${S.milkSlots.filter((x) => x.aid).length}/${S.milkSlots.length}　<button class="btn small" data-go="milk">開く</button></b></div>
         <h3>畑</h3>
@@ -675,6 +677,7 @@ G.ui = {
   noticeAction(n) {
     if (n.done) return n.type === 'diary' ? '読む' : (n.aid && G.S.animals[n.aid] ? '詳細' : '');
     if (n.type === 'rescue') return n.done ? '' : '町へ';
+    if (n.type === 'crowd') return '個体一覧';
     return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け', idle: '詳細', peak: '詳細', aging: '詳細' }[n.type] || '';
   },
   queueNotice(n) {
@@ -728,6 +731,9 @@ G.ui = {
       this.openBreed(a);
     } else if (n.type === 'rescue') {
       this.openTown('senior');
+    } else if (n.type === 'crowd') {
+      n.done = true;
+      this.openOffice('list', n.pid);
     } else if (n.type === 'milkable' && !n.done) {
       this.openMilk();
     } else if (n.type === 'milklow' && !n.done && a && G.canBreed(a)) {
@@ -766,8 +772,8 @@ G.ui = {
     this.showSummary(sum);
   },
   summaryCat(line, inc) {
-    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース']]
-      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設']];
+    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース'], ['手伝い', '🧺', '手伝い']]
+      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['放牧地 開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設'], ['倉庫 増設', '⛏', '開拓・増設'], ['けがの治療', '🩹', '治療']];
     let best = null;
     for (const c of cats) if (line.startsWith(c[0]) && (!best || c[0].length > best[0].length)) best = c;
     return best ? { icon: best[1], name: best[2] } : { icon: '📒', name: 'その他' };

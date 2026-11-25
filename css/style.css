@@ -649,3 +649,8 @@ body.dev .dev-only { display: block; }
 .work-main { flex: 1; min-width: 0; }
 .work-title { font-weight: 800; font-size: 18px; }
 .work-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* ---------- 過密 ---------- */
+.chip.crowd { background: #ffe1d6; color: #c2552d; }
+.crowd-text { color: #c2552d !important; font-weight: 800; }
+.notice.crowd { border-color: #ffc9a8; }

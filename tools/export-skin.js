@@ -90,4 +90,5 @@ const outDir = path.resolve(process.argv[2] || path.join(root, 'assets', 'skins'
   }
   console.log(`${Object.keys(files).length} files → ${outDir}（${Math.round(bytes / 1024)}KB）`);
   await browser.close();
+  require('./skin-files.js');
 })();

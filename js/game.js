@@ -47,7 +47,24 @@ G.defaultPastures = () => {
 };
 G.herdCount = (sp) => G.alive().filter((a) => (a.species || 'cattle') === sp).length;
 G.slotsOf = (sp) => (sp === 'horse' ? G.S.horseSlots : G.S.cattleSlots);
-G.hasRoom = (sp) => G.herdCount(sp) < G.slotsOf(sp);
+// 放牧地ごとの上限（第1放牧地は最初の飼育枠、開拓した牛の放牧地・馬の放牧地はそれぞれの枠）
+G.pastureCap = (pid) => (pid === 'p1' ? G.C.startCattleSlots : G.pastureSpecies(pid) === 'horse' ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots);
+G.pastureCount = (pid) => G.alive().filter((a) => a.pasture === pid).length;
+G.pastureExcess = (pid) => Math.max(0, G.pastureCount(pid) - G.pastureCap(pid));
+G.openPastures = (sp) => Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && (!sp || G.pastureSpecies(p) === sp));
+G.totalExcess = () => G.openPastures().reduce((s, p) => s + G.pastureExcess(p), 0);
+G.crowdMult = () => 1 + G.C.crowdUpkeepPerHead * G.totalExcess();
+G.hasRoom = (sp) => !!G.pastureWithRoom(sp);
+// 過密になったら1回だけ警告する
+G.checkCrowding = () => {
+  const S = G.S;
+  S.crowdWarned = S.crowdWarned || {};
+  for (const p of G.openPastures()) {
+    const ex = G.pastureExcess(p);
+    if (ex > 0 && !S.crowdWarned[p]) { S.crowdWarned[p] = true; G.notify('crowd', null, `⚠ ${G.MAP_LABEL[p]}が過密です（${G.pastureCount(p)}/${G.pastureCap(p)}）`, { pid: p }); }
+    if (!ex) S.crowdWarned[p] = false;
+  }
+};
 
 G.setupHerd = () => {
   const mk = G.makeAnimal;
@@ -289,6 +306,7 @@ G.endTurn = () => {
     let rec = 20 - G.traitRank(a, 'frail') * 3 + (likedHere ? 5 : 0) + (staffMatch ? 5 : 0);
     if (a.flags.earlyCast) { rec = 100; a.flags.earlyCast = false; }
     if (a.flags.linger > 0) { rec = Math.round(rec / 2); a.flags.linger--; }
+    if (G.pastureExcess(a.pasture) > 0) rec = 0; // 過密の放牧地では自然には回復しない（ストレスは下で少しずつ加わる）
     a.stress = G.clamp(a.stress - rec + (dislikedHere ? 3 : 0), 0, 100);
     if (G.traitRank(a, 'temper') && !a.castrated && a.sex === 'M' && G.chance(0.1 * G.traitRank(a, 'temper'))) a.stress = Math.min(100, a.stress + 10);
     // 幸福度
@@ -308,6 +326,7 @@ G.endTurn = () => {
     if (a.sex === 'F' && G.isMature(a) && !a.pregnancy) a.openTurns++;
     // 成熟
     G.applyAging(a);
+    if (G.pastureExcess(a.pasture) > 0) a.stress = Math.min(100, a.stress + G.C.crowdStress);
     G.rollInjury(a);
     // 当代能力は少しずつ落ちる
     if (a.trained) a.trained = Math.max(0, a.trained - G.C.trainDecay);
@@ -359,11 +378,15 @@ G.endTurn = () => {
   for (const c of newborns) c.status = 'newborn';
   const fb = G.feedBalance();
   for (const c of newborns) c.status = 'alive';
-  if (fb.cost) G.pay(fb.cost, `飼料費　必要 ${fb.need}単位　自給 ${fb.self}単位　購入 ${fb.buy}単位　${G.yen(fb.cost)}`);
+  const cm = G.crowdMult();
+  const crowdNote = cm > 1 ? `　過密 +${Math.round((cm - 1) * 100)}%` : '';
+  fb.cost = Math.round(fb.cost * cm);
+  if (fb.cost) G.pay(fb.cost, `飼料費　必要 ${fb.need}単位　自給 ${fb.self}単位　購入 ${fb.buy}単位${crowdNote}　${G.yen(fb.cost)}`);
   else G.ledger(`飼料　必要 ${fb.need}単位　自給 ${fb.self}単位`, 0, 'note');
   if (fb.surplusIncome) G.earn(fb.surplusIncome, `飼料 売却　${fb.surplus}単位　${G.yen(fb.surplusIncome)}`, { silent: true });
   const up = G.upkeepBreakdown();
-  G.pay(up.total, `施設維持費　放牧地・畜舎 ${up.pastures}区画　搾乳 ${up.milk}枠${up.fields ? `　畑 ${up.fields}区画` : ''}　${G.yen(up.total)}`);
+  up.total = Math.round(up.total * cm);
+  G.pay(up.total, `施設維持費　放牧地・畜舎 ${up.pastures}区画　搾乳 ${up.milk}枠${up.fields ? `　畑 ${up.fields}区画` : ''}${crowdNote}　${G.yen(up.total)}`);
   G.pay(G.C.staffWage, `人件費　厩務員 2名　${G.yen(G.C.staffWage)}`);
 
   // 季節の収支
@@ -419,6 +442,7 @@ G.endTurn = () => {
   G.refreshStallions();
   G.race.makeCard();
   for (const a of G.alive()) G.checkProdState(a);
+  G.checkCrowding();
   G.checkRecords();
   G.senior.check();
   S.lastSummary = summary;
