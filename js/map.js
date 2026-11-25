@@ -509,11 +509,11 @@ G.map = {
     for (const a of G.alive()) {
       const s = this.stOf(a);
       if (!vis(s.x, s.y, 80)) continue;
-      items.push({ y: s.y, f: () => { (a.species === 'horse' ? G.draw.horse : G.draw.cow)(ctx, a, s.x, s.y, s, t); this.drawAnimalExtras(a, s); } });
+      items.push({ y: s.y, f: () => { G.skin.animal(ctx, G.look(a), s.x, s.y, s, t); this.drawAnimalExtras(a, s); } });
     }
-    for (const k of ['girl', 'boy']) { const s = this.staff[k]; items.push({ y: s.y, f: () => { G.draw.person(ctx, s.x, s.y, k, s.facing, s.walk, t); this.drawSay(s); } }); }
+    for (const k of ['girl', 'boy']) { const s = this.staff[k]; items.push({ y: s.y, f: () => { G.skin.person(ctx, k, s.x, s.y, s.facing, s.walk, t); this.drawSay(s); } }); }
     const P = G.S.player;
-    items.push({ y: P.y, f: () => G.draw.person(ctx, P.x, P.y, 'player', this.facing, this.walking, t) });
+    items.push({ y: P.y, f: () => G.skin.person(ctx, 'player', P.x, P.y, this.facing, this.walking, t) });
     items.sort((a, b) => a.y - b.y).forEach((i) => i.f());
     // エフェクト
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

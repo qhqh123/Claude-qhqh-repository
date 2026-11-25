@@ -3,6 +3,7 @@ G.main = {
   async boot() {
     try { G.audio.muted = !!localStorage.getItem('inochi-farm-muted'); } catch (e) { /* */ }
     await G.text.load();
+    await G.skin.init();
     G.ui.initHud();
     G.ui.initTip();
     G.novel.init();

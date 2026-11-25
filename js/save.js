@@ -69,6 +69,7 @@ G.save = {
       for (const k of ['history', 'diaries', 'likes', 'dislikes', 'children']) if (!Array.isArray(a[k])) a[k] = [];
       if (!a.flags) a.flags = {};
       if (!a.species) a.species = 'cattle';
+      if (typeof a.coat !== 'number') a.coat = G.defaultCoat(a);
       if (typeof a.trained !== 'number') a.trained = 0;
       if (!Array.isArray(a.races)) a.races = [];
       if (!a.affinity) a.affinity = { player: 10, girl: 20, boy: 20 };

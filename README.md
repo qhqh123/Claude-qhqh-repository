@@ -25,6 +25,7 @@ python3 tools/build-text.py
 | `python3 tools/check-text.py` | 文章JSONのチェック（ID・条件・プレースホルダー・抜け） |
 | `python3 tools/text-sheet.py` | 執筆用の台帳 `docs/文章台帳.md` を作り直す |
 | `node tools/sim.js [回数] [年数]` | 自動プレーでのバランス検証（結果は `docs/バランス検証.md`） |
+| `node tools/export-skin.js` | 標準の絵を下絵の画像（`assets/skins/template/`）に書き出す |
 | `python3 tools/build-artifact.py 出力.html` | 1つのHTMLにまとめる（共有ページ用） |
 
 ## 資料
@@ -50,6 +51,8 @@ python3 tools/build-text.py
 | `js/ui-choice.js` | 選択カード・一覧の行・去勢と交配・倉庫の画面 |
 | `js/draw-horse.js` | 馬の描画 |
 | `js/text.js` / `js/novel.js` | 文章JSON・ノベル表示・既読スキップ・出荷画面 |
-| `js/map.js` / `js/draw.js` | マップ・カメラ・ミニマップ・描画 |
+| `js/map.js` | マップ・カメラ・ミニマップ |
+| `js/look.js` / `js/skin.js` | 見た目情報と、絵の差し替え（スキン）。説明は `assets/skins/README.md` |
+| `js/draw.js` / `js/draw-horse.js` | 標準スキン（プログラムで描く絵） |
 | `js/ui.js` | 事務所・町・個体詳細・通知などの画面 |
 | `js/save.js` | 自動セーブ・JSON書き出し/読み込み |

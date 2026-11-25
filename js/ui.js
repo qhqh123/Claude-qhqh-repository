@@ -499,9 +499,10 @@ G.ui = {
     }
     if (tab === 'staff') {
       const ps = Object.keys(S.pastures).filter((p) => S.pastures[p].open);
-      body.innerHTML = ['girl', 'boy'].map((k) => `<div class="staff-card ${k}"><div class="staff-avatar">${k === 'girl' ? '👩‍🌾' : '👨‍🌾'}</div>
+      body.innerHTML = ['girl', 'boy'].map((k) => `<div class="staff-card ${k}"><canvas class="staff-avatar" data-person="${k}" width="120" height="120"></canvas>
         <div class="staff-main"><input class="text-input" data-name="${k}" maxlength="10" value="${G.esc(S.staff[k].name)}">
         <div class="sec-label">担当放牧地</div>${this.pickChips(ps.map((p) => ({ value: `${k}|${p}`, label: G.MAP_LABEL[p], on: S.staff[k].pasture === p })), 'data-sp')}</div></div>`).join('');
+      $$('canvas[data-person]', body).forEach((c) => G.skin.personPortrait(c, c.dataset.person));
       $$('[data-name]', body).forEach((i) => i.onchange = () => { const v = i.value.trim(); if (v) S.staff[i.dataset.name].name = v; });
       $$('[data-sp]', body).forEach((b) => b.onclick = () => { const [k, p] = b.getAttribute('data-sp').split('|'); S.staff[k].pasture = p; G.audio.sfx('click'); this.renderOffice(w, 'staff'); });
     }
@@ -587,10 +588,11 @@ G.ui = {
     }
     if (tab === 'senior') {
       const need = G.senior.needed();
-      body.innerHTML = `<div class="senior ${need ? 'alert' : ''}"><div class="senior-avatar">🧓</div>
+      body.innerHTML = `<div class="senior ${need ? 'alert' : ''}"><canvas class="senior-avatar" data-person="senior" width="172" height="172"></canvas>
         <div class="senior-main"><div class="senior-name">先輩牧場主</div>
         <div class="senior-btns"><button class="btn" data-sr="advice">💬 話を聞く</button>
         ${need ? '<button class="btn primary rescue" data-sr="rescue">❗ 再建を手伝ってもらう</button>' : ''}</div></div></div>`;
+      $$('canvas[data-person]', body).forEach((c) => G.skin.personPortrait(c, c.dataset.person));
       $$('[data-sr]', body).forEach((b) => b.onclick = () => {
         if (b.dataset.sr === 'advice') { const ev = G.senior.advice(); if (ev.paras.length) G.novel.play(ev); return; }
         const ev = G.senior.rescue();
@@ -634,7 +636,7 @@ G.ui = {
       <button class="btn" data-m="import">セーブデータを読み込む</button>
       <button class="btn" data-m="title">タイトル画面に戻る</button>
       <button class="btn ${dev ? 'on' : ''}" data-m="dev">開発者モードの切り替え</button>
-      ${dev ? '<button class="btn dev-only" data-m="text">文章データを読み込む</button><button class="btn dev-only" data-m="reload">文章データを再読み込み</button>' : ''}
+      ${dev ? `<button class="btn dev-only" data-m="text">文章データを読み込む</button><button class="btn dev-only" data-m="reload">文章データを再読み込み</button><button class="btn dev-only" data-m="skin">スキン：${G.skin.label(G.skin.name)}</button>` : ''}
       </div>`, { size: 'small' });
     $$('[data-m]', w).forEach((b) => b.onclick = async () => {
       const m = b.dataset.m;
@@ -650,6 +652,11 @@ G.ui = {
         try { const n = await G.text.importFile(f); this.toast(`${f.name}　${n}`); } catch (e) { this.error('文章データを読み込めませんでした'); }
       });
       if (m === 'reload') { await G.text.load(); this.toast('文章データ ' + Object.keys(G.text.data).length); }
+      if (m === 'skin') {
+        const ns = G.skin.names();
+        await G.skin.use(ns[(ns.indexOf(G.skin.name) + 1) % ns.length]);
+        this.close(w); this.openMenu();
+      }
     });
   },
   pickFile(accept, cb) {

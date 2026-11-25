@@ -8,7 +8,7 @@ const vm = require('vm');
 const root = path.join(__dirname, '..');
 global.window = global;
 global.G = {};
-const files = ['consts', 'util', 'text-data', 'text', 'animals', 'game', 'events', 'production', 'race', 'relations', 'storage', 'senior', 'aging', 'save', 'map'];
+const files = ['consts', 'util', 'text-data', 'text', 'look', 'animals', 'game', 'events', 'production', 'race', 'relations', 'storage', 'senior', 'aging', 'save', 'map'];
 for (const f of files) vm.runInThisContext(fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8'), { filename: f + '.js' });
 G.text.setFromBundle(window.TEXT_DATA);
 // 調整案を試す: TUNE='{"staffWage":50000}' node tools/sim.js

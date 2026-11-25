@@ -112,6 +112,7 @@ G.makeAnimal = (o) => {
   };
   S.animals[id] = a;
   a.idNo = G.newIdNumber();
+  a.coat = G.defaultCoat(a);
   // 年齢に合わせて体重を進める
   for (let i = 0; i < a.age; i++) G.growWeight(a, true);
   if (G.isMature(a) && a.sex === 'M') a.breedInterest = G.ri(1, 3);
