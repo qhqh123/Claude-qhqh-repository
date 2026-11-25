@@ -82,6 +82,7 @@ G.novel = {
   show(p, instant) {
     this.win.classList.toggle('ledger-mode', !!p.ledger);
     if (p.ledger) {
+      this.textEl.classList.remove('margin');
       this.speakerEl.textContent = '帳簿';
       this.speakerEl.classList.remove('hidden');
       this.textEl.innerHTML = p.ledger.map((l) => `<div>${G.esc(l)}</div>`).join('');
@@ -101,6 +102,7 @@ G.novel = {
     this.speakerEl.textContent = name;
     this.speakerEl.classList.toggle('hidden', !name);
     this.speakerEl.className = 'speaker ' + sp + (name ? '' : ' hidden');
+    this.textEl.classList.toggle('margin', sp === 'margin');
     const text = G.text.fill(e.text, this.vars);
     G.S.readTexts[p.id] = true;
     this.idEl.textContent = p.id;

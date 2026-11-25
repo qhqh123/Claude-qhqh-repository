@@ -54,10 +54,14 @@ G.castrate = (a, methodSel, mode) => {
   const staff = G.staffFor(a);
   const late = period === 'late' || period === 'mature';
   const vo = (scene) => G.voiceStep(a, `cas.voice.${method}`, scene, late);
+  // B（No.25）：成熟した個体の去勢だけ、処置を嫌がる台詞・失ったことを話す台詞・余白の文を足す
+  const bMature = G.isRouteB() && G.isMature(a);
+  const pk = G.PERS_KEY[a.personality];
   const steps = [
     'cas.head',
     { pick: `cas.${method}.pre_` },
     vo('pre'),
+    bMature ? { pick: `b.mature.pre.${pk}_` } : null,
     `cas.${method}.tool`,
     G.bodyStep(`cas.${method}.locate`),
     G.armsStep(a, 'locate'),
@@ -77,6 +81,8 @@ G.castrate = (a, methodSel, mode) => {
     G.replyStep(a, 'cas_staff'),
     `cas.${method}.after`,
     vo('after'),
+    bMature ? { pick: `b.mature.after.${pk}_` } : null,
+    bMature ? { pick: 'b.margin_' } : null,
   );
   if (keep && keep.kept) steps.push({ pick: 'cas.keep_testes_' });
   const vars = G.textVars(a);
