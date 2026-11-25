@@ -103,6 +103,11 @@ G.voiceStep = (a, base, scene, late) => {
   return { picks: (late ? [`${base}.late.${scene}.${pk}_`] : []).concat([`${base}.${scene}.${pk}_`]) };
 };
 
+// 体の文（No.24）：四足の文と二足の文（ID末尾 .biped）のうち条件に合うほう
+G.bodyStep = (id) => ({ alt: [id, id + '.biped'] });
+// 腕の文：腕のある個体だけ
+G.armsStep = (a, scene) => (a && G.formOf(a).arms ? { pick: `cas.arms.${scene}_` } : null);
+
 // 段落リストを組み立てる。steps: 'id' | {pick, p} | {picks: [接頭辞…]} | {id, p} | null（飛ばす）
 G.buildParas = (steps, ctx) => {
   const out = [];
@@ -112,6 +117,7 @@ G.buildParas = (steps, ctx) => {
     if (st.p !== undefined && !G.chance(st.p)) continue;
     let id = null;
     if (st.picks) { for (const pre of st.picks) { id = G.text.pick(pre, ctx); if (id) break; } } else if (st.pick) id = G.text.pick(st.pick, ctx);
+    else if (st.alt) id = st.alt.find((x) => G.text.has(x, ctx)) || null;
     else if (G.text.has(st.id, ctx)) id = st.id;
     if (id) out.push(id);
   }

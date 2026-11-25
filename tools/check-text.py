@@ -12,7 +12,8 @@ import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal', 'senior'}
-COND_KEYS = {'species', 'method', 'personality', 'partner_in_pasture', 'partner_liked', 'meat_grade_min'}
+COND_KEYS = {'species', 'method', 'personality', 'partner_in_pasture', 'partner_liked', 'meat_grade_min', 'locomotion'}
+LOCOMOTION = ['quad', 'biped']
 PLACEHOLDERS = {'name', 'sex', 'age', 'species', 'staff', 'partner', 'date', 'id_number'}
 PERSONALITIES = ['おっとり', '甘えん坊', '活発', '好奇心旺盛', 'マイペース', '頑固']
 METHODS = ['ring', 'burdizzo', 'surgical', 'traditional']
@@ -48,8 +49,13 @@ for sc in ['pre', 'act', 'after']:
         REQUIRED.append(f'breed.voice.{sc}.{pk}_*')
 for pk in PERS_KEYS:
     REQUIRED += [f'ship.voice.farewell.{pk}_*', f'daily.voice.{pk}_*']
+# 体の文の二足版（No.24）と腕の文
+for m in METHODS:
+    REQUIRED += [f'cas.{m}.locate.biped', f'cas.{m}.act.biped', f'cas.{m}.react_biped_*']
+REQUIRED += ['breed.ai.act.biped', 'breed.ai.estrus_biped_*', 'breed.natural.act_biped_*', 'breed.teaser.act_biped_*', 'breed.stallion.act_biped_*',
+             'cas.arms.locate_*', 'cas.arms.act_*', 'cas.arms.react_*']
 # 性格ごとに必ず候補があるべきもの
-PERSONALITY_COVER = [f'cas.{m}.react_' for m in METHODS] + [f'cas.{m}.pre_' for m in METHODS] + [f'care.{c}_' for c in ['brush', 'pet', 'exercise']]
+PERSONALITY_COVER = [f'cas.{m}.react_biped_' for m in METHODS] + [f'cas.{m}.react_' for m in METHODS] + [f'cas.{m}.pre_' for m in METHODS] + [f'care.{c}_' for c in ['brush', 'pet', 'exercise']]
 
 
 def load():
@@ -90,6 +96,7 @@ def check():
                     if p not in PERSONALITIES: errors.append(f'{k}: 性格 "{p}" はありません')
             if ck == 'method' and cv not in METHODS: errors.append(f'{k}: method "{cv}" はありません')
             if ck == 'species' and cv not in SPECIES: errors.append(f'{k}: species "{cv}" はありません')
+            if ck == 'locomotion' and cv not in LOCOMOTION: errors.append(f'{k}: locomotion "{cv}" はありません')
     ids = set(data)
     for r in REQUIRED:
         if r.endswith('*'):

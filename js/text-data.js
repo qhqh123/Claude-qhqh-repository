@@ -103,7 +103,17 @@ window.TEXT_DATA = {
   },
   "breed.ai.estrus_01": {
    "text": "［breed.ai.estrus_01｜発情の確認］",
-   "speaker": "narration"
+   "speaker": "narration",
+   "cond": {
+    "locomotion": "quad"
+   }
+  },
+  "breed.ai.estrus_biped_01": {
+   "text": "［breed.ai.estrus_biped_01｜発情の確認（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "locomotion": "biped"
+   }
   },
   "breed.ai.partner_near_01": {
    "text": "［breed.ai.partner_near_01｜仲の良い雄］",
@@ -121,7 +131,17 @@ window.TEXT_DATA = {
   },
   "breed.ai.act": {
    "text": "［breed.ai.act｜人工授精の実施］",
-   "speaker": "narration"
+   "speaker": "narration",
+   "cond": {
+    "locomotion": "quad"
+   }
+  },
+  "breed.ai.act.biped": {
+   "text": "［breed.ai.act.biped｜人工授精の実施（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "locomotion": "biped"
+   }
   },
   "breed.ai.after_partner_01": {
    "text": "［breed.ai.after_partner_01｜直後（仲の良い雄）］",
@@ -138,14 +158,32 @@ window.TEXT_DATA = {
    "text": "［breed.natural.act_01｜自然交配（仲の良い相手）］",
    "speaker": "narration",
    "cond": {
-    "partner_liked": true
+    "partner_liked": true,
+    "locomotion": "quad"
+   }
+  },
+  "breed.natural.act_biped_01": {
+   "text": "［breed.natural.act_biped_01｜自然交配（仲の良い相手）（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "partner_liked": true,
+    "locomotion": "biped"
    }
   },
   "breed.natural.act_02": {
    "text": "［breed.natural.act_02｜自然交配（それ以外）］",
    "speaker": "narration",
    "cond": {
-    "partner_liked": false
+    "partner_liked": false,
+    "locomotion": "quad"
+   }
+  },
+  "breed.natural.act_biped_02": {
+   "text": "［breed.natural.act_biped_02｜自然交配（それ以外）（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "partner_liked": false,
+    "locomotion": "biped"
    }
   },
   "breed.natural.after_01": {
@@ -156,7 +194,16 @@ window.TEXT_DATA = {
    "text": "［breed.teaser.act_01｜当て馬］",
    "speaker": "narration",
    "cond": {
-    "species": "horse"
+    "species": "horse",
+    "locomotion": "quad"
+   }
+  },
+  "breed.teaser.act_biped_01": {
+   "text": "［breed.teaser.act_biped_01｜当て馬（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "species": "horse",
+    "locomotion": "biped"
    }
   },
   "breed.teaser.after_01": {
@@ -174,7 +221,16 @@ window.TEXT_DATA = {
    "text": "［breed.stallion.act_01｜外部種牡馬との交配］",
    "speaker": "narration",
    "cond": {
-    "species": "horse"
+    "species": "horse",
+    "locomotion": "quad"
+   }
+  },
+  "breed.stallion.act_biped_01": {
+   "text": "［breed.stallion.act_biped_01｜外部種牡馬との交配（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "species": "horse",
+    "locomotion": "biped"
    }
   },
   "breed.stallion.after_01": {
@@ -311,14 +367,32 @@ window.TEXT_DATA = {
    "text": "［cas.ring.locate｜対象の確認］",
    "speaker": "narration",
    "cond": {
-    "method": "ring"
+    "method": "ring",
+    "locomotion": "quad"
+   }
+  },
+  "cas.ring.locate.biped": {
+   "text": "［cas.ring.locate.biped｜対象の確認（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "locomotion": "biped"
    }
   },
   "cas.ring.act": {
    "text": "［cas.ring.act｜処置の実施］",
    "speaker": "narration",
    "cond": {
-    "method": "ring"
+    "method": "ring",
+    "locomotion": "quad"
+   }
+  },
+  "cas.ring.act.biped": {
+   "text": "［cas.ring.act.biped｜処置の実施（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "locomotion": "biped"
    }
   },
   "cas.ring.mismatch_01": {
@@ -336,7 +410,20 @@ window.TEXT_DATA = {
     "personality": [
      "おっとり",
      "甘えん坊"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.ring.react_biped_01": {
+   "text": "［cas.ring.react_biped_01｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.ring.react_02": {
@@ -347,7 +434,20 @@ window.TEXT_DATA = {
     "personality": [
      "活発",
      "頑固"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.ring.react_biped_02": {
+   "text": "［cas.ring.react_biped_02｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "personality": [
+     "活発",
+     "頑固"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.ring.react_03": {
@@ -358,7 +458,20 @@ window.TEXT_DATA = {
     "personality": [
      "好奇心旺盛",
      "マイペース"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.ring.react_biped_03": {
+   "text": "［cas.ring.react_biped_03｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.ring.after": {
@@ -410,14 +523,32 @@ window.TEXT_DATA = {
    "text": "［cas.burdizzo.locate｜対象の確認］",
    "speaker": "narration",
    "cond": {
-    "method": "burdizzo"
+    "method": "burdizzo",
+    "locomotion": "quad"
+   }
+  },
+  "cas.burdizzo.locate.biped": {
+   "text": "［cas.burdizzo.locate.biped｜対象の確認（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "locomotion": "biped"
    }
   },
   "cas.burdizzo.act": {
    "text": "［cas.burdizzo.act｜処置の実施］",
    "speaker": "narration",
    "cond": {
-    "method": "burdizzo"
+    "method": "burdizzo",
+    "locomotion": "quad"
+   }
+  },
+  "cas.burdizzo.act.biped": {
+   "text": "［cas.burdizzo.act.biped｜処置の実施（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "locomotion": "biped"
    }
   },
   "cas.burdizzo.mismatch_01": {
@@ -435,7 +566,20 @@ window.TEXT_DATA = {
     "personality": [
      "おっとり",
      "甘えん坊"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.burdizzo.react_biped_01": {
+   "text": "［cas.burdizzo.react_biped_01｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.burdizzo.react_02": {
@@ -446,7 +590,20 @@ window.TEXT_DATA = {
     "personality": [
      "活発",
      "頑固"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.burdizzo.react_biped_02": {
+   "text": "［cas.burdizzo.react_biped_02｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "personality": [
+     "活発",
+     "頑固"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.burdizzo.react_03": {
@@ -457,7 +614,20 @@ window.TEXT_DATA = {
     "personality": [
      "好奇心旺盛",
      "マイペース"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.burdizzo.react_biped_03": {
+   "text": "［cas.burdizzo.react_biped_03｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.burdizzo.after": {
@@ -509,14 +679,32 @@ window.TEXT_DATA = {
    "text": "［cas.surgical.locate｜対象の確認］",
    "speaker": "narration",
    "cond": {
-    "method": "surgical"
+    "method": "surgical",
+    "locomotion": "quad"
+   }
+  },
+  "cas.surgical.locate.biped": {
+   "text": "［cas.surgical.locate.biped｜対象の確認（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "locomotion": "biped"
    }
   },
   "cas.surgical.act": {
    "text": "［cas.surgical.act｜処置の実施］",
    "speaker": "narration",
    "cond": {
-    "method": "surgical"
+    "method": "surgical",
+    "locomotion": "quad"
+   }
+  },
+  "cas.surgical.act.biped": {
+   "text": "［cas.surgical.act.biped｜処置の実施（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "locomotion": "biped"
    }
   },
   "cas.surgical.mismatch_01": {
@@ -534,7 +722,20 @@ window.TEXT_DATA = {
     "personality": [
      "おっとり",
      "甘えん坊"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.surgical.react_biped_01": {
+   "text": "［cas.surgical.react_biped_01｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.surgical.react_02": {
@@ -545,7 +746,20 @@ window.TEXT_DATA = {
     "personality": [
      "活発",
      "頑固"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.surgical.react_biped_02": {
+   "text": "［cas.surgical.react_biped_02｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "personality": [
+     "活発",
+     "頑固"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.surgical.react_03": {
@@ -556,7 +770,20 @@ window.TEXT_DATA = {
     "personality": [
      "好奇心旺盛",
      "マイペース"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.surgical.react_biped_03": {
+   "text": "［cas.surgical.react_biped_03｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.surgical.after": {
@@ -642,14 +869,32 @@ window.TEXT_DATA = {
    "text": "［cas.traditional.locate｜対象の確認］",
    "speaker": "narration",
    "cond": {
-    "method": "traditional"
+    "method": "traditional",
+    "locomotion": "quad"
+   }
+  },
+  "cas.traditional.locate.biped": {
+   "text": "［cas.traditional.locate.biped｜対象の確認（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "locomotion": "biped"
    }
   },
   "cas.traditional.act": {
    "text": "［cas.traditional.act｜処置の実施］",
    "speaker": "narration",
    "cond": {
-    "method": "traditional"
+    "method": "traditional",
+    "locomotion": "quad"
+   }
+  },
+  "cas.traditional.act.biped": {
+   "text": "［cas.traditional.act.biped｜処置の実施（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "locomotion": "biped"
    }
   },
   "cas.traditional.mismatch_01": {
@@ -667,7 +912,20 @@ window.TEXT_DATA = {
     "personality": [
      "おっとり",
      "甘えん坊"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.traditional.react_biped_01": {
+   "text": "［cas.traditional.react_biped_01｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.traditional.react_02": {
@@ -678,7 +936,20 @@ window.TEXT_DATA = {
     "personality": [
      "活発",
      "頑固"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.traditional.react_biped_02": {
+   "text": "［cas.traditional.react_biped_02｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "活発",
+     "頑固"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.traditional.react_03": {
@@ -689,7 +960,20 @@ window.TEXT_DATA = {
     "personality": [
      "好奇心旺盛",
      "マイペース"
-    ]
+    ],
+    "locomotion": "quad"
+   }
+  },
+  "cas.traditional.react_biped_03": {
+   "text": "［cas.traditional.react_biped_03｜反応（二足）］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ],
+    "locomotion": "biped"
    }
   },
   "cas.traditional.after": {
@@ -1189,6 +1473,194 @@ window.TEXT_DATA = {
   "cas.voice.traditional.course.stubborn_01": {
    "text": "［cas.voice.traditional.course.stubborn_01｜声・経過日誌］",
    "speaker": "animal"
+  },
+  "cas.arms.locate_01": {
+   "text": "［cas.arms.locate_01｜腕・押さえ方］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring"
+   }
+  },
+  "cas.arms.act_01": {
+   "text": "［cas.arms.act_01｜腕・処置］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring"
+   }
+  },
+  "cas.arms.react_01": {
+   "text": "［cas.arms.react_01｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ]
+   }
+  },
+  "cas.arms.react_02": {
+   "text": "［cas.arms.react_02｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "personality": [
+     "活発",
+     "頑固"
+    ]
+   }
+  },
+  "cas.arms.react_03": {
+   "text": "［cas.arms.react_03｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "ring",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ]
+   }
+  },
+  "cas.arms.locate_02": {
+   "text": "［cas.arms.locate_02｜腕・押さえ方］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo"
+   }
+  },
+  "cas.arms.act_02": {
+   "text": "［cas.arms.act_02｜腕・処置］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo"
+   }
+  },
+  "cas.arms.react_04": {
+   "text": "［cas.arms.react_04｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ]
+   }
+  },
+  "cas.arms.react_05": {
+   "text": "［cas.arms.react_05｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "personality": [
+     "活発",
+     "頑固"
+    ]
+   }
+  },
+  "cas.arms.react_06": {
+   "text": "［cas.arms.react_06｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "burdizzo",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ]
+   }
+  },
+  "cas.arms.locate_03": {
+   "text": "［cas.arms.locate_03｜腕・押さえ方］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical"
+   }
+  },
+  "cas.arms.act_03": {
+   "text": "［cas.arms.act_03｜腕・処置］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical"
+   }
+  },
+  "cas.arms.react_07": {
+   "text": "［cas.arms.react_07｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ]
+   }
+  },
+  "cas.arms.react_08": {
+   "text": "［cas.arms.react_08｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "personality": [
+     "活発",
+     "頑固"
+    ]
+   }
+  },
+  "cas.arms.react_09": {
+   "text": "［cas.arms.react_09｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "surgical",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ]
+   }
+  },
+  "cas.arms.locate_04": {
+   "text": "［cas.arms.locate_04｜腕・押さえ方］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
+  },
+  "cas.arms.act_04": {
+   "text": "［cas.arms.act_04｜腕・処置］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional"
+   }
+  },
+  "cas.arms.react_10": {
+   "text": "［cas.arms.react_10｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "おっとり",
+     "甘えん坊"
+    ]
+   }
+  },
+  "cas.arms.react_11": {
+   "text": "［cas.arms.react_11｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "活発",
+     "頑固"
+    ]
+   }
+  },
+  "cas.arms.react_12": {
+   "text": "［cas.arms.react_12｜腕・反応］",
+   "speaker": "narration",
+   "cond": {
+    "method": "traditional",
+    "personality": [
+     "好奇心旺盛",
+     "マイペース"
+    ]
+   }
   }
  },
  "daily-events.json": {

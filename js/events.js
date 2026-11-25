@@ -50,7 +50,7 @@ G.castrate = (a, methodSel, mode) => {
   const keep = mode === 'direct' && period === 'mature' && !incomplete && (method === 'surgical' || method === 'traditional') ? G.store.addTestes(a, method) : null;
 
   if (mode !== 'direct') return null;
-  const ctx = { species: a.species, method, personality: a.personality };
+  const ctx = { species: a.species, method, personality: a.personality, locomotion: G.formOf(a).loco };
   const staff = G.staffFor(a);
   const late = period === 'late' || period === 'mature';
   const vo = (scene) => G.voiceStep(a, `cas.voice.${method}`, scene, late);
@@ -59,15 +59,18 @@ G.castrate = (a, methodSel, mode) => {
     { pick: `cas.${method}.pre_` },
     vo('pre'),
     `cas.${method}.tool`,
-    `cas.${method}.locate`,
+    G.bodyStep(`cas.${method}.locate`),
+    G.armsStep(a, 'locate'),
     `cas.${a.species}.function_sperm`,
     `cas.${a.species}.function_hormone`,
-    `cas.${method}.act`,
+    G.bodyStep(`cas.${method}.act`),
+    G.armsStep(a, 'act'),
     vo('act'),
   ];
   if (!suitable) steps.push({ pick: `cas.${method}.mismatch_` });
   steps.push(
     { pick: `cas.${method}.react_` },
+    G.armsStep(a, 'react'),
     vo('react'),
     { pick: 'cas.react_projection_', p: 0.5 },
     { pick: `cas.staff_${staff}_`, p: 0.3 },
@@ -88,7 +91,7 @@ G.storeDiary = (a, ev) => {
 G.deliverCourse = (c) => {
   const a = G.S.animals[c.aid];
   if (!a || a.status !== 'alive') return;
-  const ctx = { species: a.species, method: c.method, personality: a.personality };
+  const ctx = { species: a.species, method: c.method, personality: a.personality, locomotion: G.formOf(a).loco };
   if (c.infection) {
     a.infection = G.C.infectionTurns;
     a.health = Math.max(30, a.health - 30);
@@ -137,7 +140,7 @@ G.breed = (dam, partner) => {
     ok = G.chance(G.C.naturalConception * G.fertMult(dam) * G.fertMult(bull));
     line = `自然交配　${dam.name} × ${bull.name}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = bull.name;
-    const ctx = { species: dam.species, personality: dam.personality, partner_liked: G.likesAnimal(dam, bull) };
+    const ctx = { species: dam.species, personality: dam.personality, partner_liked: G.likesAnimal(dam, bull), locomotion: G.formOf(dam).loco };
     ev = { title: '交配', paras: G.buildParas(['breed.natural.head', G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.natural.act_' }, G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.natural.after_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
     G.addHistory(dam, `自然交配　${bull.name}　${ok ? '受胎' : '不受胎'}`);
     G.addHistory(bull, `自然交配　${dam.name}　${ok ? '受胎' : '不受胎'}`);
@@ -149,7 +152,7 @@ G.breed = (dam, partner) => {
     G.pay(st.fee, `種付け料　${st.name}（外部）　${G.yen(st.fee)}`);
     line = `種付け　${dam.name} × ${st.name}（外部）${teaser ? `　当て馬 ${teaser.name}` : ''}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = st.name;
-    const ctx = { species: dam.species, personality: dam.personality };
+    const ctx = { species: dam.species, personality: dam.personality, locomotion: G.formOf(dam).loco };
     const steps = ['breed.stallion.head', G.voiceStep(dam, 'breed.voice', 'pre')];
     if (teaser) steps.push({ pick: 'breed.teaser.act_' }, { pick: 'breed.teaser.after_' });
     steps.push({ pick: 'breed.stallion.act_' }, G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.stallion.after_' }, G.voiceStep(dam, 'breed.voice', 'after'));
@@ -165,8 +168,8 @@ G.breed = (dam, partner) => {
     ok = G.chance(G.C.aiConception * G.fertMult(dam));
     line = `人工授精　${dam.name}　精液ストロー ${straw.name}（${G.TRAITS[straw.main].name}期待${G.rankName(straw.rank)}）${G.yen(straw.price)}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     const near = G.partnerNear(dam);
-    const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near };
-    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, 'breed.ai.act', G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.ai.after_partner_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
+    const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near, locomotion: G.formOf(dam).loco };
+    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, G.bodyStep('breed.ai.act'), G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.ai.after_partner_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
     G.addHistory(dam, `人工授精　${straw.name}　${ok ? '受胎' : '不受胎'}`);
   }
   if (ok) {

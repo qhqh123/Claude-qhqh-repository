@@ -210,7 +210,7 @@ G.assignRelations = (a) => {
   a.dislikes = pool.slice(nLike, nLike + nDislike).map((b) => ({ id: b.id, v: -1 }));
 };
 
-G.likesAnimal = (a, b) => a.likes.some((l) => l.id === b.id) || (a.motherBond && a.motherBond.id === b.id);
+G.likesAnimal = (a, b) => !!(a.likes.some((l) => l.id === b.id) || (a.motherBond && a.motherBond.id === b.id));
 
 // 産子の登録
 G.birth = (dam) => {
