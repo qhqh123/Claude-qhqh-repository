@@ -1,8 +1,13 @@
 // 見下ろし2Dマップ（No.17）
 G.MAP = {
   W: 4100, H: 2700,
+  X0: -700, // 左に広げた森の端
   office: { x: 300, y: 620, w: 240, h: 190 },
-  town: { x: 30, y: 1330, w: 130, h: 130 },
+  // 町への門（森の小道の突き当たり）。触れると町が開く
+  town: { x: -680, y: 1300, w: 60, h: 200 },
+  townExit: { x: -540, y: 1400 },
+  // 当たり判定のある森（小道 y: gap1〜gap2 をはさむ）
+  forest: { x2: -20, gap1: 1335, gap2: 1475 },
   pond: { x: 400, y: 1180, rx: 120, ry: 70 },
   // species: 放牧地の動物種。開拓前は丘として描く
   pastures: {
@@ -83,7 +88,7 @@ G.map = {
     this.canvas.width = this.vw * dpr; this.canvas.height = this.vh * dpr;
     this.canvas.style.width = this.vw + 'px'; this.canvas.style.height = this.vh + 'px';
     const mw = this.vw < 600 ? 150 : 230;
-    const mh = mw * G.MAP.H / G.MAP.W;
+    const mh = mw * G.MAP.H / (G.MAP.W - G.MAP.X0);
     this.mini.width = mw * dpr; this.mini.height = mh * dpr;
     this.mini.style.width = mw + 'px'; this.mini.style.height = mh + 'px';
   },
@@ -112,8 +117,17 @@ G.map = {
       if (trees.some((t) => Math.hypot(t.x - x, t.y - y) < 60)) continue;
       trees.push({ x, y, r: 26 + rnd() * 14, kind: rnd() < 0.3 ? 1 : 0 });
     }
+    const F = M.forest, forest = [];
+    for (let y = -30; y < M.H + 60; y += 38) {
+      for (let x = M.X0 - 10; x < F.x2; x += 44) {
+        const tx = x + (rnd() - 0.5) * 22, ty = y + (rnd() - 0.5) * 16;
+        if (tx > F.x2 - 6 - rnd() * 30) continue;
+        if (ty > F.gap1 - 8 && ty < F.gap2 + 30) continue;
+        forest.push({ x: tx, y: ty, r: 26 + rnd() * 12, kind: rnd() < 0.12 ? 1 : 0 });
+      }
+    }
     const tufts = [];
-    for (let i = 0; i < 2000; i++) tufts.push({ x: rnd() * M.W, y: rnd() * M.H, k: rnd() });
+    for (let i = 0; i < 2300; i++) tufts.push({ x: M.X0 + rnd() * (M.W - M.X0), y: rnd() * M.H, k: rnd() });
     const flowers = [];
     for (let i = 0; i < 600; i++) {
       const x = rnd() * M.W, y = rnd() * M.H;
@@ -137,7 +151,7 @@ G.map = {
     }
     const weeds = [];
     for (let i = 0; i < 50 * M.fieldBlocks.length; i++) { const f = M.fieldBlocks[i % M.fieldBlocks.length]; weeds.push({ x: f.x + 20 + rnd() * (f.w - 40), y: f.y + 20 + rnd() * (f.h - 40) }); }
-    this.deco = { trees, tufts, flowers, hillDeco, cracks, weeds };
+    this.deco = { trees, forest, tufts, flowers, hillDeco, cracks, weeds };
   },
 
   paths: [
@@ -148,7 +162,7 @@ G.map = {
     [[3700, 900], [3700, 760]],
     [[1070, 900], [1070, 1090]],
     [[1500, 900], [1500, 250], [1260, 250]],
-    [[420, 900], [420, 1000], [250, 1000], [250, 1400], [160, 1400]],
+    [[420, 900], [420, 1000], [250, 1000], [250, 1400], [-700, 1400]],
     [[250, 1290], [650, 1290], [650, 1220]],
     [[1500, 900], [1500, 1700]],
     [[250, 1400], [250, 1700], [3700, 1700]],
@@ -175,7 +189,8 @@ G.map = {
     const o = M.office;
     B.push({ x: o.x, y: o.y + 40, w: o.w, h: o.h - 40 });
     B.push({ x: M.milk.x, y: M.milk.y + 50, w: M.milk.w, h: M.milk.h - 50 });
-    B.push({ x: M.town.x, y: M.town.y + 60, w: 22, h: 70 }, { x: M.town.x + M.town.w - 22, y: M.town.y + 60, w: 22, h: 70 });
+    const F = M.forest;
+    B.push({ x: M.X0, y: 0, w: F.x2 - M.X0, h: F.gap1 }, { x: M.X0, y: F.gap2, w: F.x2 - M.X0, h: M.H - F.gap2 });
     for (const pid of Object.keys(M.pastures)) {
       const p = M.pastures[pid];
       if (!G.S.pastures[pid].open) continue;
@@ -193,7 +208,7 @@ G.map = {
   },
   blocked(x, y, r) {
     const M = G.MAP;
-    if (x < r || y < r || x > M.W - r || y > M.H - r) return true;
+    if (x < M.X0 + r || y < r || x > M.W - r || y > M.H - r) return true;
     for (const b of this.blocks) if (x + r > b.x && x - r < b.x + b.w && y + r * 0.5 > b.y && y - r * 0.5 < b.y + b.h) return true;
     const dx = (x - M.pond.x) / (M.pond.rx + r * 0.5), dy = (y - M.pond.y) / (M.pond.ry + r * 0.5);
     return dx * dx + dy * dy < 1;
@@ -299,20 +314,33 @@ G.map = {
       if (!this.blocked(P.x, ny, 14)) P.y = ny;
       if (Math.abs(dx) > 0.2) this.facing = dx > 0 ? 1 : -1;
     }
+    this.checkTownGate();
     // カメラ
     const tx = P.x - this.vw / 2, ty = P.y - this.vh / 2 + 20;
     const k = Math.min(1, dt * 6);
     this.cam.x += (tx - this.cam.x) * k;
     this.cam.y += (ty - this.cam.y) * k;
-    this.cam.x = G.clamp(this.cam.x, 0, Math.max(0, G.MAP.W - this.vw));
+    this.cam.x = G.clamp(this.cam.x, G.MAP.X0, Math.max(G.MAP.X0, G.MAP.W - this.vw));
     this.cam.y = G.clamp(this.cam.y, 0, Math.max(0, G.MAP.H - this.vh));
     // 近くの家畜の名前と操作ボタン
     const near = this.nearest(110);
     G.ui.setNear(near);
   },
+  // 門に触れたら町を開き、門の少し右に右向きで立たせる
+  checkTownGate() {
+    const P = G.S.player, t = G.MAP.town;
+    if (G.ui.modalOpen() || P.x - 14 > t.x + t.w || P.y < t.y || P.y > t.y + t.h) return;
+    this.keys = {};
+    if (this.joy) this.joy.active = false;
+    P.x = G.MAP.townExit.x; P.y = G.MAP.townExit.y;
+    this.facing = 1; this.walking = false;
+    this.snapCamera();
+    G.audio.sfx('click');
+    G.ui.openTown();
+  },
   snapCamera() {
     const P = G.S.player;
-    this.cam.x = G.clamp(P.x - this.vw / 2, 0, Math.max(0, G.MAP.W - this.vw));
+    this.cam.x = G.clamp(P.x - this.vw / 2, G.MAP.X0, Math.max(G.MAP.X0, G.MAP.W - this.vw));
     this.cam.y = G.clamp(P.y - this.vh / 2, 0, Math.max(0, G.MAP.H - this.vh));
   },
   warp(x, y) {
@@ -411,7 +439,7 @@ G.map = {
   },
   onMini(e) {
     const r = this.mini.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width * G.MAP.W, y = (e.clientY - r.top) / r.height * G.MAP.H;
+    const x = G.MAP.X0 + (e.clientX - r.left) / r.width * (G.MAP.W - G.MAP.X0), y = (e.clientY - r.top) / r.height * G.MAP.H;
     G.audio.sfx('click');
     this.warp(x, y);
   },
@@ -511,6 +539,7 @@ G.map = {
     } }); }
     M.signs.forEach((s) => items.push({ y: s.y, f: () => this.drawSign(s.x, s.y) }));
     for (const tr of this.deco.trees) if (vis(tr.x, tr.y, 60)) items.push({ y: tr.y, f: () => this.drawTree(tr, pal) });
+    for (const tr of this.deco.forest) if (vis(tr.x, tr.y, 110)) items.push({ y: tr.y, f: () => this.drawTree(tr, pal) });
     for (const a of G.alive()) {
       const s = this.stOf(a);
       if (!vis(s.x, s.y, 80)) continue;
@@ -711,13 +740,17 @@ G.map = {
     ctx.strokeStyle = '#b98b5e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + 39, 6, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
   },
   drawTown() {
-    const ctx = this.ctx, t = G.MAP.town;
+    const ctx = this.ctx, t = G.MAP.town, F = G.MAP.forest;
+    const cx = t.x + t.w / 2, y1 = F.gap1 + 4, y2 = F.gap2 - 4, ph = 84;
+    ctx.fillStyle = 'rgba(60,80,40,0.18)';
+    ctx.beginPath(); ctx.ellipse(cx, y1, 18, 5, 0, 0, Math.PI * 2); ctx.ellipse(cx, y2, 18, 5, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#b98b5e';
-    G.roundRect(ctx, t.x, t.y + 40, 22, t.h - 40, 6); ctx.fill(); G.roundRect(ctx, t.x + t.w - 22, t.y + 40, 22, t.h - 40, 6); ctx.fill();
-    ctx.fillStyle = '#ff9a8b'; G.roundRect(ctx, t.x - 10, t.y + 20, t.w + 20, 34, 14); ctx.fill();
+    G.roundRect(ctx, cx - 11, y1 - ph, 22, ph, 6); ctx.fill();
+    G.roundRect(ctx, cx - 11, y2 - ph, 22, ph, 6); ctx.fill();
+    ctx.fillStyle = '#ff9a8b'; G.roundRect(ctx, cx - 17, y1 - ph - 10, 34, y2 - y1 + 24, 14); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = 'bold 18px "M PLUS Rounded 1c", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('町', t.x + t.w / 2, t.y + 38);
-    ctx.fillStyle = '#ffd6e0'; ctx.beginPath(); ctx.arc(t.x + 10, t.y + 20, 8, 0, Math.PI * 2); ctx.arc(t.x + t.w - 10, t.y + 20, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillText('町', cx, (y1 + y2) / 2 - ph + 2);
+    ctx.fillStyle = '#ffd6e0'; ctx.beginPath(); ctx.arc(cx, y1 - ph - 8, 8, 0, Math.PI * 2); ctx.arc(cx, y2 - ph + 12, 8, 0, Math.PI * 2); ctx.fill();
   },
   drawSign(x, y) {
     const ctx = this.ctx;
@@ -784,9 +817,13 @@ G.map = {
   },
   renderMini() {
     const c = this.mctx, M = G.MAP, W = this.mini.width, H = this.mini.height;
-    const sx = W / M.W, sy = H / M.H;
+    const sx = W / (M.W - M.X0), sy = H / M.H;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.fillStyle = this.palette().ground; c.fillRect(0, 0, W, H);
+    c.translate(-M.X0 * sx, 0);
+    c.fillStyle = this.palette().tree;
+    c.fillRect(M.X0 * sx, 0, (M.forest.x2 - M.X0) * sx, M.forest.gap1 * sy);
+    c.fillRect(M.X0 * sx, M.forest.gap2 * sy, (M.forest.x2 - M.X0) * sx, (M.H - M.forest.gap2) * sy);
     c.strokeStyle = this.palette().path; c.lineWidth = 3 * this.dpr;
     for (const p of this.paths) { c.beginPath(); c.moveTo(p[0][0] * sx, p[0][1] * sy); for (const q of p.slice(1)) c.lineTo(q[0] * sx, q[1] * sy); c.stroke(); }
     for (const pid of Object.keys(M.pastures)) {

@@ -649,7 +649,7 @@ G.ui = {
       ...Object.keys(M.pastures).map((p) => [`${G.S.pastures[p].open ? '🐮' : '⛰'} ${G.pastureLabel(p)}`, G.gateOf(p).out.x, G.gateOf(p).out.y]),
       ['🥛 搾乳施設', M.milk.x + M.milk.w / 2, M.milk.y + M.milk.h + 40],
       [G.S.fields.some((f) => f.open) ? '🌾 畑' : '🌾 荒れ地', M.fieldBlocks[0].x - 40, M.fieldBlocks[0].y + M.fieldBlocks[0].h / 2],
-      ['🏪 町への道', M.town.x + M.town.w + 50, M.town.y + M.town.h - 20],
+      ['🏪 町への道', M.townExit.x, M.townExit.y],
     ];
     const w = this.open(`<h2>🪧 案内看板</h2><div class="warp">${dests.map((d, i) => `<button class="btn" data-w="${i}">${d[0]}</button>`).join('')}</div>`, { size: 'small' });
     $$('[data-w]', w).forEach((b) => b.onclick = () => { const d = dests[+b.dataset.w]; this.close(w); G.map.warp(d[1], d[2]); });
