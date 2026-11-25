@@ -11,7 +11,7 @@ python3 tools/check-text.py
 import glob, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal', 'senior', 'vet', 'dealer', 'buyer'}
+SPEAKERS = {'narration', 'staff_girl', 'staff_boy', 'animal', 'senior', 'vet', 'dealer', 'buyer', 'margin'}
 COND_KEYS = {'species', 'method', 'personality', 'partner_in_pasture', 'partner_liked', 'meat_grade_min', 'locomotion', 'young_meat'}
 LOCOMOTION = ['quad', 'biped']
 PLACEHOLDERS = {'name', 'sex', 'age', 'species', 'staff', 'partner', 'date', 'id_number'}
@@ -55,6 +55,13 @@ for m in METHODS:
 REQUIRED += ['ship.buyer_young_meat_01']
 REQUIRED += ['breed.ai.act.biped', 'breed.ai.estrus_biped_*', 'breed.natural.act_biped_*', 'breed.teaser.act_biped_*', 'breed.stallion.act_biped_*',
              'cas.arms.locate_*', 'cas.arms.act_*', 'cas.arms.react_*']
+# B（No.25）：声・返事
+for sc in ['cas_pre', 'cas_act', 'cas_react', 'cas_after', 'cas_course', 'breed_pre', 'breed_act', 'breed_after', 'ship_farewell', 'daily']:
+    for pk in PERS_KEYS:
+        REQUIRED.append(f'b.voice.{sc}.{pk}_*')
+for sc in ['cas_staff', 'breed_staff', 'match']:
+    for pk in PERS_KEYS:
+        REQUIRED.append(f'b.reply.{sc}.{pk}_*')
 # 性格ごとに必ず候補があるべきもの
 PERSONALITY_COVER = [f'cas.{m}.react_biped_' for m in METHODS] + [f'cas.{m}.react_' for m in METHODS] + [f'cas.{m}.pre_' for m in METHODS] + [f'care.{c}_' for c in ['brush', 'pet', 'exercise']]
 

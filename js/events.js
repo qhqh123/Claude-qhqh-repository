@@ -74,6 +74,7 @@ G.castrate = (a, methodSel, mode) => {
     vo('react'),
     { pick: 'cas.react_projection_', p: 0.5 },
     { pick: `cas.staff_${staff}_`, p: 0.3 },
+    G.replyStep(a, 'cas_staff'),
     `cas.${method}.after`,
     vo('after'),
   );
@@ -169,7 +170,7 @@ G.breed = (dam, partner) => {
     line = `人工授精　${dam.name}　精液ストロー ${straw.name}（${G.TRAITS[straw.main].name}期待${G.rankName(straw.rank)}）${G.yen(straw.price)}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     const near = G.partnerNear(dam);
     const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near, locomotion: G.formOf(dam).loco };
-    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, G.bodyStep('breed.ai.act'), G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.ai.after_partner_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
+    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, G.replyStep(dam, 'breed_staff'), G.bodyStep('breed.ai.act'), G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.ai.after_partner_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
     G.addHistory(dam, `人工授精　${straw.name}　${ok ? '受胎' : '不受胎'}`);
   }
   if (ok) {

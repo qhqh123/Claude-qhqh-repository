@@ -434,6 +434,12 @@ G.map = {
       const a = G.pick(matched);
       id = G.text.pick(`staff.match_${who}_`, { personality: a.personality, species: a.species });
       if (id) vars = G.textVars(a, { staff: G.S.staff[who].name });
+      const rid = id && G.pickStep(G.replyStep(a, 'match'));
+      if (rid) {
+        const st = this.stOf(a);
+        st.say = G.text.fill(G.text.get(rid).text, vars); st.sayId = rid; st.sayT = 5;
+        G.S.readTexts[rid] = true;
+      }
     }
     if (!id) id = G.npcLine(`staff_${who}`, [`daily.staff_${who}_`]);
     if (!id) return;

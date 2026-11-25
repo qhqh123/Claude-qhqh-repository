@@ -1346,5 +1346,61 @@
     "マイペース"
    ]
   }
+ },
+ "b.mature.pre.calm_01": {
+  "text": "［b.mature.pre.calm_01｜B成熟後の去勢・処置を嫌がる］",
+  "speaker": "animal"
+ },
+ "b.mature.pre.sweet_01": {
+  "text": "［b.mature.pre.sweet_01｜B成熟後の去勢・処置を嫌がる］",
+  "speaker": "animal"
+ },
+ "b.mature.pre.lively_01": {
+  "text": "［b.mature.pre.lively_01｜B成熟後の去勢・処置を嫌がる］",
+  "speaker": "animal"
+ },
+ "b.mature.pre.curious_01": {
+  "text": "［b.mature.pre.curious_01｜B成熟後の去勢・処置を嫌がる］",
+  "speaker": "animal"
+ },
+ "b.mature.pre.easy_01": {
+  "text": "［b.mature.pre.easy_01｜B成熟後の去勢・処置を嫌がる］",
+  "speaker": "animal"
+ },
+ "b.mature.pre.stubborn_01": {
+  "text": "［b.mature.pre.stubborn_01｜B成熟後の去勢・処置を嫌がる］",
+  "speaker": "animal"
+ },
+ "b.mature.after.calm_01": {
+  "text": "［b.mature.after.calm_01｜B成熟後の去勢・失ったことを話す］",
+  "speaker": "animal"
+ },
+ "b.mature.after.sweet_01": {
+  "text": "［b.mature.after.sweet_01｜B成熟後の去勢・失ったことを話す］",
+  "speaker": "animal"
+ },
+ "b.mature.after.lively_01": {
+  "text": "［b.mature.after.lively_01｜B成熟後の去勢・失ったことを話す］",
+  "speaker": "animal"
+ },
+ "b.mature.after.curious_01": {
+  "text": "［b.mature.after.curious_01｜B成熟後の去勢・失ったことを話す］",
+  "speaker": "animal"
+ },
+ "b.mature.after.easy_01": {
+  "text": "［b.mature.after.easy_01｜B成熟後の去勢・失ったことを話す］",
+  "speaker": "animal"
+ },
+ "b.mature.after.stubborn_01": {
+  "text": "［b.mature.after.stubborn_01｜B成熟後の去勢・失ったことを話す］",
+  "speaker": "animal"
+ },
+ "b.margin_01": {
+  "text": "［b.margin_01｜B余白］",
+  "speaker": "margin"
+ },
+ "b.margin_02": {
+  "text": "［b.margin_02｜B余白］",
+  "speaker": "margin"
  }
 }

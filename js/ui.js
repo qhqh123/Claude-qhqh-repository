@@ -996,8 +996,7 @@ G.ui = {
     const id = G.text.pick('daily.animal_', { personality: a.personality });
     if (!id) return;
     G.S.readTexts[id] = true;
-    const vs = G.voiceStep(a, 'daily.voice', '');
-    const vid = vs ? G.text.pick(`daily.voice.${G.PERS_KEY[a.personality]}_`, {}) : null;
+    const vid = G.pickStep(G.voiceStep(a, 'daily.voice', ''));
     if (vid) G.S.readTexts[vid] = true;
     const el = document.createElement('div');
     el.className = 'daily';
