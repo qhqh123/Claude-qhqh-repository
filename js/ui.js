@@ -81,6 +81,7 @@ G.ui = {
     if (!this.countingMoney) $('#hud-money').textContent = G.yen(S.money);
     $('#hud-loan').textContent = G.yen(S.loan);
     $('#hud-care').textContent = S.careLeft;
+    $('#hud-wood').textContent = S.wood || 0;
     const n = G.herdCount('cattle');
     $('#hud-herd').textContent = `${n}/${S.cattleSlots}`;
     $('#hud-herd').parentElement.classList.toggle('over', n > S.cattleSlots);
@@ -490,7 +491,7 @@ G.ui = {
       body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.herdCount('cattle')}/${S.cattleSlots}</b></div>
         <div class="kv"><span>飼育枠（馬）</span><b>${G.herdCount('horse')}/${S.horseSlots}</b></div>
         <h3>放牧地・畜舎</h3>
-        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span class="${G.pastureExcess(p) ? 'crowd-text' : ''}">${G.pastureCount(p)}/${G.pastureCap(p)}頭　段階${G.pastureStage(p)}${G.pastureExcess(p) ? '　過密' : ''}</span><button class="btn small" data-open="${p}">${G.expandCost(p) !== undefined ? '拡張' : '開く'}</button>` : `<span>${G.yen(G.C.pastureOpenCost)}　飼育枠 +${G.C.pastureOpenSlots}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
+        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span class="${G.pastureExcess(p) ? 'crowd-text' : ''}">${G.pastureCount(p)}/${G.pastureCap(p)}頭　段階${G.pastureStage(p)}${G.pastureExcess(p) ? '　過密' : ''}</span><button class="btn small" data-open="${p}">${G.expandCost(p) !== undefined ? '拡張' : '開く'}</button>` : `<span>${G.costText(G.pastureOpenCost())}　飼育枠 +${G.C.pastureOpenSlots}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
         <h3>搾乳施設</h3>
         <div class="kv"><span>スロット</span><b>${S.milkSlots.filter((x) => x.aid).length}/${S.milkSlots.length}　<button class="btn small" data-go="milk">開く</button></b></div>
         <h3>畑</h3>
@@ -523,10 +524,10 @@ G.ui = {
     const S = G.S;
     if (S.pastures[pid].open) { this.openPasture(pid); return; }
     const horse = G.pastureSpecies(pid) === 'horse';
-    const cost = G.C.pastureOpenCost;
-    const can = S.money >= cost;
+    const cost = G.pastureOpenCost();
+    const can = G.canPayCost(cost);
     const w = this.open(`<h2>⛰ ${G.HILL_LABEL[pid]}</h2>
-      <div class="kv"><span>開拓</span><b>${G.yen(cost)}</b></div>
+      <div class="kv"><span>開拓</span><b>${G.costText(cost)}</b></div>
       <div class="kv"><span>${horse ? '飼育枠（馬）' : '飼育枠（牛）'}</span><b>+${G.C.pastureOpenSlots}</b></div>
       <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeep)}／ターン</b></div>
       <div class="actions"><button class="btn primary ok" ${can ? '' : 'disabled'}>開拓する</button><button class="btn cancel">やめる</button></div>`, { size: 'small' });
@@ -542,6 +543,25 @@ G.ui = {
     };
   },
 
+  // 木こり小屋：お世話の回数を木材に
+  openLumber() {
+    const w = this.open('<div class="lumber-body"></div>', { size: 'small' });
+    const render = () => {
+      const S = G.S, left = S.careLeft, per = G.C.woodPerCare;
+      $('.lumber-body', w).innerHTML = `<h2>🪓 木こり小屋</h2>
+        <div class="stat-strip"><div><span>お世話の残り</span><b>${left}</b></div><div><span>木材</span><b>🪵${S.wood || 0}</b></div></div>
+        <div class="work-btns">${[1, 2, 3, 4, 5].filter((n) => n <= left).map((n) => `<button class="btn ${n === left ? 'primary' : ''}" data-lw="${n}">${n}回　🪵+${n * per}</button>`).join('') || '<span class="muted">—</span>'}</div>`;
+      $$('[data-lw]', w).forEach((b) => b.onclick = () => {
+        if (!G.lumberWork(+b.dataset.lw)) return;
+        G.audio.sfx('coin');
+        const h = G.MAP.lumber;
+        G.map.burst(h.x + h.w / 2, h.y + h.h / 2, ['🪵', '✨'], 8);
+        render(); this.refreshHud();
+      });
+    };
+    render();
+  },
+
   // 開拓済みの放牧地：頭数・段階・拡張
   openPasture(pid) {
     const S = G.S;
@@ -551,10 +571,10 @@ G.ui = {
       const body = $('.pasture-body', w);
       body.innerHTML = `<h2>${G.pastureSpecies(pid) === 'horse' ? '🐴' : '🐮'} ${G.MAP_LABEL[pid]}</h2>
         <div class="stat-strip"><div><span>頭数</span><b class="${G.pastureExcess(pid) ? 'crowd-text' : ''}">${G.pastureCount(pid)}/${G.pastureCap(pid)}</b></div><div><span>段階</span><b>${G.pastureStage(pid)}/${G.C.pastureExpandCost.length}</b></div></div>
-        ${cost !== undefined ? `<div class="kv"><span>拡張</span><b>${G.yen(cost)}</b></div>
+        ${cost !== undefined ? `<div class="kv"><span>拡張</span><b>${G.costText(cost)}</b></div>
         <div class="kv"><span>飼育枠</span><b>+${G.C.pastureExpandSlots}</b></div>
         <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeepPerStage)}／ターン</b></div>` : ''}
-        <div class="actions">${cost !== undefined ? `<button class="btn primary ok" ${S.money < cost ? 'disabled' : ''}>拡張する</button>` : ''}<button class="btn list">個体一覧</button></div>`;
+        <div class="actions">${cost !== undefined ? `<button class="btn primary ok" ${G.canPayCost(cost) ? '' : 'disabled'}>拡張する</button>` : ''}<button class="btn list">個体一覧</button></div>`;
       const ok = $('.ok', body);
       if (ok) ok.onclick = () => {
         if (!G.expandPasture(pid)) return;
@@ -575,7 +595,7 @@ G.ui = {
   },
   renderTown(w, tab) {
     const S = G.S;
-    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医'], ['work', '手伝い'], ['senior', '先輩牧場主' + (G.senior.needed() ? ' ❗' : '')]];
+    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医'], ['work', '手伝い'], ['wood', '木材'], ['senior', '先輩牧場主' + (G.senior.needed() ? ' ❗' : '')]];
     $('.town-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''} ${k === 'senior' && G.senior.needed() ? 'alert' : ''}" data-tab="${k}">${n}</button>`).join('');
     $$('.town-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderTown(w, b.dataset.tab); });
     const body = $('.town-body', w);
@@ -614,6 +634,16 @@ G.ui = {
         <div class="work-btns">${[1, 2, 3, 4, 5].filter((n) => n <= left).map((n) => `<button class="btn ${n === left ? 'primary' : ''}" data-work="${n}">${n}回　${G.yen(n * G.C.sideWorkWage)}</button>`).join('') || '<span class="muted">—</span>'}</div></div></div>`;
       $$('[data-work]', body).forEach((b) => b.onclick = () => { if (G.sideWork(+b.dataset.work)) { this.renderTown(w, 'work'); this.refreshHud(); } });
     }
+    if (tab === 'wood') {
+      const have = S.wood || 0;
+      const row = (k, ns, price, ok) => ns.map((n) => `<button class="btn" data-${k}="${n}" ${ok(n) ? '' : 'disabled'}>${n}　${G.yen(n * price)}</button>`).join('');
+      body.innerHTML = `<div class="work"><div class="work-icon">🪵</div><div class="work-main"><div class="work-title">木材</div>
+        <div class="mini-stats"><div class="big"><span>在庫</span><b>${have}</b></div><div><span>買う（1）</span><b>${G.yen(G.C.woodBuyPrice)}</b></div><div><span>売る（1）</span><b>${G.yen(G.C.woodSellPrice)}</b></div></div>
+        <div class="work-sub">買う</div><div class="work-btns">${row('buy', [5, 10, 50, 100], G.C.woodBuyPrice, (n) => S.money >= n * G.C.woodBuyPrice)}</div>
+        <div class="work-sub">売る</div><div class="work-btns">${row('sell', [5, 10, 50], G.C.woodSellPrice, (n) => have >= n)}${have && ![5, 10, 50].includes(have) ? `<button class="btn" data-sell="${have}">${have}　${G.yen(have * G.C.woodSellPrice)}</button>` : ''}</div></div></div>`;
+      $$('[data-buy]', body).forEach((b) => b.onclick = () => { if (G.buyWood(+b.dataset.buy)) { G.audio.sfx('coin'); this.renderTown(w, 'wood'); this.refreshHud(); } });
+      $$('[data-sell]', body).forEach((b) => b.onclick = () => { if (G.sellWood(+b.dataset.sell)) { G.audio.sfx('coin'); this.renderTown(w, 'wood'); this.refreshHud(); } });
+    }
     if (tab === 'senior') {
       const need = G.senior.needed();
       body.innerHTML = `<div class="senior ${need ? 'alert' : ''}"><canvas class="senior-avatar" data-person="senior" width="172" height="172"></canvas>
@@ -649,6 +679,7 @@ G.ui = {
       ...Object.keys(M.pastures).map((p) => [`${G.S.pastures[p].open ? '🐮' : '⛰'} ${G.pastureLabel(p)}`, G.gateOf(p).out.x, G.gateOf(p).out.y]),
       ['🥛 搾乳施設', M.milk.x + M.milk.w / 2, M.milk.y + M.milk.h + 40],
       [G.S.fields.some((f) => f.open) ? '🌾 畑' : '🌾 荒れ地', M.fieldBlocks[0].x - 40, M.fieldBlocks[0].y + M.fieldBlocks[0].h / 2],
+      ['🪓 木こり小屋', M.lumber.x + M.lumber.w / 2, M.lumber.y + M.lumber.h + 40],
       ['🏪 町への道', M.townExit.x, M.townExit.y],
     ];
     const w = this.open(`<h2>🪧 案内看板</h2><div class="warp">${dests.map((d, i) => `<button class="btn" data-w="${i}">${d[0]}</button>`).join('')}</div>`, { size: 'small' });
@@ -859,8 +890,8 @@ G.ui = {
     this.showSummary(sum);
   },
   summaryCat(line, inc) {
-    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース'], ['手伝い', '🧺', '手伝い']]
-      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['放牧地 開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設'], ['倉庫 増設', '⛏', '開拓・増設'], ['けがの治療', '🩹', '治療']];
+    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース'], ['手伝い', '🧺', '手伝い'], ['木材 売却', '🪵', '木材']]
+      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['放牧地 開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設'], ['倉庫 増設', '⛏', '開拓・増設'], ['けがの治療', '🩹', '治療'], ['木材 購入', '🪵', '木材']];
     let best = null;
     for (const c of cats) if (line.startsWith(c[0]) && (!best || c[0].length > best[0].length)) best = c;
     return best ? { icon: best[1], name: best[2] } : { icon: '📒', name: 'その他' };

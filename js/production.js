@@ -67,6 +67,7 @@ G.removeFromSlots = (a) => {
 // ---------- 畑 ----------
 G.field = {
   label(i) { return G.FIELD_KEYS[i] || String(i + 1); },
+  openCost() { return G.woodCost(G.C.fieldOpenCost, 'field'); },
   // 担当馬の能力（フェーズ3で馬が入る。いまは常に未配置）
   horseKey(f) {
     const h = f.horse && G.S.animals[f.horse];
@@ -89,9 +90,10 @@ G.field = {
   },
   open(i) {
     const S = G.S, f = S.fields[i];
-    if (!f || f.open || S.money < G.C.fieldOpenCost) return false;
+    const cost = this.openCost();
+    if (!f || f.open || !G.canPayCost(cost)) return false;
     f.open = true;
-    G.pay(G.C.fieldOpenCost, `畑 開拓　区画${this.label(i)}　${G.yen(G.C.fieldOpenCost)}`);
+    G.payCost(cost, `畑 開拓　区画${this.label(i)}`);
     return true;
   },
   setUse(i, use) {

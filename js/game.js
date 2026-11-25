@@ -17,6 +17,7 @@ G.newGame = () => {
     notices: [],
     nextNotice: 1,
     storage: { cap: G.C.storageCap, items: [], next: 1 },
+    wood: 0,
     market: [],
     straws: [],
     strawCatalog: [],
@@ -57,13 +58,17 @@ G.recalcSlots = () => {
 // 牛・馬とも同じ（第1放牧地は最初の飼育枠、開拓した放牧地は同じ頭数）。拡張1段階ごとに増える
 G.pastureCap = (pid) => (pid === 'p1' ? G.C.startCattleSlots : G.C.pastureOpenSlots) + G.C.pastureExpandSlots * ((G.S.pastures[pid] || {}).stage || 0);
 G.pastureStage = (pid) => (G.S.pastures[pid] || {}).stage || 0;
-G.expandCost = (pid) => G.C.pastureExpandCost[G.pastureStage(pid)];
+G.expandCost = (pid) => {
+  const base = G.C.pastureExpandCost[G.pastureStage(pid)];
+  return base === undefined ? undefined : G.woodCost(base, 'pasture');
+};
+G.pastureOpenCost = () => G.woodCost(G.C.pastureOpenCost, 'pasture');
 G.expandPasture = (pid) => {
   const S = G.S, cost = G.expandCost(pid);
-  if (!S.pastures[pid].open || cost === undefined || S.money < cost) return false;
+  if (!S.pastures[pid].open || cost === undefined || !G.canPayCost(cost)) return false;
   S.pastures[pid].stage = G.pastureStage(pid) + 1;
   G.recalcSlots();
-  G.pay(cost, `放牧地 拡張　${G.MAP_LABEL[pid]}　段階${S.pastures[pid].stage}　${G.yen(cost)}　飼育枠 +${G.C.pastureExpandSlots}`);
+  G.payCost(cost, `放牧地 拡張　${G.MAP_LABEL[pid]}　段階${S.pastures[pid].stage}　飼育枠 +${G.C.pastureExpandSlots}`);
   return true;
 };
 G.pastureCount = (pid) => G.alive().filter((a) => a.pasture === pid).length;
@@ -292,12 +297,12 @@ G.sideWork = (n) => {
 G.openPasture = (pid) => {
   const S = G.S;
   const horse = G.pastureSpecies(pid) === 'horse';
-  const cost = G.C.pastureOpenCost;
-  if (S.pastures[pid].open || S.money < cost) return false;
+  const cost = G.pastureOpenCost();
+  if (S.pastures[pid].open || !G.canPayCost(cost)) return false;
   S.pastures[pid].open = true;
   S.pastures[pid].stage = 0;
   G.recalcSlots();
-  G.pay(cost, `放牧地 開拓　${G.MAP_LABEL[pid]}　${G.yen(cost)}　飼育枠（${horse ? '馬' : '牛'}） +${G.C.pastureOpenSlots}`);
+  G.payCost(cost, `放牧地 開拓　${G.MAP_LABEL[pid]}　飼育枠（${horse ? '馬' : '牛'}） +${G.C.pastureOpenSlots}`);
   return true;
 };
 

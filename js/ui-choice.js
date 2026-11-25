@@ -184,7 +184,7 @@ Object.assign(G.ui, {
     const S = G.S;
     const items = S.storage.items.slice().reverse();
     body.innerHTML = `<div class="stat-strip"><div><span>保管</span><b>${G.store.used()}/${S.storage.cap}</b></div>
-      <div class="expand"><span>${G.yen(G.C.storageExpandCost)}　+${G.C.storageExpandSlots}</span><button class="btn small primary" data-expand ${S.money < G.C.storageExpandCost ? 'disabled' : ''}>増設</button></div></div>
+      <div class="expand"><span>${G.costText(G.store.expandCost())}　+${G.C.storageExpandSlots}</span><button class="btn small primary" data-expand ${G.canPayCost(G.store.expandCost()) ? '' : 'disabled'}>増設</button></div></div>
       <div class="item-grid">${items.map((it) => {
         const mem = G.store.price(it, 'memorial'), food = G.store.price(it, 'food');
         return `<div class="item-card ${it.kind}"><div class="item-icon">${G.ICONS[G.ITEMS[it.kind].icon]}</div>

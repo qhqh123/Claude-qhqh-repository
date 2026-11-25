@@ -92,6 +92,12 @@ G.C = {
   crowdStress: 4,          // 過密な放牧地の個体に毎ターン加わるストレス
   crowdUpkeepPerHead: 0.05, // 上限を超えた1頭ごとに維持費（飼料費・施設維持費）+5%
   sideWorkWage: 25000, // 他の牧場の手伝い：お世話1回あたりの賃金（仮）
+  // 木こり小屋と木材（仮）
+  woodPerCare: 5,       // お世話1回で得る木材
+  woodSellPrice: 3000,  // 町で売る値段（1木材）
+  woodBuyPrice: 6000,   // 町で買う値段（1木材）
+  woodValue: 4500,      // 拡張費用を木材に置き換えるときの換算（1木材）
+  woodShare: { pasture: 0.5, field: 0.3, storage: 0.8 }, // 拡張費用のうち木材で求める割合
 
   // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
   acqRankMax: 3,           // 後天のデメリットバッジの上限（A）

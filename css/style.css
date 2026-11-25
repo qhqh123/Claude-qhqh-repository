@@ -654,3 +654,8 @@ body.dev .dev-only { display: block; }
 .chip.crowd { background: #ffe1d6; color: #c2552d; }
 .crowd-text { color: #c2552d !important; font-weight: 800; }
 .notice.crowd { border-color: #ffc9a8; }
+
+/* 木材 */
+.pill-box.wood { padding-left: 10px; }
+.work-sub { font-weight: 800; font-size: 13px; color: var(--ink-l); margin-top: 12px; }
+.lumber-body .work-btns { margin-top: 14px; }

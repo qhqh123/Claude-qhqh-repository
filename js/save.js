@@ -50,7 +50,7 @@ G.save = {
   },
   // 旧データの補完
   migrate(obj) {
-    const def = { careLeft: G.C.carePerTurn, cattleSlots: G.C.startCattleSlots, ledger: [], records: {}, readTexts: {}, notices: [], nextNotice: 1, market: [], straws: [], strawCatalog: [], tools: { burdizzo: false }, pendingCourses: [], yearSales: 0, devMode: false, player: { x: 1000, y: 880 }, nextSeq: 1 };
+    const def = { careLeft: G.C.carePerTurn, cattleSlots: G.C.startCattleSlots, ledger: [], records: {}, readTexts: {}, notices: [], nextNotice: 1, market: [], straws: [], strawCatalog: [], tools: { burdizzo: false }, pendingCourses: [], yearSales: 0, devMode: false, player: { x: 1000, y: 880 }, nextSeq: 1, wood: 0 };
     for (const k of Object.keys(def)) if (obj[k] === undefined) obj[k] = def[k];
     if (!obj.pastures) obj.pastures = {};
     for (const pid of Object.keys(G.MAP.pastures)) if (!obj.pastures[pid]) obj.pastures[pid] = { open: pid === 'p1' };

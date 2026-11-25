@@ -73,8 +73,8 @@ Object.assign(G.ui, {
     let detail;
     if (!f.open) {
       detail = `<div class="f-detail waste"><div class="f-title">畑スロット${lab}<small>荒れ地</small></div>
-        <div class="mini-stats"><div><span>開拓</span><b>${G.yen(G.C.fieldOpenCost)}</b></div><div><span>維持費</span><b>+${G.yen(G.C.fieldUpkeep)}／ターン</b></div></div>
-        <div class="actions"><button class="btn primary open" ${S.money < G.C.fieldOpenCost ? 'disabled' : ''}>開拓する</button></div></div>`;
+        <div class="mini-stats"><div><span>開拓</span><b>${G.costText(G.field.openCost())}</b></div><div><span>維持費</span><b>+${G.yen(G.C.fieldUpkeep)}／ターン</b></div></div>
+        <div class="actions"><button class="btn primary open" ${G.canPayCost(G.field.openCost()) ? '' : 'disabled'}>開拓する</button></div></div>`;
     } else {
       const m = G.field.mult(f), r = G.field.produce(f);
       const cands = G.alive().filter((h) => G.isHorse(h) && G.isMature(h) && (h.id === f.horse || G.field.canAssign(h)));
