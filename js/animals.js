@@ -153,7 +153,7 @@ G.growWeight = (a, init) => {
   let mult = init ? 1 : G.condition(a);
   if (!init && a.stress > 60) mult *= 0.6;
   if (!init && a.infection > 0) mult *= 0.5;
-  const rate = 0.26 * (1 + growth * 0.06) * mult;
+  const rate = 0.26 * (1 + growth * 0.06) * mult * G.maleLate(a, 'growth');
   const cap = G.weightCap(a);
   if (a.weight < cap) a.weight += (cap - a.weight) * rate;
   if (!init && a.stress > 85) a.weight *= 0.97;

@@ -17,7 +17,7 @@ G.AGING = {
 // 今の後天バッジ [{ k, r }]
 G.acqList = (a) => {
   const A = G.AGING[a.species || 'cattle'];
-  const k2 = G.formOf(a).aging;
+  const k2 = G.formOf(a).aging * G.maleLate(a, 'aging');
   const out = [];
   const fertile = a.sex === 'F' || !a.castrated;
   if (fertile && G.isMature(a)) {

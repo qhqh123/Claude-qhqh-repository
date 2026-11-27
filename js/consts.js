@@ -243,14 +243,17 @@ G.STRAW_NAMES = ['北の誉', '福光', '安美', '茂勝', '百合花', '勝早
 // voice 声、arms 腕、face 表情。loco：quad 四足／biped 二足
 // 経済の倍率（仮）：weight 体重、upkeep 維持費（飼料）、meatPlus 遺伝の肉質ランクへの加算（上限S）、
 //   meatDecline 【肉質低下】の効き目、aging 後天バッジの年齢の倍率、slot 飼育枠の消費
+//   maleLate：雄が去勢の晩期以降（標準期を過ぎてから）に、生育（体重の増え方）と老化（後天バッジの年齢）に掛ける倍率
 G.FORM_KEYS = ['normal', 'telepathy', 'taur', 'halfbeast', 'kemomimi'];
 G.FORMS = {
   normal:    { name: '普通',       body: 'full',     voice: false, arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 1.0,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
   telepathy: { name: 'テレパシー種', body: 'full',     voice: true,  arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 0.96,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
   taur:      { name: 'タウル種',     body: 'full',     voice: true,  arms: true,  face: true,  loco: 'quad',  weight: 1.0, upkeep: 0.89,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
-  halfbeast: { name: '半獣人種',     body: 'head',     voice: false, arms: true,  face: false, loco: 'biped', weight: 0.6, upkeep: 0.78,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  halfbeast: { name: '半獣人種',     body: 'head',     voice: false, arms: true,  face: false, loco: 'biped', weight: 0.6, upkeep: 0.78,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1, maleLate: { growth: 1.25, aging: 0.85 } },
   kemomimi:  { name: 'ケモミミ種',   body: 'earsTail', voice: true,  arms: true,  face: true,  loco: 'biped', weight: 0.4, upkeep: 0.35, meatPlus: 2, meatDecline: 0.3, aging: 2, slot: 0 },
 };
 G.NPC_NAMES = { vet: '獣医', dealer: '家畜商', buyer: 'バイヤー' };
 G.isRouteB = () => !!(G.S && G.S.route === 'B');
+// 雄の晩期以降の倍率（なければ1）
+G.maleLate = (a, k) => { const m = G.formOf(a).maleLate; return m && a.sex === 'M' && a.age > 2 ? m[k] : 1; };
 G.formOf = (a) => G.FORMS[(a && a.form) || 'normal'] || G.FORMS.normal;
