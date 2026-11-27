@@ -1,0 +1,5 @@
+# Python のキャッシュ
+__pycache__/
+*.pyc
+# 共有用に1つにまとめたHTML（tools/build-artifact.py の既定の出力先）
+dist/
