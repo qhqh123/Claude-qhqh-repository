@@ -77,7 +77,7 @@ small { color: var(--ink-l); font-weight: 400; }
 .notice.out { animation: fadeout .25s forwards; }
 .notice .n-title { font-weight: 800; color: var(--pink-d); font-size: 16px; margin-bottom: 4px; }
 .notice .n-text { font-weight: 700; font-size: 14px; line-height: 1.5; }
-.notice .n-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.notice .n-btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 10px; }
 .notice.birth { border-color: #ffe58f; background: linear-gradient(#fffdf2, #fff); }
 @keyframes pop { from { transform: scale(.6) translateY(-10px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fadeout { to { transform: translateX(30px); opacity: 0; } }
@@ -621,3 +621,47 @@ body.dev .dev-only { display: block; }
 .keep-row .sec-label { flex-basis: 100%; margin: 0; }
 .btn.keep { display: inline-flex; align-items: center; gap: 6px; }
 .btn.keep svg { width: 22px; height: 22px; }
+
+/* ---------- 先輩牧場主 ---------- */
+.notice.rescue { border: 3px solid transparent; background: linear-gradient(#fffdf2, #fffdf2) padding-box, linear-gradient(120deg, #ffb347, #ff6f91, #ffd166) border-box; box-shadow: 0 0 0 4px rgba(255, 179, 71, .25), var(--shadow); }
+.notice.rescue .n-title { font-size: 20px; color: #ff6f61; }
+.tab.alert { background: #fff3d6; color: #d9822b; box-shadow: 0 2px 0 #f2c46b; }
+.tab.alert.on { background: #ffb347; color: #fff; }
+.hud-btn.alert::after { content: '❗'; position: absolute; top: -6px; right: -6px; font-size: 14px; }
+.senior { display: flex; gap: 18px; align-items: center; background: #fff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 0 #f3dce5; }
+.senior.alert { background: linear-gradient(#fffdf2, #fffdf2) padding-box, linear-gradient(120deg, #ffb347, #ff6f91, #ffd166) border-box; border: 3px solid transparent; }
+.senior-avatar { font-size: 56px; width: 86px; height: 86px; border-radius: 50%; background: #fff4e0; display: flex; align-items: center; justify-content: center; flex: none; }
+.senior-name { font-weight: 800; font-size: 18px; margin-bottom: 10px; }
+.senior-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.rescue { background: linear-gradient(90deg, #ffb347, #ff6f91); box-shadow: 0 3px 0 #e0566f; }
+.novel-win .speaker.senior { background: #d9a066; box-shadow: 0 3px 0 #b77f45; }
+
+/* ---------- 生産の状態・後天バッジ ---------- */
+.row-pills { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; align-items: center; }
+.pill.idle { background: #e9e4ef; color: #6d5f7e; }
+.trend { font-size: 11px; font-weight: 800; color: var(--ink-l); }
+.trend.t1 { color: #3f9f6a; } .trend.t-1 { color: #c9708a; }
+.badge[data-tip^="受胎"], .badge[data-tip^="繁殖"] { background: #efe6dc; color: #8a6a52; }
+
+/* ---------- 他の牧場の手伝い ---------- */
+.work { display: flex; gap: 18px; align-items: center; background: #fff; border-radius: 24px; padding: 18px 20px; box-shadow: 0 4px 0 #f3dce5; }
+.work-icon { font-size: 48px; width: 80px; height: 80px; border-radius: 50%; background: #f1f8e9; display: flex; align-items: center; justify-content: center; flex: none; }
+.work-main { flex: 1; min-width: 0; }
+.work-title { font-weight: 800; font-size: 18px; }
+.work-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* ---------- 過密 ---------- */
+.chip.crowd { background: #ffe1d6; color: #c2552d; }
+.crowd-text { color: #c2552d !important; font-weight: 800; }
+.notice.crowd { border-color: #ffc9a8; }
+
+/* 木材 */
+.pill-box.wood { padding-left: 10px; }
+.work-sub { font-weight: 800; font-size: 13px; color: var(--ink-l); margin-top: 12px; }
+.lumber-body .work-btns { margin-top: 14px; }
+.btn.buywood small { display: block; font-size: 11px; opacity: .85; }
+.daily .voice { display: block; margin-top: 4px; }
+.npc-line { display: flex; gap: 10px; align-items: baseline; background: #fff; border-radius: 14px; padding: 8px 12px; margin: 8px 0; font-size: 13px; font-weight: 700; box-shadow: 0 3px 0 #f3dce5; }
+.npc-line b { color: var(--pink-d); flex: none; }
+.npc-line code { font-size: 10px; color: #7a6cff; }
+.novel-win .ntext.margin { font-style: italic; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-weight: 400; color: #7c6a74; }

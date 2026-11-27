@@ -49,6 +49,7 @@ Object.assign(G.ui, {
           { value: 'direct', icon: G.ICONS.direct, title: '直接対応' },
           { value: 'outsource', icon: G.ICONS.outsource, title: '外部委託', sub: `委託費 ${G.yen(out.cost)}` },
         ], 'slim')}
+        <div class="vet-line hidden">${this.npcLineHtml('vet')}</div>
       </div>
       <div class="sheet-sec methods collapsed"><div class="sec-label">術式</div>
         ${this.choiceGrid('method', methods.map((m) => {
@@ -61,6 +62,7 @@ Object.assign(G.ui, {
     G.draw.portrait($('.mini-portrait', w), a);
     const upd = () => {
       $('.methods', w).classList.toggle('collapsed', st.mode !== 'direct');
+      $('.vet-line', w).classList.toggle('hidden', st.mode !== 'outsource');
       let cost = null;
       if (st.mode === 'outsource') cost = out.cost;
       if (st.mode === 'direct' && st.method) { const c = G.castCost(a, st.method, 'direct'); cost = c.cost + c.tool; }
@@ -85,10 +87,10 @@ Object.assign(G.ui, {
     if (!G.canBreed(dam)) return;
     const S = G.S;
     const horse = G.isHorse(dam);
-    const bulls = G.alive().filter((b) => G.isIntactMature(b) && b.species === dam.species);
+    const bulls = G.alive().filter((b) => G.isIntactMature(b) && b.species === dam.species && G.fertMult(b) > 0);
     const opts = bulls.map((b) => ({ key: 'b' + b.id, type: 'bull', label: b.name, tag: '牧場', genes: b.genes, partner: { type: 'bull', id: b.id }, a: b, fee: 0 }))
-      .concat((horse ? [] : S.straws).map((s, i) => ({ key: 's' + i, type: 'straw', label: s.name, tag: '精液ストロー', sub: `${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}`, genes: s.genes, partner: { type: 'straw', index: i }, a: null, fee: 0 })))
-      .concat((horse ? S.stallions : []).map((s, i) => ({ key: 'h' + i, type: 'stallion', label: s.name, tag: '外部種牡馬', sub: s.type === 'farm' ? '農耕' : '競走', genes: s.genes, partner: { type: 'stallion', index: i }, a: null, fee: s.fee })));
+      .concat((horse ? [] : S.straws).map((s, i) => ({ key: 's' + i, type: 'straw', label: s.name, tag: '精液ストロー', sub: `${s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : ''}${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}`, genes: s.genes, partner: { type: 'straw', index: i }, a: null, fee: 0 })))
+      .concat((horse ? S.stallions : []).map((s, i) => ({ key: 'h' + i, type: 'stallion', label: s.name, tag: '外部種牡馬', sub: (s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : '') + (s.type === 'farm' ? '農耕' : '競走'), genes: s.genes, partner: { type: 'stallion', index: i }, a: null, fee: s.fee })));
     const teasers = horse ? G.teasers() : [];
     const st = { key: null, teaser: '' };
     const card = (o) => ({
@@ -152,7 +154,7 @@ Object.assign(G.ui, {
     return `<div class="a-row ${a.status !== 'alive' ? 'gone' : ''}" data-id="${a.id}" ${attrs || ''}>
       <canvas class="a-face" data-face="${a.id}" width="96" height="96"></canvas>
       <div class="a-main"><div class="a-name">${G.esc(a.name)} <small>${a.sex === 'M' ? '♂' : '♀'}　${G.spName(a)}　${G.ageText(a.age)}</small></div>
-        <div class="bs">${this.badgesFrame(a, null, true)}${this.badgesTraits(a, null, true)}</div></div>
+        <div class="bs">${this.badgesFrame(a, null, true)}${this.badgesTraits(a, null, true)}${this.badgesAcq(a, true)}</div></div>
       <div class="a-right">${right || ''}</div></div>`;
   },
   drawFaces(root) {
@@ -184,7 +186,7 @@ Object.assign(G.ui, {
     const S = G.S;
     const items = S.storage.items.slice().reverse();
     body.innerHTML = `<div class="stat-strip"><div><span>保管</span><b>${G.store.used()}/${S.storage.cap}</b></div>
-      <div class="expand"><span>${G.yen(G.C.storageExpandCost)}　+${G.C.storageExpandSlots}</span><button class="btn small primary" data-expand ${S.money < G.C.storageExpandCost ? 'disabled' : ''}>増設</button></div></div>
+      <div class="expand"><span>${G.costText(G.store.expandCost())}　+${G.C.storageExpandSlots}</span>${this.costBtn(G.store.expandCost(), '増設', 'small', 'data-expand')}</div></div>
       <div class="item-grid">${items.map((it) => {
         const mem = G.store.price(it, 'memorial'), food = G.store.price(it, 'food');
         return `<div class="item-card ${it.kind}"><div class="item-icon">${G.ICONS[G.ITEMS[it.kind].icon]}</div>
@@ -196,6 +198,6 @@ Object.assign(G.ui, {
       if (G.store.sell(id, use)) { this.renderOffice(w, 'storage'); this.refreshHud(); }
     });
     const ex = $('[data-expand]', body);
-    if (ex) ex.onclick = () => { if (G.store.expand()) { G.audio.sfx('fanfare'); this.renderOffice(w, 'storage'); this.refreshHud(); } };
+    if (ex) ex.onclick = () => { if (this.payPrep(ex, G.store.expandCost()) && G.store.expand()) { G.audio.sfx('fanfare'); this.renderOffice(w, 'storage'); this.refreshHud(); } };
   },
 });

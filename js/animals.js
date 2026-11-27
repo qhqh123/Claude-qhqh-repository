@@ -90,6 +90,7 @@ G.makeAnimal = (o) => {
     genes: o.genes,
     sire: o.sire || null, // { id } または { external:true, name, genes }
     dam: o.dam || null,   // id
+    form: o.form || 'normal',
     children: [],
     castrated: false,
     castration: null,
@@ -112,6 +113,8 @@ G.makeAnimal = (o) => {
   };
   S.animals[id] = a;
   a.idNo = G.newIdNumber();
+  a.coat = G.defaultCoat(a);
+  a.form = o.form || 'normal';
   // 年齢に合わせて体重を進める
   for (let i = 0; i < a.age; i++) G.growWeight(a, true);
   if (G.isMature(a) && a.sex === 'M') a.breedInterest = G.ri(1, 3);
@@ -142,7 +145,7 @@ G.weightCap = (a) => {
   if (a.sex === 'F') cap *= 0.9;
   else if (!a.castrated) cap *= 1.15;
   else cap *= ({ early: 1.0, standard: 1.04, late: 1.08, mature: 1.12 })[a.castration.period] || 1;
-  return cap;
+  return cap * G.formOf(a).weight;
 };
 
 G.growWeight = (a, init) => {
@@ -150,7 +153,7 @@ G.growWeight = (a, init) => {
   let mult = init ? 1 : G.condition(a);
   if (!init && a.stress > 60) mult *= 0.6;
   if (!init && a.infection > 0) mult *= 0.5;
-  const rate = 0.26 * (1 + growth * 0.06) * mult;
+  const rate = 0.26 * (1 + growth * 0.06) * mult * G.maleLate(a, 'growth');
   const cap = G.weightCap(a);
   if (a.weight < cap) a.weight += (cap - a.weight) * rate;
   if (!init && a.stress > 85) a.weight *= 0.97;
@@ -160,18 +163,21 @@ G.growWeight = (a, init) => {
 
 // 出荷時の肉質評価（内部数値）
 G.meatEval = (a) => {
-  let v = G.traitRank(a, 'meat');
+  const fm = G.formOf(a);
+  let v = Math.min(5, G.traitRank(a, 'meat') + fm.meatPlus);
   if (a.sex === 'F') v += 0.2;
   if (a.castrated) v += a.castBonus;
   v += Math.min(0.6, Math.max(0, a.age - 2) * 0.15);
-  if (a.age > 16) v -= Math.min(1.5, (a.age - 16) * 0.1);
+  v -= G.C.meatDeclinePerRank * G.acqRank(a, 'meatDecline') * fm.meatDecline;
   if (a.stress > 70) v -= 0.3;
   if (a.health < 60) v -= 0.3;
   return v;
 };
 
+// 年齢が一定以上で、年齢による肉質の減価をほとんど受けていない
+G.youngMeat = (a) => a.age >= G.C.youngMeatAge && G.C.meatDeclinePerRank * G.acqRank(a, 'meatDecline') * G.formOf(a).meatDecline <= G.C.youngMeatMaxDecline;
 G.shipValue = (a) => {
-  const carcass = Math.round(a.weight * G.C.carcassRatio);
+  const carcass = Math.round(a.weight * G.C.carcassRatio * (a.form === 'taur' ? 1 - G.C.taurUpperShare : 1));
   const q = G.clamp(Math.floor(G.meatEval(a) + 1e-6), 0, 5);
   const yieldRank = G.clamp(a.genes.depth | 0, 0, 5);
   const unit = G.C.carcassUnit[q];
@@ -206,7 +212,7 @@ G.assignRelations = (a) => {
   a.dislikes = pool.slice(nLike, nLike + nDislike).map((b) => ({ id: b.id, v: -1 }));
 };
 
-G.likesAnimal = (a, b) => a.likes.some((l) => l.id === b.id) || (a.motherBond && a.motherBond.id === b.id);
+G.likesAnimal = (a, b) => !!(a.likes.some((l) => l.id === b.id) || (a.motherBond && a.motherBond.id === b.id));
 
 // 産子の登録
 G.birth = (dam) => {
@@ -219,7 +225,9 @@ G.birth = (dam) => {
   const sire = p.sire.external ? null : G.S.animals[p.sire.id];
   if (r < 0.25 && sire) personality = sire.personality;
   else if (r < 0.5) personality = dam.personality;
-  const calf = G.makeAnimal({ species: dam.species, sex, genes, personality, sire: p.sire.external ? { external: true, name: p.sire.name, genes: p.sire.genes } : { id: p.sire.id }, dam: dam.id, pasture: dam.pasture });
+  const sireForm = (p.sire.external ? p.sire.form : (sire || {}).form) || 'normal';
+  const form = G.chance(0.5) ? (dam.form || 'normal') : sireForm;
+  const calf = G.makeAnimal({ species: dam.species, sex, genes, personality, form, sire: p.sire.external ? { external: true, name: p.sire.name, genes: p.sire.genes, form: p.sire.form } : { id: p.sire.id }, dam: dam.id, pasture: dam.pasture });
   calf.motherBond = { id: dam.id, v: G.ri(2, 3) };
   G.checkRankS(calf);
   dam.children.push(calf.id);

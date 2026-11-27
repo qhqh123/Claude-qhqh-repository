@@ -1,7 +1,9 @@
 // ゲーム状態・帳簿・ターン進行
-G.newGame = () => {
+// route：'A' / 'B'（No.25）。B は開始時点で全フォームが入荷済み
+G.newGame = (route) => {
   G.S = {
     version: G.VERSION,
+    route: route === 'B' ? 'B' : 'A',
     turn: 1,
     money: G.C.startMoney,
     loan: G.C.startLoan,
@@ -17,6 +19,8 @@ G.newGame = () => {
     notices: [],
     nextNotice: 1,
     storage: { cap: G.C.storageCap, items: [], next: 1 },
+    wood: 0,
+    formsIn: route === 'B' ? G.FORM_KEYS.slice(1) : [],
     market: [],
     straws: [],
     strawCatalog: [],
@@ -45,9 +49,47 @@ G.defaultPastures = () => {
   for (const pid of Object.keys(G.MAP.pastures)) out[pid] = { open: pid === 'p1' };
   return out;
 };
-G.herdCount = (sp) => G.alive().filter((a) => (a.species || 'cattle') === sp).length;
+G.herdCount = (sp) => G.alive().filter((a) => (a.species || 'cattle') === sp).reduce((s, a) => s + G.formOf(a).slot, 0);
 G.slotsOf = (sp) => (sp === 'horse' ? G.S.horseSlots : G.S.cattleSlots);
-G.hasRoom = (sp) => G.herdCount(sp) < G.slotsOf(sp);
+// 飼育枠の合計は放牧地ごとの上限から計算し直す（開拓・拡張・読み込みのたび）
+G.recalcSlots = () => {
+  const S = G.S;
+  S.cattleSlots = G.openPastures('cattle').reduce((s, p) => s + G.pastureCap(p), 0);
+  S.horseSlots = G.openPastures('horse').reduce((s, p) => s + G.pastureCap(p), 0);
+};
+// 放牧地ごとの上限（第1放牧地は最初の飼育枠、開拓した牛の放牧地・馬の放牧地はそれぞれの枠）
+// 牛・馬とも同じ（第1放牧地は最初の飼育枠、開拓した放牧地は同じ頭数）。拡張1段階ごとに増える
+G.pastureCap = (pid) => (pid === 'p1' ? G.C.startCattleSlots : G.C.pastureOpenSlots) + G.C.pastureExpandSlots * ((G.S.pastures[pid] || {}).stage || 0);
+G.pastureStage = (pid) => (G.S.pastures[pid] || {}).stage || 0;
+G.expandCost = (pid) => {
+  const base = G.C.pastureExpandCost[G.pastureStage(pid)];
+  return base === undefined ? undefined : G.woodCost(base, 'pasture');
+};
+G.pastureOpenCost = () => G.woodCost(G.C.pastureOpenCost, 'pasture');
+G.expandPasture = (pid) => {
+  const S = G.S, cost = G.expandCost(pid);
+  if (!S.pastures[pid].open || cost === undefined || !G.canPayCost(cost)) return false;
+  S.pastures[pid].stage = G.pastureStage(pid) + 1;
+  G.recalcSlots();
+  G.payCost(cost, `放牧地 拡張　${G.MAP_LABEL[pid]}　段階${S.pastures[pid].stage}　飼育枠 +${G.C.pastureExpandSlots}`);
+  return true;
+};
+G.pastureCount = (pid) => G.alive().filter((a) => a.pasture === pid).reduce((s, a) => s + G.formOf(a).slot, 0);
+G.pastureExcess = (pid) => Math.max(0, G.pastureCount(pid) - G.pastureCap(pid));
+G.openPastures = (sp) => Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && (!sp || G.pastureSpecies(p) === sp));
+G.totalExcess = () => G.openPastures().reduce((s, p) => s + G.pastureExcess(p), 0);
+G.crowdMult = () => 1 + G.C.crowdUpkeepPerHead * G.totalExcess();
+G.hasRoom = (sp) => !!G.pastureWithRoom(sp);
+// 過密になったら1回だけ警告する
+G.checkCrowding = () => {
+  const S = G.S;
+  S.crowdWarned = S.crowdWarned || {};
+  for (const p of G.openPastures()) {
+    const ex = G.pastureExcess(p);
+    if (ex > 0 && !S.crowdWarned[p]) { S.crowdWarned[p] = true; G.notify('crowd', null, `⚠ ${G.MAP_LABEL[p]}が過密です（${G.pastureCount(p)}/${G.pastureCap(p)}）`, { pid: p }); }
+    if (!ex) S.crowdWarned[p] = false;
+  }
+};
 
 G.setupHerd = () => {
   const mk = G.makeAnimal;
@@ -164,7 +206,20 @@ G.randomMarketGenes = (sp) => {
   if (sp === 'horse' && G.chance(0.25)) genes.traits.push({ k: 'racer', r: 1 });
   return genes;
 };
+// 新しいフォームの入荷（年数で。初めて並んだときだけ通知）
+G.checkFormArrival = () => {
+  const S = G.S;
+  S.formsIn = S.formsIn || [];
+  const year = Math.floor((S.turn - 1) / 4) + 1;
+  let fresh = false;
+  for (const f of G.FORM_KEYS) {
+    const y = G.C.formArrival[f];
+    if (y && year >= y && !S.formsIn.includes(f)) { S.formsIn.push(f); fresh = true; }
+  }
+  if (fresh) G.notify('newform', null, '家畜市場に新しい品種が入りました');
+};
 G.refreshMarket = () => {
+  G.checkFormArrival();
   const list = [];
   const n = G.ri(3, 4) + 2;
   for (let i = 0; i < n; i++) {
@@ -177,6 +232,17 @@ G.refreshMarket = () => {
   for (const m of list) {
     const tmp = { genes: m.genes, age: m.age, species: m.species };
     m.price = G.marketValue(tmp);
+    if (G.S.formsIn.length && G.chance(G.C.formMarketRate)) m.form = G.pick(G.S.formsIn);
+  }
+  // 基礎的な若い雌牛（特筆は肉質・伸び/骨格・深み/肉付きのどれか1つだけ。安い）
+  const nb = G.ri(1, 2);
+  for (let i = 0; i < nb; i++) {
+    const genes = { length: 0, depth: 0, traits: [] };
+    const k = G.pick(['meat', 'length', 'depth']);
+    const r = G.chance(0.7) ? 1 : 2;
+    if (k === 'meat') genes.traits.push({ k, r }); else genes[k] = r;
+    const [lo, hi] = G.C.marketBasic;
+    list.push({ key: 'b' + G.S.turn + '_' + i, species: 'cattle', sex: 'F', age: G.ri(1, 3), genes, personality: G.pick(G.PERSONALITIES), price: Math.round((lo + (hi - lo) * (r - 1)) / 10000) * 10000, basic: true });
   }
   G.S.market = list;
 };
@@ -222,26 +288,42 @@ G.makeStallion = (type, rank, i) => {
     genes: { length: G.ri(rank - 1, rank), depth: type === 'farm' ? G.ri(rank - 1, rank) : G.ri(1, 2), traits },
   };
 };
+// 外部の種雄（精液ストロー・外部種牡馬）のフォーム：入荷済みのフォームから
+G.extForm = () => (G.S.formsIn && G.S.formsIn.length && G.chance(G.C.formMarketRate) ? G.pick(G.S.formsIn) : undefined);
 G.refreshStallions = () => {
   G.S.stallions = [G.makeStallion('farm', 3, 0), G.makeStallion('farm', 3, 1), G.makeStallion('race', 3, 2), G.makeStallion('race', 4, 3)];
+  for (const s of G.S.stallions) { const f = G.extForm(); if (f) s.form = f; }
 };
 
 G.refreshCatalog = () => {
   const list = [];
   for (let i = 0; i < 3; i++) list.push(G.makeStraw(3, i));
   list.push(G.makeStraw(4, 3));
+  for (const s of list) { const f = G.extForm(); if (f) s.form = f; }
   G.S.strawCatalog = list;
+};
+
+// ---------- 他の牧場の手伝い ----------
+G.sideWork = (n) => {
+  const S = G.S;
+  n = Math.min(n, S.careLeft);
+  if (n <= 0) return 0;
+  S.careLeft -= n;
+  const wage = n * G.C.sideWorkWage;
+  G.earn(wage, `手伝い　他の牧場　お世話 ${n}回分　${G.yen(wage)}`);
+  return wage;
 };
 
 // ---------- 施設 ----------
 G.openPasture = (pid) => {
   const S = G.S;
   const horse = G.pastureSpecies(pid) === 'horse';
-  const cost = horse ? G.C.horsePastureCost : G.C.pastureOpenCost;
-  if (S.pastures[pid].open || S.money < cost) return false;
+  const cost = G.pastureOpenCost();
+  if (S.pastures[pid].open || !G.canPayCost(cost)) return false;
   S.pastures[pid].open = true;
-  if (horse) S.horseSlots += G.C.horseSlotsPerPasture; else S.cattleSlots += G.C.pastureOpenSlots;
-  G.pay(cost, `放牧地 開拓　${G.MAP_LABEL[pid]}　${G.yen(cost)}　飼育枠（${horse ? '馬' : '牛'}） +${horse ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots}`);
+  S.pastures[pid].stage = 0;
+  G.recalcSlots();
+  G.payCost(cost, `放牧地 開拓　${G.MAP_LABEL[pid]}　飼育枠（${horse ? '馬' : '牛'}） +${G.C.pastureOpenSlots}`);
   return true;
 };
 
@@ -268,6 +350,7 @@ G.endTurn = () => {
     let rec = 20 - G.traitRank(a, 'frail') * 3 + (likedHere ? 5 : 0) + (staffMatch ? 5 : 0);
     if (a.flags.earlyCast) { rec = 100; a.flags.earlyCast = false; }
     if (a.flags.linger > 0) { rec = Math.round(rec / 2); a.flags.linger--; }
+    if (G.pastureExcess(a.pasture) > 0) rec = 0; // 過密の放牧地では自然には回復しない（ストレスは下で少しずつ加わる）
     a.stress = G.clamp(a.stress - rec + (dislikedHere ? 3 : 0), 0, 100);
     if (G.traitRank(a, 'temper') && !a.castrated && a.sex === 'M' && G.chance(0.1 * G.traitRank(a, 'temper'))) a.stress = Math.min(100, a.stress + 10);
     // 幸福度
@@ -286,6 +369,9 @@ G.endTurn = () => {
     // 空胎
     if (a.sex === 'F' && G.isMature(a) && !a.pregnancy) a.openTurns++;
     // 成熟
+    G.applyAging(a);
+    if (G.pastureExcess(a.pasture) > 0) a.stress = Math.min(100, a.stress + G.C.crowdStress);
+    G.rollInjury(a);
     // 当代能力は少しずつ落ちる
     if (a.trained) a.trained = Math.max(0, a.trained - G.C.trainDecay);
     if (a.age === G.SPECIES[a.species || 'cattle'].mature) {
@@ -301,7 +387,6 @@ G.endTurn = () => {
     if (a.lactation && G.milk.slotOf(a) >= 0) {
       const k = S.turn + 1 - a.lactation.start + 1;
       if (k === G.C.milkLowAt && !a.pregnancy) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
-      else if (a.age === G.C.milkAgeStart + 1) G.notify('milklow', a.id, `🐮 ${a.name}の乳量が下がってきました`);
     }
     else if (a.flags.postpartum) { a.flags.postpartum = false; G.notify('breedable', a.id, `${G.spIcon(a)} ${a.name}が交配できるようになりました！`); }
   }
@@ -313,7 +398,7 @@ G.endTurn = () => {
     calf.bornTurn = S.turn + 1;
     newborns.push(calf);
     dam.lactation = { start: S.turn + 1 };
-    if (G.milk.slotOf(dam) < 0) G.notify('milkable', dam.id, `🐮 ${dam.name}が搾乳できるようになりました！`);
+    if (G.milk.slotOf(dam) < 0) G.notify('milkable', dam.id, `🐮 ${dam.name}が搾乳できるようになりました！`, { card: false });
   }
 
   // 死亡
@@ -321,7 +406,7 @@ G.endTurn = () => {
     if (newborns.includes(a)) continue;
     let dead = false;
     if (a.age > a.lifespan && G.chance(G.C.oldAgeDeathRate)) dead = 'old';
-    else if (G.chance(G.C.accidentRate)) dead = 'accident';
+    else if (G.chance(G.C.accidentRate * G.injuryMult(a))) dead = 'accident';
     if (dead) {
       a.status = 'dead';
       a.endTurn = S.turn + 1;
@@ -337,11 +422,15 @@ G.endTurn = () => {
   for (const c of newborns) c.status = 'newborn';
   const fb = G.feedBalance();
   for (const c of newborns) c.status = 'alive';
-  if (fb.cost) G.pay(fb.cost, `飼料費　必要 ${fb.need}単位　自給 ${fb.self}単位　購入 ${fb.buy}単位　${G.yen(fb.cost)}`);
+  const cm = G.crowdMult();
+  const crowdNote = cm > 1 ? `　過密 +${Math.round((cm - 1) * 100)}%` : '';
+  fb.cost = Math.round(fb.cost * cm);
+  if (fb.cost) G.pay(fb.cost, `飼料費　必要 ${fb.need}単位　自給 ${fb.self}単位　購入 ${fb.buy}単位${crowdNote}　${G.yen(fb.cost)}`);
   else G.ledger(`飼料　必要 ${fb.need}単位　自給 ${fb.self}単位`, 0, 'note');
   if (fb.surplusIncome) G.earn(fb.surplusIncome, `飼料 売却　${fb.surplus}単位　${G.yen(fb.surplusIncome)}`, { silent: true });
   const up = G.upkeepBreakdown();
-  G.pay(up.total, `施設維持費　放牧地・畜舎 ${up.pastures}区画　搾乳 ${up.milk}枠${up.fields ? `　畑 ${up.fields}区画` : ''}　${G.yen(up.total)}`);
+  up.total = Math.round(up.total * cm);
+  G.pay(up.total, `施設維持費　放牧地・畜舎 ${up.pastures}区画　搾乳 ${up.milk}枠${up.fields ? `　畑 ${up.fields}区画` : ''}${crowdNote}　${G.yen(up.total)}`);
   G.pay(G.C.staffWage, `人件費　厩務員 2名　${G.yen(G.C.staffWage)}`);
 
   // 季節の収支
@@ -385,8 +474,9 @@ G.endTurn = () => {
   S.noticeTurn = null;
   S.careLeft = G.C.carePerTurn;
   for (const a of newborns) {
-    G.notify('birth', a.id, `${a.name}（${a.sex === 'M' ? '♂' : '♀'}）`, { title: '新しい家族が生まれました！' });
-    if (a.sex === 'M') G.notify('castrate', a.id, `${G.spIcon(a)} ${a.name}が去勢を検討できる時期になりました！`);
+    const dam = S.animals[a.dam];
+    G.notify('birth', a.id, `${a.name}（${a.sex === 'M' ? '♂' : '♀'}）${dam ? `　母 ${dam.name}` : ''}`, { title: '新しい家族が生まれました！', dam: a.dam });
+    if (a.sex === 'M') G.notify('castrate', a.id, `${G.spIcon(a)} ${a.name}が去勢を検討できる時期になりました！`, { card: false });
   }
   // 経過日誌
   const due = S.pendingCourses.filter((c) => c.turn < S.turn);
@@ -396,7 +486,10 @@ G.endTurn = () => {
   G.refreshCatalog();
   G.refreshStallions();
   G.race.makeCard();
+  for (const a of G.alive()) G.checkProdState(a);
+  G.checkCrowding();
   G.checkRecords();
+  G.senior.check();
   S.lastSummary = summary;
   G.save.auto();
   return summary;

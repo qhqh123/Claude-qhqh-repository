@@ -79,12 +79,48 @@ G.C = {
 
   // 市場
   marketCalf: [300000, 600000],
+  marketBasic: [150000, 250000], // 基礎的な若い雌牛（C / B）
   marketAdult: [500000, 900000],
   marketSellRate: 0.7,
   marketTraitDist: [0.50, 0.35, 0.15], // なし, C, B
   marketDemeritRate: 0.30,
 
   carePerTurn: 5,
+  pastureExpandSlots: 3,                         // 拡張1段階で増える頭数（牛馬共通）
+  pastureExpandCost: [1000000, 1500000, 2000000], // 拡張の費用（段階ごと）
+  pastureUpkeepPerStage: 10000,                  // 拡張1段階ごとの維持費の上乗せ
+  crowdStress: 4,          // 過密な放牧地の個体に毎ターン加わるストレス
+  crowdUpkeepPerHead: 0.05, // 上限を超えた1頭ごとに維持費（飼料費・施設維持費）+5%
+  sideWorkWage: 25000, // 他の牧場の手伝い：お世話1回あたりの賃金（仮）
+  // 木こり小屋と木材（仮）
+  woodPerCare: 5,       // お世話1回で得る木材
+  woodSellPrice: 3000,  // 町で売る値段（1木材）
+  woodBuyPrice: 6000,   // 町で買う値段（1木材）
+  woodValue: 4500,      // 拡張費用を木材に置き換えるときの換算（1木材）
+  woodRound: 10,        // 拡張に求める木材は10単位に四捨五入
+  woodShare: { pasture: 0.5, field: 0.3, storage: 0.8 }, // 拡張費用のうち木材で求める割合
+  // フォームの入荷（No.24。仮）：何年目から家畜市場に並ぶか、並ぶ割合
+  formArrival: { telepathy: 3, taur: 5, halfbeast: 7, kemomimi: 9 },
+  // 出荷時のバイヤーの「年齢のわりに肉が若い」（仮）：この年齢（ターン）以上で、【肉質低下】の実際の効き目がこれ以下
+  youngMeatAge: 24,
+  // B（No.25）の日常イベントの行動（仮）：行動になる割合、好きな相手として厩務員を選ぶなつき度の下限
+  bBehaviorRate: 0.5,
+  bAffinityMin: 50,
+  youngMeatMaxDecline: 0.1,
+  // タウル種の出荷（No.24。仮）：上半身の体重の割合、ペットフード原料の単価、埋葬費
+  taurUpperShare: 0.1,
+  petfoodPerKg: 300,
+  burialCost: 50000,
+  formMarketRate: 0.3,
+
+  // 後天バッジの年齢は js/aging.js の G.AGING。ここは効果の量（仮）
+  acqRankMax: 3,           // 後天のデメリットバッジの上限（A）
+  fertDownMult: 0.7,       // 【受胎率低下】【繁殖力低下】
+  injuryRate: 0.02,        // 【けがしやすい】1ランクあたりのけがの確率
+  injuryCost: 10000,
+  milkDeclinePerRank: 0.10, // 【乳量低下】1ランクあたり
+  meatDeclinePerRank: 0.3,  // 【肉質低下】1ランクあたりの肉質評価
+  speedDeclinePerRank: 4,   // 【走力低下】1ランクあたりのレース評価点
 
   // 倉庫とメモリアルアイテム（仮）
   storageCap: 20,
@@ -102,8 +138,6 @@ G.C = {
   horseLifeMax: 120,
   horseDeclineAge: 40,
   teaserBonus: 0.15,
-  horseSlotsPerPasture: 4,
-  horsePastureCost: 2000000,
   marketFoal: [400000, 900000],
   marketHorse: [700000, 1500000],
   stallionFee: { farm3: 150000, race3: 500000, race4: 2000000 },
@@ -127,9 +161,6 @@ G.C = {
   milkPrice: [90, 100, 110, 125, 150, 190],
   milkDilute1: 2500,
   milkDilute2: 3000,
-  milkAgeStart: 32,
-  milkAgePerTurn: 0.03,
-  milkAgeMin: 0.4,
   milkLowAt: 5, // 泌乳5ターン目（25%）で通知
   startMilkSlots: 1,
   milkSlotCost: 800000,
@@ -140,8 +171,8 @@ G.C = {
   feedUnitsAdult: 10,
   feedUnitsYoung: 5,
   feedSurplusPrice: 1500,
-  fieldPastureBase: 10,
-  fieldCropBase: 30000,
+  fieldPastureBase: 25,
+  fieldCropBase: 100000,
   fieldOpenCost: 300000,
   fieldUpkeep: 10000,
   // 農耕馬の能力 → [商業作物, 牧草]（null は配置不可）
@@ -156,6 +187,8 @@ G.SPECIES = {
 G.DIST_NAMES = { short: '短距離', mid: '中距離', long: '長距離' };
 G.RANKS = ['平凡', 'C', 'B', 'A', 'A+', 'S'];
 G.PERSONALITIES = ['おっとり', '甘えん坊', '活発', '好奇心旺盛', 'マイペース', '頑固'];
+// 文章IDで使う性格の英字キー（声のステップなど）
+G.PERS_KEY = { おっとり: 'calm', 甘えん坊: 'sweet', 活発: 'lively', 好奇心旺盛: 'curious', マイペース: 'easy', 頑固: 'stubborn' };
 G.ACTIVITIES = ['brush', 'pet', 'exercise'];
 G.ACTIVITY_NAMES = { brush: 'ブラッシング', pet: 'ふれあい', exercise: '運動' };
 G.METHOD_NAMES = { ring: 'ゴムリング法', burdizzo: '去勢鉗子法', surgical: '観血法', traditional: '旧来手法' };
@@ -180,6 +213,15 @@ G.TRAITS = {
   timid:   { name: '臆病', tip: 'レースで力を出しにくい', demerit: true },
   fickle:  { name: '気まぐれ', tip: 'レース成績がばらつく', demerit: true },
   racer:   { name: '競走馬', tip: 'レース評価点 +5', noRank: true },
+  fertDownF:  { name: '受胎率低下', tip: '受胎率 ×0.7', noRank: true, acquired: true },
+  infertileF: { name: '受胎不可', tip: '受胎しない', noRank: true, acquired: true },
+  fertDownM:  { name: '繁殖力低下', tip: '交配相手の受胎率 ×0.7', noRank: true, acquired: true },
+  infertileM: { name: '繁殖不能', tip: '交配できない', noRank: true, acquired: true },
+  milkDecline:  { name: '乳量低下', tip: '乳量が減る　1ランクごとに −10%', demerit: true, acquired: true },
+  meatDecline:  { name: '肉質低下', tip: '肉質が下がる', demerit: true, acquired: true },
+  injuryProne:  { name: 'けがしやすい', tip: 'けが・事故が起きやすい', demerit: true, acquired: true },
+  speedDecline: { name: '走力低下', tip: 'レースで力が落ちる', demerit: true, acquired: true },
+  workDecline:  { name: '足腰の衰え', tip: '農耕の能力が下がる', demerit: true, acquired: true },
 };
 G.HORSE_FREE_TRAITS = ['speed', 'stamina', 'meat', 'growth', 'charm'];
 G.HORSE_DEMERITS = ['temper', 'frail', 'timid', 'fickle'];
@@ -195,3 +237,23 @@ G.NAMES_M = ['ゴロウ', 'タロウ', 'ゴンタ', 'クロ', 'マメ', 'ジロ�
 
 G.STRAW_MAIN = ['meat', 'growth', 'milk', 'milkq'];
 G.STRAW_NAMES = ['北の誉', '福光', '安美', '茂勝', '百合花', '勝早', '糸桜', '照久', '金幸', '平茂', '美津照', '藤良'];
+
+// ---------- フォーム（No.24）：同じ種の中での見た目と感情の表現方法の違い ----------
+// body：獣の体の振る舞い（full あり／head 頭が牛・馬／earsTail 耳と尾）
+// voice 声、arms 腕、face 表情。loco：quad 四足／biped 二足
+// 経済の倍率（仮）：weight 体重、upkeep 維持費（飼料）、meatPlus 遺伝の肉質ランクへの加算（上限S）、
+//   meatDecline 【肉質低下】の効き目、aging 後天バッジの年齢の倍率、slot 飼育枠の消費
+//   maleLate：雄が去勢の晩期以降（標準期を過ぎてから）に、生育（体重の増え方）と老化（後天バッジの年齢）に掛ける倍率
+G.FORM_KEYS = ['normal', 'telepathy', 'taur', 'halfbeast', 'kemomimi'];
+G.FORMS = {
+  normal:    { name: '普通',       body: 'full',     voice: false, arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 1.0,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  telepathy: { name: 'テレパシー種', body: 'full',     voice: true,  arms: false, face: false, loco: 'quad',  weight: 1.0, upkeep: 0.96,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  taur:      { name: 'タウル種',     body: 'full',     voice: true,  arms: true,  face: true,  loco: 'quad',  weight: 1.0, upkeep: 0.89,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1 },
+  halfbeast: { name: '半獣人種',     body: 'head',     voice: false, arms: true,  face: false, loco: 'biped', weight: 0.6, upkeep: 0.78,  meatPlus: 0, meatDecline: 1.0, aging: 1, slot: 1, maleLate: { growth: 1.25, aging: 0.85 } },
+  kemomimi:  { name: 'ケモミミ種',   body: 'earsTail', voice: true,  arms: true,  face: true,  loco: 'biped', weight: 0.4, upkeep: 0.35, meatPlus: 2, meatDecline: 0.3, aging: 2, slot: 0 },
+};
+G.NPC_NAMES = { vet: '獣医', dealer: '家畜商', buyer: 'バイヤー' };
+G.isRouteB = () => !!(G.S && G.S.route === 'B');
+// 雄の晩期以降の倍率（なければ1）
+G.maleLate = (a, k) => { const m = G.formOf(a).maleLate; return m && a.sex === 'M' && a.age > 2 ? m[k] : 1; };
+G.formOf = (a) => G.FORMS[(a && a.form) || 'normal'] || G.FORMS.normal;

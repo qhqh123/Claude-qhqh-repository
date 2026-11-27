@@ -45,28 +45,44 @@ G.castrate = (a, methodSel, mode) => {
   const line2 = `　増体予測 −${GAIN_PRED[period]}kg/日（1ターン）${period !== 'early' ? '※月齢による' : ''}　格付予測 肉質 ${period === 'mature' ? '→' : '↑'}`;
   G.pay(cost, [line1, line2]);
   G.addHistory(a, `去勢（${short}・${modeName}）　${G.PERIOD_NAMES[period]}`);
-  S.pendingCourses.push({ aid: a.id, method, mode, incomplete, infection, turn: S.turn });
+  S.pendingCourses.push({ aid: a.id, method, mode, incomplete, infection, turn: S.turn, period });
   // 成熟雄を観血法・旧来手法で直接去勢したときは精巣を冷凍保存
   const keep = mode === 'direct' && period === 'mature' && !incomplete && (method === 'surgical' || method === 'traditional') ? G.store.addTestes(a, method) : null;
 
   if (mode !== 'direct') return null;
-  const ctx = { species: a.species, method, personality: a.personality };
+  const ctx = { species: a.species, method, personality: a.personality, locomotion: G.formOf(a).loco };
   const staff = G.staffFor(a);
+  const late = period === 'late' || period === 'mature';
+  const vo = (scene) => G.voiceStep(a, `cas.voice.${method}`, scene, late);
+  // B（No.25）：成熟した個体の去勢だけ、処置を嫌がる台詞・失ったことを話す台詞・余白の文を足す
+  const bMature = G.isRouteB() && G.isMature(a);
+  const pk = G.PERS_KEY[a.personality];
   const steps = [
     'cas.head',
     { pick: `cas.${method}.pre_` },
+    vo('pre'),
+    bMature ? { pick: `b.mature.pre.${pk}_` } : null,
     `cas.${method}.tool`,
-    `cas.${method}.locate`,
+    G.bodyStep(`cas.${method}.locate`),
+    G.armsStep(a, 'locate'),
     `cas.${a.species}.function_sperm`,
     `cas.${a.species}.function_hormone`,
-    `cas.${method}.act`,
+    G.bodyStep(`cas.${method}.act`),
+    G.armsStep(a, 'act'),
+    vo('act'),
   ];
   if (!suitable) steps.push({ pick: `cas.${method}.mismatch_` });
   steps.push(
     { pick: `cas.${method}.react_` },
+    G.armsStep(a, 'react'),
+    vo('react'),
     { pick: 'cas.react_projection_', p: 0.5 },
     { pick: `cas.staff_${staff}_`, p: 0.3 },
+    G.replyStep(a, 'cas_staff'),
     `cas.${method}.after`,
+    vo('after'),
+    bMature ? { pick: `b.mature.after.${pk}_` } : null,
+    bMature ? { pick: 'b.margin_' } : null,
   );
   if (keep && keep.kept) steps.push({ pick: 'cas.keep_testes_' });
   const vars = G.textVars(a);
@@ -82,7 +98,7 @@ G.storeDiary = (a, ev) => {
 G.deliverCourse = (c) => {
   const a = G.S.animals[c.aid];
   if (!a || a.status !== 'alive') return;
-  const ctx = { species: a.species, method: c.method, personality: a.personality };
+  const ctx = { species: a.species, method: c.method, personality: a.personality, locomotion: G.formOf(a).loco };
   if (c.infection) {
     a.infection = G.C.infectionTurns;
     a.health = Math.max(30, a.health - 30);
@@ -101,7 +117,7 @@ G.deliverCourse = (c) => {
     G.notify('castrate', a.id, `🐮 ${a.name}の去勢が不完全でした`);
   }
   if (c.mode === 'direct') {
-    const steps = [{ pick: `cas.${c.method}.course_` }];
+    const steps = [{ pick: `cas.${c.method}.course_` }, G.voiceStep(a, `cas.voice.${c.method}`, 'course', c.period === 'late' || c.period === 'mature')];
     if (c.incomplete) steps.push({ pick: 'cas.course_incomplete_' });
     if (c.infection) steps.push({ pick: 'cas.course_infection_' });
     const ev = { title: '経過日誌', paras: G.buildParas(steps, ctx), vars: G.textVars(a), ledger: null };
@@ -111,7 +127,7 @@ G.deliverCourse = (c) => {
 };
 
 // ---------- 交配 ----------
-G.canBreed = (a) => a.status === 'alive' && a.sex === 'F' && G.isMature(a) && !a.pregnancy && a.bredTurn !== G.S.turn;
+G.canBreed = (a) => a.status === 'alive' && a.sex === 'F' && G.isMature(a) && !a.pregnancy && a.bredTurn !== G.S.turn && G.fertMult(a) > 0;
 
 G.partnerNear = (dam) => G.alive().some((b) => G.isIntactMature(b) && b.species === dam.species && b.pasture === dam.pasture && G.likesAnimal(dam, b));
 // 当て馬に使える牡馬
@@ -122,31 +138,31 @@ G.breed = (dam, partner) => {
   const S = G.S;
   dam.bredTurn = S.turn;
   const season = (S.turn - 1) % 4;
-  const feed = Math.round(G.C.feedUnitsAdult * G.C.feedUnitPrice * G.C.feedSeason[(season + 1) % 4]);
+  const feed = Math.round(G.C.feedUnitsAdult * G.formOf(dam).upkeep * G.C.feedUnitPrice * G.C.feedSeason[(season + 1) % 4]);
   let sire, ok, line, ev;
   const vars = G.textVars(dam);
   if (partner.type === 'bull') {
     const bull = S.animals[partner.id];
     sire = { id: bull.id };
-    ok = G.chance(G.C.naturalConception);
+    ok = G.chance(G.C.naturalConception * G.fertMult(dam) * G.fertMult(bull));
     line = `自然交配　${dam.name} × ${bull.name}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = bull.name;
-    const ctx = { species: dam.species, personality: dam.personality, partner_liked: G.likesAnimal(dam, bull) };
-    ev = { title: '交配', paras: G.buildParas(['breed.natural.head', { pick: 'breed.natural.act_' }, { pick: 'breed.natural.after_' }], ctx), vars, aid: dam.id };
+    const ctx = { species: dam.species, personality: dam.personality, partner_liked: G.likesAnimal(dam, bull), locomotion: G.formOf(dam).loco };
+    ev = { title: '交配', paras: G.buildParas(['breed.natural.head', G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.natural.act_' }, G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.natural.after_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
     G.addHistory(dam, `自然交配　${bull.name}　${ok ? '受胎' : '不受胎'}`);
     G.addHistory(bull, `自然交配　${dam.name}　${ok ? '受胎' : '不受胎'}`);
   } else if (partner.type === 'stallion') {
     const st = S.stallions[partner.index];
     const teaser = partner.teaser && S.animals[partner.teaser];
-    sire = { external: true, name: st.name, genes: st.genes };
-    ok = G.chance(G.C.naturalConception + (teaser ? G.C.teaserBonus : 0));
+    sire = { external: true, name: st.name, genes: st.genes, form: st.form };
+    ok = G.chance((G.C.naturalConception + (teaser ? G.C.teaserBonus : 0)) * G.fertMult(dam));
     G.pay(st.fee, `種付け料　${st.name}（外部）　${G.yen(st.fee)}`);
     line = `種付け　${dam.name} × ${st.name}（外部）${teaser ? `　当て馬 ${teaser.name}` : ''}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     vars.partner = st.name;
-    const ctx = { species: dam.species, personality: dam.personality };
-    const steps = ['breed.stallion.head'];
+    const ctx = { species: dam.species, personality: dam.personality, locomotion: G.formOf(dam).loco };
+    const steps = ['breed.stallion.head', G.voiceStep(dam, 'breed.voice', 'pre')];
     if (teaser) steps.push({ pick: 'breed.teaser.act_' }, { pick: 'breed.teaser.after_' });
-    steps.push({ pick: 'breed.stallion.act_' }, { pick: 'breed.stallion.after_' });
+    steps.push({ pick: 'breed.stallion.act_' }, G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.stallion.after_' }, G.voiceStep(dam, 'breed.voice', 'after'));
     ev = { title: '種付け', paras: G.buildParas(steps, ctx), vars, aid: dam.id };
     G.addHistory(dam, `種付け　${st.name}（外部）　${ok ? '受胎' : '不受胎'}`);
     if (teaser) {
@@ -155,12 +171,12 @@ G.breed = (dam, partner) => {
     }
   } else {
     const straw = S.straws.splice(partner.index, 1)[0];
-    sire = { external: true, name: straw.name, genes: straw.genes };
-    ok = G.chance(G.C.aiConception);
+    sire = { external: true, name: straw.name, genes: straw.genes, form: straw.form };
+    ok = G.chance(G.C.aiConception * G.fertMult(dam));
     line = `人工授精　${dam.name}　精液ストロー ${straw.name}（${G.TRAITS[straw.main].name}期待${G.rankName(straw.rank)}）${G.yen(straw.price)}　${ok ? '受胎' : `不受胎　空胎 +1ターン　飼料費 ${G.yen(feed)}`}`;
     const near = G.partnerNear(dam);
-    const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near };
-    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, 'breed.ai.act', { pick: 'breed.ai.after_partner_' }], ctx), vars, aid: dam.id };
+    const ctx = { species: dam.species, personality: dam.personality, partner_in_pasture: near, locomotion: G.formOf(dam).loco };
+    ev = { title: '人工授精', paras: G.buildParas(['breed.ai.head', { pick: 'breed.ai.estrus_' }, G.voiceStep(dam, 'breed.voice', 'pre'), { pick: 'breed.ai.partner_near_' }, { pick: 'breed.ai.staff_' }, G.replyStep(dam, 'breed_staff'), G.bodyStep('breed.ai.act'), G.voiceStep(dam, 'breed.voice', 'act'), { pick: 'breed.ai.after_partner_' }, G.voiceStep(dam, 'breed.voice', 'after')], ctx), vars, aid: dam.id };
     G.addHistory(dam, `人工授精　${straw.name}　${ok ? '受胎' : '不受胎'}`);
   }
   if (ok) {
@@ -174,7 +190,7 @@ G.breed = (dam, partner) => {
 };
 
 // ---------- 出荷・売買 ----------
-G.ship = (a) => {
+G.ship = (a, opt) => {
   const S = G.S;
   const v = G.shipValue(a);
   a.status = 'shipped';
@@ -183,7 +199,16 @@ G.ship = (a) => {
   a.shipped = { turn: S.turn, carcass: v.carcass, q: v.q, yieldRank: v.yieldRank, sales: v.sales };
   G.addHistory(a, '出荷');
   G.earn(v.sales, `出荷　個体識別番号 ${a.idNo}　枝肉 ${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}　売上 ${G.yen(v.sales)}`);
+  // タウル種：上半身は枝肉にならない。ペットフード原料として売るか、埋葬する
+  if (a.form === 'taur') {
+    if ((opt && opt.upper) === 'burial') G.pay(G.C.burialCost, `埋葬費　${G.yen(G.C.burialCost)}`);
+    else {
+      const pf = Math.round(a.weight * G.C.taurUpperShare * G.C.petfoodPerKg / 1000) * 1000;
+      G.earn(pf, `副産物　ペットフード原料　${G.yen(pf)}`);
+    }
+  }
   G.record('firstShip');
+  G.senior && G.senior.check();
   if (v.q >= 3) G.record('meatA');
   return v;
 };
@@ -198,16 +223,18 @@ G.sell = (a) => {
   a.soldPrice = price;
   G.addHistory(a, '売却');
   G.earn(price, `売却　${a.name}　個体識別番号 ${a.idNo}　${G.yen(price)}`);
+  G.senior && G.senior.check();
   return price;
 };
 
 G.buy = (m) => {
   const S = G.S;
   const sp = m.species || 'cattle';
-  if (S.money < m.price || !G.hasRoom(sp)) return null;
-  const pasture = G.pastureWithRoom(sp);
+  const free = G.FORMS[m.form || 'normal'].slot === 0;
+  if (S.money < m.price || (!free && !G.hasRoom(sp))) return null;
+  const pasture = G.pastureWithRoom(sp) || (free ? G.openPastures(sp)[0] : null);
   if (!pasture) return null;
-  const a = G.makeAnimal({ species: sp, sex: m.sex, age: m.age, genes: m.genes, personality: m.personality, origin: 'market', pasture });
+  const a = G.makeAnimal({ species: sp, sex: m.sex, age: m.age, genes: m.genes, personality: m.personality, origin: 'market', pasture, form: m.form });
   if (G.isMature(a)) G.assignRelations(a);
   S.market = S.market.filter((x) => x !== m);
   G.addHistory(a, '購入');
@@ -225,16 +252,8 @@ G.buyStraw = (s) => {
   return true;
 };
 
-G.pastureWithRoom = (sp) => {
-  const open = Object.keys(G.S.pastures).filter((p) => G.S.pastures[p].open && G.pastureSpecies(p) === (sp || 'cattle'));
-  if (!open.length) return null;
-  let best = open[0], min = 1e9;
-  for (const p of open) {
-    const n = G.alive().filter((a) => a.pasture === p).length;
-    if (n < min) { min = n; best = p; }
-  }
-  return best;
-};
+// 空きのある放牧地のうち、番号の若いところ（なければ null）
+G.pastureWithRoom = (sp) => G.openPastures(sp || 'cattle').find((p) => G.pastureCount(p) < G.pastureCap(p)) || null;
 
 // S ランク個体の作出（出生時）
 G.checkRankS = (a) => {

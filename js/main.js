@@ -3,6 +3,7 @@ G.main = {
   async boot() {
     try { G.audio.muted = !!localStorage.getItem('inochi-farm-muted'); } catch (e) { /* */ }
     await G.text.load();
+    await G.skin.init();
     G.ui.initHud();
     G.ui.initTip();
     G.novel.init();
@@ -39,6 +40,13 @@ G.main = {
         G.ui.confirm('新規ゲーム', '', '新規ゲーム', () => this.newGame());
       } else this.newGame();
     };
+    // 新規ゲーム（B）：出現条件はテストプレーの後で決める。今は常に表示
+    t.querySelector('.new-b').onclick = () => {
+      this.startAudio();
+      if (G.save.hasAuto()) {
+        G.ui.confirm('新規ゲーム（B）', '', '新規ゲーム', () => this.newGame('B'));
+      } else this.newGame('B');
+    };
     cont.onclick = () => {
       this.startAudio();
       if (G.save.loadAuto()) this.startLoaded(); else G.ui.error('セーブデータを読み込めませんでした');
@@ -64,8 +72,9 @@ G.main = {
     document.getElementById('notices').innerHTML = '';
     G.ui.refreshHud();
   },
-  newGame() {
-    G.newGame();
+  newGame(route) {
+    G.newGame(route);
+    G.recalcSlots();
     this.enterGame();
     G.ui.holdNotices = true;
     for (const a of G.alive()) if (a.sex === 'M' && !a.castrated && a.age === 0) G.notify('castrate', a.id, `🐮 ${a.name}が去勢を検討できる時期になりました！`);
@@ -73,10 +82,10 @@ G.main = {
     G.ui.seasonChange();
   },
   startLoaded() {
+    G.recalcSlots();
     this.enterGame();
     G.ui.holdNotices = false;
-    G.ui.noticeQueue = G.S.notices.filter((n) => !n.done && n.turn === G.S.turn);
-    G.ui.flushNotices();
+    G.ui.buildNoticeQueue();
   },
 };
 

@@ -82,6 +82,7 @@ G.novel = {
   show(p, instant) {
     this.win.classList.toggle('ledger-mode', !!p.ledger);
     if (p.ledger) {
+      this.textEl.classList.remove('margin');
       this.speakerEl.textContent = '帳簿';
       this.speakerEl.classList.remove('hidden');
       this.textEl.innerHTML = p.ledger.map((l) => `<div>${G.esc(l)}</div>`).join('');
@@ -95,10 +96,13 @@ G.novel = {
     let name = '';
     if (sp === 'staff_girl') name = G.S.staff.girl.name;
     if (sp === 'staff_boy') name = G.S.staff.boy.name;
+    if (sp === 'senior') name = G.senior.NAME;
+    if (G.NPC_NAMES[sp]) name = G.NPC_NAMES[sp];
     if (sp === 'animal') name = this.vars.name || '';
     this.speakerEl.textContent = name;
     this.speakerEl.classList.toggle('hidden', !name);
     this.speakerEl.className = 'speaker ' + sp + (name ? '' : ' hidden');
+    this.textEl.classList.toggle('margin', sp === 'margin');
     const text = G.text.fill(e.text, this.vars);
     G.S.readTexts[p.id] = true;
     this.idEl.textContent = p.id;
@@ -141,8 +145,9 @@ G.novel = {
 // 出荷画面（No.18）
 G.shipScreen = {
   active: false,
-  start(a) {
+  start(a, opt) {
     this.a = a;
+    this.opt = opt || {};
     this.active = true;
     const root = document.getElementById('ship');
     this.root = root;
@@ -153,8 +158,10 @@ G.shipScreen = {
     G.draw.portrait(root.querySelector('canvas'), a);
     G.audio.duck(true);
     const v = G.shipValue(a);
-    const ctx = { species: a.species, personality: a.personality, meat_grade: v.q };
-    this.paras = G.buildParas([{ pick: 'ship.farewell_' }, { pick: 'ship.buyer_marbling_' }], ctx);
+    const ctx = { species: a.species, personality: a.personality, meat_grade: v.q, young_meat: G.youngMeat(a) };
+    this.paras = G.buildParas([{ pick: 'ship.farewell_' }, G.voiceStep(a, 'ship.voice', 'farewell'), { pick: 'ship.buyer_marbling_' }, { pick: 'ship.buyer_young_meat_' }], ctx);
+    const buyer = G.npcLine('buyer', [], ctx);
+    if (buyer) this.paras.push(buyer);
     this.vars = G.textVars(a);
     this.i = -1;
     this.stage = 1;
@@ -171,7 +178,7 @@ G.shipScreen = {
         const e = G.text.get(id);
         const box = root.querySelector('.ship-text');
         box.classList.remove('hidden');
-        const sp = e.speaker === 'staff_girl' ? G.S.staff.girl.name : e.speaker === 'staff_boy' ? G.S.staff.boy.name : '';
+        const sp = e.speaker === 'staff_girl' ? G.S.staff.girl.name : e.speaker === 'staff_boy' ? G.S.staff.boy.name : e.speaker === 'animal' ? this.a.name : G.NPC_NAMES[e.speaker] || '';
         box.querySelector('.speaker').textContent = sp;
         box.querySelector('.speaker').classList.toggle('hidden', !sp);
         box.querySelector('.ntext').textContent = G.text.fill(e.text, this.vars);
@@ -188,8 +195,9 @@ G.shipScreen = {
   },
   showLabel() {
     const a = this.a, root = this.root;
-    const v = G.ship(a);
-    const line = G.S.ledger[G.S.ledger.length - 1].lines;
+    const n0 = G.S.ledger.length;
+    const v = G.ship(a, this.opt);
+    const line = G.S.ledger.slice(n0).reduce((l, e) => l.concat(e.lines), []);
     G.storeDiary(a, { title: '出荷', paras: this.paras, vars: this.vars, ledger: line });
     root.className = 'stage3';
     root.querySelector('.s1').classList.add('hidden');

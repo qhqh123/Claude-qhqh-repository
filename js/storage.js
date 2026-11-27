@@ -66,11 +66,13 @@ G.store = {
     G.earn(v, `売却　${G.ITEMS[it.kind].name}（${it.name}）　${use === 'food' ? '食用' : '記念品'}　${G.yen(v)}`);
     return true;
   },
+  expandCost() { return G.woodCost(G.C.storageExpandCost, 'storage'); },
   expand() {
     const S = G.S;
-    if (S.money < G.C.storageExpandCost) return false;
+    const cost = this.expandCost();
+    if (!G.canPayCost(cost)) return false;
     S.storage.cap += G.C.storageExpandSlots;
-    G.pay(G.C.storageExpandCost, `倉庫 増設　+${G.C.storageExpandSlots}　${G.yen(G.C.storageExpandCost)}`);
+    G.payCost(cost, `倉庫 増設　+${G.C.storageExpandSlots}`);
     return true;
   },
 };

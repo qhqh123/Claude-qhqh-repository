@@ -74,6 +74,14 @@ G.text = {
   },
 };
 
+// 人物の評価の台詞（No.24）。prefixes の候補に、牧場にいるフォームの npc.<form>.<人物>_ を加えて1つ選ぶ
+G.farmForms = () => [...new Set(G.alive().map((a) => a.form || 'normal'))];
+G.npcLine = (person, prefixes, ctx) => {
+  const pres = (prefixes || []).concat(G.farmForms().map((f) => `npc.${f}.${person}_`));
+  const ids = Object.keys(G.text.data).filter((id) => pres.some((p) => id.startsWith(p)) && G.text.match(G.text.data[id].cond, ctx || {}));
+  return ids.length ? G.pick(ids) : null;
+};
+
 // 文章イベント用の差し込み変数
 G.textVars = (a, extra) => {
   const S = G.S;
@@ -96,16 +104,48 @@ G.staffFor = (a) => {
   return here.length ? G.pick(here) : G.pick(['girl', 'boy']);
 };
 
-// 段落リストを組み立てる。steps: 'id' | {pick, p} | {id, p}
+// 声のステップ（No.24）：声のある個体だけ。base.<場面>.<性格キー>_NN、late なら base.late.… を優先
+// B（No.25）：全フォームが話す。b.voice.<種類>_<場面>.<性格キー>_NN を A の声の代わりに出す
+G.voiceStep = (a, base, scene, late) => {
+  if (!a) return null;
+  const pk = G.PERS_KEY[a.personality];
+  if (G.isRouteB()) {
+    const kind = base.split('.')[0];
+    return { picks: [`b.voice.${scene ? kind + '_' + scene : kind}.${pk}_`] };
+  }
+  if (!G.formOf(a).voice) return null;
+  const sc = scene ? '.' + scene : '';
+  return { picks: (late ? [`${base}.late${sc}.${pk}_`] : []).concat([`${base}${sc}.${pk}_`]) };
+};
+// B：厩務員が家畜に向けて話した台詞の後に、家畜の返事 b.reply.<場面>.<性格キー>_NN（直前の台詞が出たときだけ）
+G.replyStep = (a, scene) => (a && G.isRouteB() ? { picks: [`b.reply.${scene}.${G.PERS_KEY[a.personality]}_`], ifPrev: true } : null);
+// 候補の中から1つ（なければ null）
+G.pickStep = (step, ctx) => {
+  if (!step) return null;
+  for (const pre of step.picks) { const id = G.text.pick(pre, ctx || {}); if (id) return id; }
+  return null;
+};
+
+// 体の文（No.24）：四足の文と二足の文（ID末尾 .biped）のうち条件に合うほう
+G.bodyStep = (id) => ({ alt: [id, id + '.biped'] });
+// 腕の文：腕のある個体だけ
+G.armsStep = (a, scene) => (a && G.formOf(a).arms ? { pick: `cas.arms.${scene}_` } : null);
+
+// 段落リストを組み立てる。steps: 'id' | {pick, p} | {picks: [接頭辞…]} | {id, p} | null（飛ばす）
 G.buildParas = (steps, ctx) => {
   const out = [];
+  let prevAdded = false;
   for (const s of steps) {
+    if (!s) continue;
     const st = typeof s === 'string' ? { id: s } : s;
+    if (st.ifPrev && !prevAdded) continue;
+    prevAdded = false;
     if (st.p !== undefined && !G.chance(st.p)) continue;
     let id = null;
-    if (st.pick) id = G.text.pick(st.pick, ctx);
+    if (st.picks) { for (const pre of st.picks) { id = G.text.pick(pre, ctx); if (id) break; } } else if (st.pick) id = G.text.pick(st.pick, ctx);
+    else if (st.alt) id = st.alt.find((x) => G.text.has(x, ctx)) || null;
     else if (G.text.has(st.id, ctx)) id = st.id;
-    if (id) out.push(id);
+    if (id) { out.push(id); prevAdded = true; }
   }
   return out;
 };

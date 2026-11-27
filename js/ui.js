@@ -81,6 +81,7 @@ G.ui = {
     if (!this.countingMoney) $('#hud-money').textContent = G.yen(S.money);
     $('#hud-loan').textContent = G.yen(S.loan);
     $('#hud-care').textContent = S.careLeft;
+    $('#hud-wood').textContent = S.wood || 0;
     const n = G.herdCount('cattle');
     $('#hud-herd').textContent = `${n}/${S.cattleSlots}`;
     $('#hud-herd').parentElement.classList.toggle('over', n > S.cattleSlots);
@@ -89,6 +90,7 @@ G.ui = {
     $('#hud-horse').parentElement.classList.toggle('hidden', !S.horseSlots && !nh);
     $('#hud-horse').parentElement.classList.toggle('over', nh > S.horseSlots);
     const pending = S.notices.filter((x) => !x.done).length;
+    $('#btn-town').classList.toggle('alert', G.senior.needed());
     const badge = $('#office-badge');
     badge.textContent = pending; badge.classList.toggle('hidden', !pending);
     $('#btn-sound').textContent = G.audio.muted ? '🔇' : '🔊';
@@ -166,6 +168,9 @@ G.ui = {
   badgesFrame(a, genes, small) {
     genes = genes || a.genes;
     return this.badge(a, 'length', genes.length, small) + this.badge(a, 'depth', genes.depth, small);
+  },
+  badgesAcq(a, small) {
+    return a && a.species ? G.acqList(a).map((t) => this.badge(a, t.k, t.r, small)).join('') : '';
   },
   badgesTraits(a, genes, small) {
     genes = genes || a.genes;
@@ -245,11 +250,13 @@ G.ui = {
       <div class="info-col">
         ${archive}
         ${alive ? `<div class="kv"><span>個体識別番号</span><b>${a.idNo}</b></div>` : ''}
+        <div class="kv"><span>品種</span><b>${G.formOf(a).name}</b></div>
         <div class="kv"><span>性格</span><b>${a.personality}</b></div>
         <div class="kv"><span>好きなお世話</span><b>${G.ACTIVITY_NAMES[a.favorite]}</b></div>
         ${alive ? this.bar('健康', a.health, 'health') + this.bar('幸福度', a.happiness, 'happy') + this.bar('ストレス', a.stress, 'stress') + this.bar('なつき度', a.affinity.player, 'aff') + (G.isHorse(a) ? this.bar('当代能力', a.trained || 0, 'train') : '') : ''}
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(a)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(a)}</div>
+        ${a.status === 'alive' && G.acqList(a).length ? `<div class="badge-row"><span class="lbl">後天</span>${this.badgesAcq(a)}</div>` : ''}
         <div class="kv"><span>繁殖状態</span><b>${this.breedStatus(a)}</b></div>
         ${rec ? `<div class="kv"><span>レース</span><b>${rec.n}戦 ${rec.win}勝 入賞${rec.place}</b></div>` : ''}
         ${alive && G.isHorse(a) ? `<div class="kv"><span>畑</span><b>${fieldIdx >= 0 ? `畑スロット${G.field.label(fieldIdx)}` : '—'}</b></div>` : ''}
@@ -258,7 +265,9 @@ G.ui = {
         ${alive ? `<div class="kv"><span>体重</span><b>${Math.round(a.weight)}kg</b></div>
         <div class="kv"><span>枝肉（予測）</span><b>${v.carcass}kg　肉量 ${G.rankName(v.yieldRank)}　肉質 ${G.rankName(v.q)}</b></div>
         <div class="kv"><span>売上（予測）</span><b>${G.yen(v.sales)}${v.pen > 0 ? `　<small>未去勢 −${Math.round(v.pen * 100)}%</small>` : ''}</b></div>
-        <div class="kv"><span>放牧地</span><b>${pastures.length > 1 ? '' : G.MAP_LABEL[a.pasture]}</b></div>${pastures.length > 1 ? this.pickChips(pastures.map((p) => ({ value: p, label: G.MAP_LABEL[p], on: p === a.pasture })), 'data-move') : ''}` : ''}
+        <div class="kv"><span>見込み売上（次のターン）</span><b>${G.yen(G.nextShipValue(a))} ${['↓', '→', '↑'][G.valueTrend(a) + 1]}</b></div>
+        <div class="kv"><span>維持費（1ターン）</span><b>${G.yen(G.upkeepOf(a))}</b></div>
+        <div class="kv"><span>放牧地</span><b>${pastures.length > 1 ? '' : G.MAP_LABEL[a.pasture]}</b></div>${pastures.length > 1 ? this.pickChips(pastures.map((p) => ({ value: p, label: `${G.MAP_LABEL[p]} ${G.pastureCount(p)}/${G.pastureCap(p)}`, on: p === a.pasture, disabled: p !== a.pasture && G.pastureCount(p) >= G.pastureCap(p) })), 'data-move') : ''}` : ''}
       </div></div>
       ${alive ? `<div class="actions">
         ${G.canBreed(a) ? '<button class="btn primary" data-act="breed">💞 交配</button>' : ''}
@@ -371,6 +380,14 @@ G.ui = {
 
   // 去勢・交配の画面は ui-choice.js
 
+  // 人物の1行（窓の中に出す）
+  npcLineHtml(person) {
+    const id = G.npcLine(person);
+    if (!id) return '';
+    G.S.readTexts[id] = true;
+    return `<div class="npc-line"><b>${G.NPC_NAMES[person]}</b><span>${G.esc(G.text.fill(G.text.get(id).text, { date: G.dateText(G.S.turn) }))}</span>${G.S.devMode ? `<code>${id}</code>` : ''}</div>`;
+  },
+
   // ---------- 出荷・売却 ----------
   confirmShip(a) {
     const v = G.shipValue(a);
@@ -379,12 +396,19 @@ G.ui = {
       <div class="kv"><span>枝肉（予測）</span><b>${v.carcass}kg</b></div>
       <div class="kv"><span>肉量</span><b>${G.rankName(v.yieldRank)}</b></div><div class="kv"><span>肉質</span><b>${G.rankName(v.q)}</b></div>
       <div class="kv"><span>売上（予測）</span><b>${G.yen(v.sales)}</b></div></div></div>
-      <div class="actions"><button class="btn primary ok">出荷する</button><button class="btn cancel">やめる</button></div>`, { size: 'medium' });
+      ${a.form === 'taur' ? `<div class="sheet-sec"><div class="sec-label">上半身</div>${this.pickChips([{ value: 'petfood', label: 'ペットフード原料' }, { value: 'burial', label: '埋葬' }], 'data-upper')}</div>` : ''}
+      <div class="actions"><button class="btn primary ok" ${a.form === 'taur' ? 'disabled' : ''}>出荷する</button><button class="btn cancel">やめる</button></div>`, { size: 'medium' });
     G.draw.portrait($('canvas', w), a);
+    let upper = null;
+    $$('[data-upper]', w).forEach((b) => b.onclick = () => {
+      upper = b.dataset.upper;
+      $$('[data-upper]', w).forEach((x) => x.classList.toggle('on', x === b));
+      $('.ok', w).disabled = false;
+    });
     $('.cancel', w).onclick = () => this.close(w);
     $('.ok', w).onclick = () => {
       this.closeAll();
-      G.shipScreen.start(a);
+      G.shipScreen.start(a, { upper });
     };
   },
   confirmSell(a) {
@@ -430,9 +454,10 @@ G.ui = {
     if (tab === 'list') {
       const ps = Object.keys(S.pastures).filter((p) => S.pastures[p].open);
       const filt = pid && S.pastures[pid] ? pid : '';
-      const list = G.alive().filter((a) => !filt || a.pasture === filt).sort((x, y) => x.pasture.localeCompare(y.pasture) || y.age - x.age);
-      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt ? 'on' : ''}" data-p="${p}">${p ? G.MAP_LABEL[p] : 'すべて'}</button>`).join('')}<span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
-        <div class="a-list">${list.map((a) => this.animalRow(a, `<span class="st">${this.breedStatus(a)}</span>${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '<span class="pill">出荷適期</span>' : ''}`)).join('') || '<div class="muted">—</div>'}</div>`;
+      const idleOnly = pid === 'idle';
+      const list = G.alive().filter((a) => (idleOnly ? ['idle', 'peak'].includes(G.prodState(a)) : (!filt || a.pasture === filt))).sort((x, y) => x.pasture.localeCompare(y.pasture) || y.age - x.age);
+      body.innerHTML = `<div class="filter">${['', ...ps].map((p) => `<button class="chip ${p === filt && !idleOnly ? 'on' : ''} ${p && G.pastureExcess(p) ? 'crowd' : ''}" data-p="${p}">${p ? `${G.MAP_LABEL[p]} ${G.pastureCount(p)}/${G.pastureCap(p)}` : 'すべて'}</button>`).join('')}<button class="chip ${idleOnly ? 'on' : ''}" data-p="idle">生産なし</button><span class="count">🐮 ${G.herdCount('cattle')}/${S.cattleSlots}${S.horseSlots ? `　🐴 ${G.herdCount('horse')}/${S.horseSlots}` : ''}</span></div>
+        <div class="a-list">${list.map((a) => { const ps = G.prodState(a); return this.animalRow(a, `<span class="st">${this.breedStatus(a)}</span><span class="row-pills">${ps === 'idle' || ps === 'peak' ? '<span class="pill idle">生産なし</span>' : ''}${!G.isHorse(a) && a.age >= G.C.cattleShipAgeMin ? '<span class="pill">出荷適期</span>' : ''}<span class="trend t${G.valueTrend(a)}">見込み ${['↓', '→', '↑'][G.valueTrend(a) + 1]}</span></span>`); }).join('') || '<div class="muted">—</div>'}</div>`;
       this.drawFaces(body);
       $$('.a-row', body).forEach((r) => r.onclick = () => this.openDetail(r.dataset.id));
       $$('[data-p]', body).forEach((b) => b.onclick = () => this.renderOffice(w, 'list', b.dataset.p));
@@ -455,8 +480,10 @@ G.ui = {
     }
     if (tab === 'money') {
       const fb = G.feedBalance();
-      const feed = fb.cost;
+      const cm = G.crowdMult();
+      const feed = Math.round(fb.cost * cm);
       const up = G.upkeepBreakdown();
+      up.total = Math.round(up.total * cm);
       const milkInc = S.milkSlots.reduce((s, x) => s + (x.aid && S.animals[x.aid] ? G.milk.calc(S.animals[x.aid]).income : 0), 0);
       const cropInc = S.fields.reduce((s, f) => s + G.field.produce(f).money, 0);
       const thisTurn = S.ledger.filter((e) => e.turn === S.turn);
@@ -480,7 +507,7 @@ G.ui = {
       body.innerHTML = `<div class="kv"><span>飼育枠（牛）</span><b>${G.herdCount('cattle')}/${S.cattleSlots}</b></div>
         <div class="kv"><span>飼育枠（馬）</span><b>${G.herdCount('horse')}/${S.horseSlots}</b></div>
         <h3>放牧地・畜舎</h3>
-        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span>${G.alive().filter((a) => a.pasture === p).length}頭</span>` : `<span>${G.pastureSpecies(p) === 'horse' ? `${G.yen(G.C.horsePastureCost)}　飼育枠（馬） +${G.C.horseSlotsPerPasture}` : `${G.yen(G.C.pastureOpenCost)}　飼育枠（牛） +${G.C.pastureOpenSlots}`}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
+        <ul class="facility">${Object.keys(S.pastures).map((p) => `<li><b>${G.pastureLabel(p)}</b>${S.pastures[p].open ? `<span class="${G.pastureExcess(p) ? 'crowd-text' : ''}">${G.pastureCount(p)}/${G.pastureCap(p)}頭　段階${G.pastureStage(p)}${G.pastureExcess(p) ? '　過密' : ''}</span><button class="btn small" data-open="${p}">${G.expandCost(p) !== undefined ? '拡張' : '開く'}</button>` : `<span>${G.costText(G.pastureOpenCost())}　飼育枠 +${G.C.pastureOpenSlots}</span><button class="btn small primary" data-open="${p}">開拓</button>`}</li>`).join('')}</ul>
         <h3>搾乳施設</h3>
         <div class="kv"><span>スロット</span><b>${S.milkSlots.filter((x) => x.aid).length}/${S.milkSlots.length}　<button class="btn small" data-go="milk">開く</button></b></div>
         <h3>畑</h3>
@@ -491,9 +518,10 @@ G.ui = {
     }
     if (tab === 'staff') {
       const ps = Object.keys(S.pastures).filter((p) => S.pastures[p].open);
-      body.innerHTML = ['girl', 'boy'].map((k) => `<div class="staff-card ${k}"><div class="staff-avatar">${k === 'girl' ? '👩‍🌾' : '👨‍🌾'}</div>
+      body.innerHTML = ['girl', 'boy'].map((k) => `<div class="staff-card ${k}"><canvas class="staff-avatar" data-person="${k}" width="120" height="120"></canvas>
         <div class="staff-main"><input class="text-input" data-name="${k}" maxlength="10" value="${G.esc(S.staff[k].name)}">
         <div class="sec-label">担当放牧地</div>${this.pickChips(ps.map((p) => ({ value: `${k}|${p}`, label: G.MAP_LABEL[p], on: S.staff[k].pasture === p })), 'data-sp')}</div></div>`).join('');
+      $$('canvas[data-person]', body).forEach((c) => G.skin.personPortrait(c, c.dataset.person));
       $$('[data-name]', body).forEach((i) => i.onchange = () => { const v = i.value.trim(); if (v) S.staff[i.dataset.name].name = v; });
       $$('[data-sp]', body).forEach((b) => b.onclick = () => { const [k, p] = b.getAttribute('data-sp').split('|'); S.staff[k].pasture = p; G.audio.sfx('click'); this.renderOffice(w, 'staff'); });
     }
@@ -508,20 +536,30 @@ G.ui = {
       body.innerHTML = `<ul class="records">${G.RECORDS.map(([k, n]) => `<li class="${S.records[k] ? 'got' : ''}"><span class="medal">${S.records[k] ? '🏅' : '・'}</span>${S.records[k] ? n : '？？？'}<small>${S.records[k] ? G.dateText(S.records[k].turn) : ''}</small></li>`).join('')}</ul>`;
     }
   },
+  // 拡張ボタン：木材だけ足りないときは、不足分を買ってそのまま拡張できる
+  costBtn(cost, label, cls, attr = '') {
+    if (G.canPayCost(cost)) return `<button class="btn primary ${cls}" ${attr}>${label}</button>`;
+    if (G.canBuyAndPay(cost)) {
+      const n = G.woodShort(cost);
+      return `<button class="btn primary ${cls} buywood" ${attr} data-buywood="1">🪵${n}を買って${label}<small>${G.yen(n * G.C.woodBuyPrice)}</small></button>`;
+    }
+    return `<button class="btn primary ${cls}" ${attr} disabled>${label}</button>`;
+  },
+  // 木材を買う選択だったら、先に不足分を買う
+  payPrep(btn, cost) { return !btn.dataset.buywood || G.buyShortWood(cost); },
   openExpand(pid) {
     const S = G.S;
-    if (S.pastures[pid].open) { this.openOffice('list', pid); return; }
+    if (S.pastures[pid].open) { this.openPasture(pid); return; }
     const horse = G.pastureSpecies(pid) === 'horse';
-    const cost = horse ? G.C.horsePastureCost : G.C.pastureOpenCost;
-    const can = S.money >= cost;
+    const cost = G.pastureOpenCost();
     const w = this.open(`<h2>⛰ ${G.HILL_LABEL[pid]}</h2>
-      <div class="kv"><span>開拓</span><b>${G.yen(cost)}</b></div>
-      <div class="kv"><span>${horse ? '飼育枠（馬）' : '飼育枠（牛）'}</span><b>+${horse ? G.C.horseSlotsPerPasture : G.C.pastureOpenSlots}</b></div>
+      <div class="kv"><span>開拓</span><b>${G.costText(cost)}</b></div>
+      <div class="kv"><span>${horse ? '飼育枠（馬）' : '飼育枠（牛）'}</span><b>+${G.C.pastureOpenSlots}</b></div>
       <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeep)}／ターン</b></div>
-      <div class="actions"><button class="btn primary ok" ${can ? '' : 'disabled'}>開拓する</button><button class="btn cancel">やめる</button></div>`, { size: 'small' });
+      <div class="actions">${this.costBtn(cost, '開拓する', 'ok')}<button class="btn cancel">やめる</button></div>`, { size: 'small' });
     $('.cancel', w).onclick = () => this.close(w);
-    $('.ok', w).onclick = () => {
-      if (!G.openPasture(pid)) return;
+    $('.ok', w).onclick = (e) => {
+      if (!this.payPrep(e.currentTarget, cost) || !G.openPasture(pid)) return;
       this.closeAll();
       G.map.buildBlocks();
       const p = G.MAP.pastures[pid];
@@ -531,6 +569,51 @@ G.ui = {
     };
   },
 
+  // 木こり小屋：お世話の回数を木材に
+  openLumber() {
+    const w = this.open('<div class="lumber-body"></div>', { size: 'small' });
+    const render = () => {
+      const S = G.S, left = S.careLeft, per = G.C.woodPerCare;
+      $('.lumber-body', w).innerHTML = `<h2>🪓 木こり小屋</h2>
+        <div class="stat-strip"><div><span>お世話の残り</span><b>${left}</b></div><div><span>木材</span><b>🪵${S.wood || 0}</b></div></div>
+        <div class="work-btns">${[1, 2, 3, 4, 5].filter((n) => n <= left).map((n) => `<button class="btn ${n === left ? 'primary' : ''}" data-lw="${n}">${n}回　🪵+${n * per}</button>`).join('') || '<span class="muted">—</span>'}</div>`;
+      $$('[data-lw]', w).forEach((b) => b.onclick = () => {
+        if (!G.lumberWork(+b.dataset.lw)) return;
+        G.audio.sfx('coin');
+        const h = G.MAP.lumber;
+        G.map.burst(h.x + h.w / 2, h.y + h.h / 2, ['🪵', '✨'], 8);
+        render(); this.refreshHud();
+      });
+    };
+    render();
+  },
+
+  // 開拓済みの放牧地：頭数・段階・拡張
+  openPasture(pid) {
+    const S = G.S;
+    const w = this.open('<div class="pasture-body"></div>', { size: 'small' });
+    const render = () => {
+      const cost = G.expandCost(pid);
+      const body = $('.pasture-body', w);
+      body.innerHTML = `<h2>${G.pastureSpecies(pid) === 'horse' ? '🐴' : '🐮'} ${G.MAP_LABEL[pid]}</h2>
+        <div class="stat-strip"><div><span>頭数</span><b class="${G.pastureExcess(pid) ? 'crowd-text' : ''}">${G.pastureCount(pid)}/${G.pastureCap(pid)}</b></div><div><span>段階</span><b>${G.pastureStage(pid)}/${G.C.pastureExpandCost.length}</b></div></div>
+        ${cost !== undefined ? `<div class="kv"><span>拡張</span><b>${G.costText(cost)}</b></div>
+        <div class="kv"><span>飼育枠</span><b>+${G.C.pastureExpandSlots}</b></div>
+        <div class="kv"><span>維持費</span><b>+${G.yen(G.C.pastureUpkeepPerStage)}／ターン</b></div>` : ''}
+        <div class="actions">${cost !== undefined ? `${this.costBtn(cost, '拡張する', 'ok')}` : ''}<button class="btn list">個体一覧</button></div>`;
+      const ok = $('.ok', body);
+      if (ok) ok.onclick = () => {
+        if (!this.payPrep(ok, cost) || !G.expandPasture(pid)) return;
+        const p = G.MAP.pastures[pid];
+        for (let i = 0; i < 4; i++) setTimeout(() => G.map.burst(p.barn.x + Math.random() * p.barn.w, p.barn.y + Math.random() * p.barn.h, ['✨', '🌾', '⭐'], 8), i * 120);
+        G.audio.sfx('fanfare');
+        render(); this.refreshHud(); this.refreshOpenDetail();
+      };
+      $('.list', body).onclick = () => { this.close(w); this.openOffice('list', pid); };
+    };
+    render();
+  },
+
   // ---------- 町 ----------
   openTown(tab) {
     const w = this.open('<h2>🏪 町</h2><div class="tabs town-tabs"></div><div class="tab-body town-body"></div>', { size: 'large' });
@@ -538,24 +621,25 @@ G.ui = {
   },
   renderTown(w, tab) {
     const S = G.S;
-    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医']];
-    $('.town-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-tab="${k}">${n}</button>`).join('');
+    const tabs = [['market', '家畜市場'], ['straw', '精液ストロー'], ['stallion', '外部種牡馬'], ['vet', '獣医'], ['work', '手伝い'], ['wood', '木材'], ['senior', '先輩牧場主' + (G.senior.needed() ? ' ❗' : '')]];
+    $('.town-tabs', w).innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''} ${k === 'senior' && G.senior.needed() ? 'alert' : ''}" data-tab="${k}">${n}</button>`).join('');
     $$('.town-tabs .tab', w).forEach((b) => b.onclick = () => { G.audio.sfx('page'); this.renderTown(w, b.dataset.tab); });
     const body = $('.town-body', w);
     if (tab === 'market') {
-      body.innerHTML = `<div class="kv"><span>飼育枠</span><b>🐮 ${G.herdCount('cattle')}/${S.cattleSlots}　🐴 ${G.herdCount('horse')}/${S.horseSlots}</b></div>
-        <div class="cards">${S.market.map((m, i) => `<div class="card market"><canvas class="a-face" data-mk="${i}" width="96" height="96"></canvas><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${G.ageText(m.age)}　${m.personality}</small></div>
+      if (!w.dataset.dealer) w.dataset.dealer = this.npcLineHtml('dealer') || ' ';
+      body.innerHTML = `${w.dataset.dealer.trim()}<div class="kv"><span>飼育枠</span><b>🐮 ${G.herdCount('cattle')}/${S.cattleSlots}　🐴 ${G.herdCount('horse')}/${S.horseSlots}</b></div>
+        <div class="cards">${S.market.map((m, i) => `<div class="card market"><canvas class="a-face" data-mk="${i}" width="96" height="96"></canvas><div class="card-h"><b>${G.SPECIES[m.species || 'cattle'].icon} ${m.sex === 'M' ? '♂' : '♀'} ${G.SPECIES[m.species || 'cattle'].name}</b><small>${m.form && m.form !== 'normal' ? G.FORMS[m.form].name + '　' : ''}${G.ageText(m.age)}　${m.personality}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame({ sex: m.sex, castrated: false }, m.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits({ sex: m.sex, castrated: false }, m.genes, true)}</div>
-        <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || !G.hasRoom(m.species || 'cattle') || !G.pastureWithRoom(m.species || 'cattle') ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
-      $$('canvas[data-mk]', body).forEach((c) => { const m = S.market[+c.dataset.mk]; G.draw.portrait(c, { id: m.key, idNo: '', species: m.species || 'cattle', sex: m.sex, age: m.age, castrated: false, personality: m.personality }); });
+        <div class="card-f"><b>${G.yen(m.price)}</b><button class="btn small primary" data-buy="${i}" ${S.money < m.price || (G.FORMS[m.form || 'normal'].slot ? !G.pastureWithRoom(m.species || 'cattle') : !G.openPastures(m.species || 'cattle').length) ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>`;
+      $$('canvas[data-mk]', body).forEach((c) => { const m = S.market[+c.dataset.mk]; G.draw.portrait(c, { id: m.key, idNo: '', species: m.species || 'cattle', form: m.form, sex: m.sex, age: m.age, castrated: false, personality: m.personality }); });
       $$('[data-buy]', body).forEach((b) => b.onclick = () => {
         const a = G.buy(S.market[+b.dataset.buy]);
         if (a) { G.audio.sfx('coin'); this.renderTown(w, 'market'); this.refreshHud(); }
       });
     }
     if (tab === 'straw') {
-      body.innerHTML = `<div class="cards">${S.strawCatalog.map((s, i) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}</small></div>
+      body.innerHTML = `<div class="cards">${S.strawCatalog.map((s, i) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : ''}${G.TRAITS[s.main].name}期待${G.rankName(s.rank)}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, s.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, s.genes, true)}</div>
         <div class="card-f"><b>${G.yen(s.price)}</b><button class="btn small primary" data-s="${i}" ${S.money < s.price ? 'disabled' : ''}>購入</button></div></div>`).join('') || '<div class="muted">—</div>'}</div>
@@ -565,10 +649,44 @@ G.ui = {
       });
     }
     if (tab === 'stallion') {
-      body.innerHTML = `<div class="cards">${S.stallions.map((s) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${s.type === 'farm' ? '農耕' : '競走'}　${G.TRAITS[s.main].name}${G.rankName(s.rank)}</small></div>
+      body.innerHTML = `<div class="cards">${S.stallions.map((s) => `<div class="card ${s.rank === 4 ? 'premium' : ''}"><div class="card-h"><b>${G.esc(s.name)}</b><small>${s.form && s.form !== 'normal' ? G.FORMS[s.form].name + '　' : ''}${s.type === 'farm' ? '農耕' : '競走'}　${G.TRAITS[s.main].name}${G.rankName(s.rank)}</small></div>
         <div class="badge-row"><span class="lbl">体格</span>${this.badgesFrame(null, s.genes, true)}</div>
         <div class="badge-row"><span class="lbl">特性</span>${this.badgesTraits(null, s.genes, true)}</div>
         <div class="card-f"><span class="muted">種付け料</span><b>${G.yen(s.fee)}</b></div></div>`).join('')}</div>`;
+    }
+    if (tab === 'work') {
+      const left = S.careLeft;
+      body.innerHTML = `<div class="work"><div class="work-icon">🧺</div><div class="work-main"><div class="work-title">他の牧場の手伝い</div>
+        <div class="mini-stats"><div><span>お世話の残り</span><b>${left}</b></div><div class="big"><span>1回あたり</span><b>${G.yen(G.C.sideWorkWage)}</b></div></div>
+        <div class="work-btns">${[1, 2, 3, 4, 5].filter((n) => n <= left).map((n) => `<button class="btn ${n === left ? 'primary' : ''}" data-work="${n}">${n}回　${G.yen(n * G.C.sideWorkWage)}</button>`).join('') || '<span class="muted">—</span>'}</div></div></div>`;
+      $$('[data-work]', body).forEach((b) => b.onclick = () => { if (G.sideWork(+b.dataset.work)) { this.renderTown(w, 'work'); this.refreshHud(); } });
+    }
+    if (tab === 'wood') {
+      const have = S.wood || 0;
+      const row = (k, ns, price, ok) => ns.map((n) => `<button class="btn" data-${k}="${n}" ${ok(n) ? '' : 'disabled'}>${n}　${G.yen(n * price)}</button>`).join('');
+      body.innerHTML = `<div class="work"><div class="work-icon">🪵</div><div class="work-main"><div class="work-title">木材</div>
+        <div class="mini-stats"><div class="big"><span>在庫</span><b>${have}</b></div><div><span>買う（1）</span><b>${G.yen(G.C.woodBuyPrice)}</b></div><div><span>売る（1）</span><b>${G.yen(G.C.woodSellPrice)}</b></div></div>
+        <div class="work-sub">買う</div><div class="work-btns">${row('buy', [5, 10, 50, 100], G.C.woodBuyPrice, (n) => S.money >= n * G.C.woodBuyPrice)}</div>
+        <div class="work-sub">売る</div><div class="work-btns">${row('sell', [5, 10, 50], G.C.woodSellPrice, (n) => have >= n)}${have && ![5, 10, 50].includes(have) ? `<button class="btn" data-sell="${have}">${have}　${G.yen(have * G.C.woodSellPrice)}</button>` : ''}</div></div></div>`;
+      $$('[data-buy]', body).forEach((b) => b.onclick = () => { if (G.buyWood(+b.dataset.buy)) { G.audio.sfx('coin'); this.renderTown(w, 'wood'); this.refreshHud(); } });
+      $$('[data-sell]', body).forEach((b) => b.onclick = () => { if (G.sellWood(+b.dataset.sell)) { G.audio.sfx('coin'); this.renderTown(w, 'wood'); this.refreshHud(); } });
+    }
+    if (tab === 'senior') {
+      const need = G.senior.needed();
+      body.innerHTML = `<div class="senior ${need ? 'alert' : ''}"><canvas class="senior-avatar" data-person="senior" width="172" height="172"></canvas>
+        <div class="senior-main"><div class="senior-name">先輩牧場主</div>
+        <div class="senior-btns"><button class="btn" data-sr="advice">💬 話を聞く</button>
+        ${need ? '<button class="btn primary rescue" data-sr="rescue">❗ 再建を手伝ってもらう</button>' : ''}</div></div></div>`;
+      $$('canvas[data-person]', body).forEach((c) => G.skin.personPortrait(c, c.dataset.person));
+      $$('[data-sr]', body).forEach((b) => b.onclick = () => {
+        if (b.dataset.sr === 'advice') { const ev = G.senior.advice(); if (ev.paras.length) G.novel.play(ev); return; }
+        const ev = G.senior.rescue();
+        if (!ev) return;
+        G.audio.sfx('fanfare');
+        this.renderTown(w, 'senior');
+        this.refreshHud();
+        G.novel.play(ev);
+      });
     }
     if (tab === 'vet') {
       const items = [['early', '早期'], ['standard', '標準'], ['late', '晩期'], ['mature', '高齢'], ['ring', 'ゴムリング法'], ['burdizzo', '去勢鉗子法'], ['surgical', '観血法'], ['traditional', '旧来手法'], ['horse', '馬']];
@@ -588,12 +706,34 @@ G.ui = {
       ...Object.keys(M.pastures).map((p) => [`${G.S.pastures[p].open ? '🐮' : '⛰'} ${G.pastureLabel(p)}`, G.gateOf(p).out.x, G.gateOf(p).out.y]),
       ['🥛 搾乳施設', M.milk.x + M.milk.w / 2, M.milk.y + M.milk.h + 40],
       [G.S.fields.some((f) => f.open) ? '🌾 畑' : '🌾 荒れ地', M.fieldBlocks[0].x - 40, M.fieldBlocks[0].y + M.fieldBlocks[0].h / 2],
-      ['🏪 町への道', M.town.x + M.town.w + 50, M.town.y + M.town.h - 20],
+      ['🪓 木こり小屋', M.lumber.x + M.lumber.w / 2, M.lumber.y + M.lumber.h + 40],
+      ['🏪 町への道', M.townExit.x, M.townExit.y],
     ];
     const w = this.open(`<h2>🪧 案内看板</h2><div class="warp">${dests.map((d, i) => `<button class="btn" data-w="${i}">${d[0]}</button>`).join('')}</div>`, { size: 'small' });
     $$('[data-w]', w).forEach((b) => b.onclick = () => { const d = dests[+b.dataset.w]; this.close(w); G.map.warp(d[1], d[2]); });
   },
 
+  // 開発者モード：フォームの個体を作る（子・空きのある放牧地へ）
+  openDevForm() {
+    const st = { species: 'cattle', form: 'telepathy', sex: 'F' };
+    const w = this.open('<h2>フォームの個体を作る</h2><div class="dev-form"></div>', { size: 'small' });
+    const render = () => {
+      const chips = (k, list) => `<div class="chips">${list.map(([v, l]) => `<button class="chip ${st[k] === v ? 'on' : ''}" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
+      $('.dev-form', w).innerHTML = chips('species', [['cattle', G.SPECIES.cattle.name], ['horse', G.SPECIES.horse.name]])
+        + chips('form', G.FORM_KEYS.map((f) => [f, G.FORMS[f].name]))
+        + chips('sex', [['F', '♀'], ['M', '♂']])
+        + '<div class="actions"><button class="btn primary ok">作る</button></div>';
+      $$('[data-k]', w).forEach((b) => b.onclick = () => { st[b.dataset.k] = b.dataset.v; render(); });
+      $('.ok', w).onclick = () => {
+        const pid = G.pastureWithRoom(st.species) || G.openPastures(st.species)[0];
+        if (!pid) return;
+        const a = G.makeAnimal({ species: st.species, form: st.form, sex: st.sex, age: 0, genes: G.randomGenes ? G.randomGenes(0) : { length: 1, depth: 1, traits: [] }, pasture: pid });
+        G.addHistory(a, '開発者モードで作成');
+        this.close(w); this.refreshHud(); this.openDetail(a.id);
+      };
+    };
+    render();
+  },
   // ---------- メニュー ----------
   openMenu() {
     const dev = G.S.devMode;
@@ -603,7 +743,7 @@ G.ui = {
       <button class="btn" data-m="import">セーブデータを読み込む</button>
       <button class="btn" data-m="title">タイトル画面に戻る</button>
       <button class="btn ${dev ? 'on' : ''}" data-m="dev">開発者モードの切り替え</button>
-      ${dev ? '<button class="btn dev-only" data-m="text">文章データを読み込む</button><button class="btn dev-only" data-m="reload">文章データを再読み込み</button>' : ''}
+      ${dev ? `<button class="btn dev-only" data-m="text">文章データを読み込む</button><button class="btn dev-only" data-m="reload">文章データを再読み込み</button><button class="btn dev-only" data-m="form">フォームの個体を作る</button><button class="btn dev-only" data-m="skin">スキン：${G.skin.label(G.skin.name)}</button>` : ''}
       </div>`, { size: 'small' });
     $$('[data-m]', w).forEach((b) => b.onclick = async () => {
       const m = b.dataset.m;
@@ -618,7 +758,13 @@ G.ui = {
       if (m === 'text') this.pickFile('.json,application/json', async (f) => {
         try { const n = await G.text.importFile(f); this.toast(`${f.name}　${n}`); } catch (e) { this.error('文章データを読み込めませんでした'); }
       });
+      if (m === 'form') { this.close(w); this.openDevForm(); }
       if (m === 'reload') { await G.text.load(); this.toast('文章データ ' + Object.keys(G.text.data).length); }
+      if (m === 'skin') {
+        const ns = G.skin.names();
+        await G.skin.use(ns[(ns.indexOf(G.skin.name) + 1) % ns.length]);
+        this.close(w); this.openMenu();
+      }
     });
   },
   pickFile(accept, cb) {
@@ -636,9 +782,46 @@ G.ui = {
   // ---------- 通知 ----------
   noticeAction(n) {
     if (n.done) return n.type === 'diary' ? '読む' : (n.aid && G.S.animals[n.aid] ? '詳細' : '');
-    return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け' }[n.type] || '';
+    if (n.type === 'rescue') return n.done ? '' : '町へ';
+    if (n.type === 'crowd') return '個体一覧';
+    if (n.type === 'newform') return n.done ? '' : '家畜市場';
+    return { castrate: '今すぐ決める', breedable: '交配する', ship: '詳細', birth: '詳細', diary: '読む', death: '詳細', milkable: '搾乳施設', milklow: '再種付け', idle: '詳細', peak: '詳細', aging: '詳細' }[n.type] || '';
+  },
+  // 同じ種類が2頭以上なら1枚にまとめる種類
+  DIGEST: {
+    breedable: { label: '交配できる', act: '繁殖', tab: 'breed' },
+    ship: { label: '出荷適期', act: '個体一覧', tab: 'list' },
+    aging: { act: '個体一覧', tab: 'list' },
+    idle: { label: '生産が止まった', act: '個体一覧', tab: 'list', pid: 'idle' },
+    peak: { label: '見込み売上が伸びない', act: '個体一覧', tab: 'list', pid: 'idle' },
+  },
+  noticeDone(n) { return n.items ? n.items.every((i) => i.done) : n.done; },
+  // 季節の始めの通知の並び（カードを出さない記録は除き、まとめられるものはまとめる）
+  buildNoticeQueue() {
+    const S = G.S;
+    const pending = S.notices.filter((n) => !n.done && n.turn === S.turn && n.card !== false);
+    const groups = {};
+    for (const n of pending) if (this.DIGEST[n.type]) (groups[n.type] = groups[n.type] || []).push(n);
+    const out = [];
+    for (const n of pending) {
+      const g = groups[n.type];
+      if (!g || g.length < 2) out.push(n);
+      else if (g[0] === n) out.push(this.makeDigest(n.type, g));
+    }
+    this.noticeQueue = out;
+    this.flushNotices();
+  },
+  makeDigest(kind, items) {
+    const names = items.map((n) => (G.S.animals[n.aid] || {}).name).filter(Boolean).join('・');
+    let label = this.DIGEST[kind].label;
+    if (kind === 'aging') {
+      const b = items[0].badge || '';
+      label = `「${b}」${items.every((n) => n.badge === b) ? '' : 'など'}が付いた`;
+    }
+    return { type: 'digest', kind, items, text: `${label}：${names}` };
   },
   queueNotice(n) {
+    if (n.card === false) return;
     this.noticeQueue.push(n);
     if (!this.holdNotices) this.flushNotices();
   },
@@ -647,15 +830,16 @@ G.ui = {
     const box = $('#notices');
     while (this.noticeQueue.length && box.children.length < 3) {
       const n = this.noticeQueue.shift();
-      if (n.done) continue;
+      if (this.noticeDone(n)) continue;
       this.showNoticeCard(n);
     }
   },
   showNoticeCard(n) {
     const box = $('#notices');
     const el = document.createElement('div');
-    el.className = 'notice ' + n.type;
-    const act = this.noticeAction(n);
+    el.className = 'notice ' + n.type + (n.kind ? ' ' + n.kind : '');
+    if (n.type === 'birth') return this.showBirthCard(n, el);
+    const act = n.type === 'digest' ? this.DIGEST[n.kind].act : this.noticeAction(n);
     const second = n.type === 'birth' || n.type === 'death' ? 'OK' : 'あとで';
     const extra = n.type === 'milklow' ? '<button class="btn small c">外す</button>' : '';
     const secondLabel = n.type === 'milklow' ? 'このまま' : second;
@@ -676,8 +860,37 @@ G.ui = {
       remove(); this.refreshHud();
     };
   },
+  // 出産：去勢・搾乳もこの1枚から
+  showBirthCard(n, el) {
+    const S = G.S, calf = S.animals[n.aid], dam = S.animals[n.dam];
+    const btns = [];
+    if (calf && calf.status === 'alive' && S.notices.some((x) => x.type === 'castrate' && x.aid === calf.id && !x.done)) btns.push(['castrate', '去勢を決める']);
+    if (dam && G.milk.canPlace(dam)) btns.push(['milk', '搾乳施設']);
+    if (calf) btns.push(['detail', '詳細']);
+    el.innerHTML = `${n.title ? `<div class="n-title">${G.esc(n.title)}</div>` : ''}<div class="n-text">${G.esc(n.text)}</div>
+      <div class="n-btns">${btns.map(([k, l]) => `<button class="btn small primary" data-k="${k}">${l}</button>`).join('')}<button class="btn small b">OK</button></div>`;
+    $('#notices').appendChild(el);
+    G.audio.sfx('fanfare');
+    const remove = () => { n.done = true; el.classList.add('out'); setTimeout(() => { el.remove(); this.flushNotices(); }, 250); };
+    $$('[data-k]', el).forEach((b) => b.onclick = () => {
+      remove();
+      if (b.dataset.k === 'castrate') this.openCastrate(calf);
+      else if (b.dataset.k === 'milk') this.openMilk();
+      else this.openDetail(calf.id);
+      this.refreshHud();
+      this.refreshOpenDetail();
+    });
+    $('.b', el).onclick = () => { remove(); this.refreshHud(); };
+  },
   doNotice(n) {
     if (!n) return;
+    if (n.type === 'digest') {
+      const d = this.DIGEST[n.kind];
+      if (n.kind !== 'breedable') n.items.forEach((i) => { i.done = true; });
+      this.openOffice(d.tab, d.pid);
+      this.refreshHud();
+      return;
+    }
     const a = G.S.animals[n.aid];
     if (n.type === 'diary') {
       n.done = true;
@@ -687,13 +900,21 @@ G.ui = {
       this.openCastrate(a);
     } else if (n.type === 'breedable' && !n.done && a && G.canBreed(a)) {
       this.openBreed(a);
+    } else if (n.type === 'rescue') {
+      this.openTown('senior');
+    } else if (n.type === 'newform') {
+      n.done = true;
+      this.openTown('market');
+    } else if (n.type === 'crowd') {
+      n.done = true;
+      this.openOffice('list', n.pid);
     } else if (n.type === 'milkable' && !n.done) {
       this.openMilk();
     } else if (n.type === 'milklow' && !n.done && a && G.canBreed(a)) {
       n.done = true;
       this.openBreed(a);
     } else if (a) {
-      n.done = n.done || n.type === 'ship' || n.type === 'birth' || n.type === 'death';
+      n.done = n.done || ['ship', 'birth', 'death', 'idle', 'peak', 'aging'].includes(n.type);
       this.openDetail(a.id);
     }
     this.refreshHud();
@@ -702,10 +923,7 @@ G.ui = {
   markNoticesDone(type, aid) {
     for (const n of G.S.notices) if (n.aid === aid && (!type || n.type === type)) n.done = true;
     $$('#notices .notice').forEach((el) => el.remove());
-    this.noticeQueue = this.noticeQueue.filter((n) => !n.done);
-    const pending = G.S.notices.filter((n) => !n.done && n.turn === G.S.turn);
-    this.noticeQueue = pending;
-    this.flushNotices();
+    this.buildNoticeQueue();
   },
 
   // ---------- ターン ----------
@@ -725,8 +943,8 @@ G.ui = {
     this.showSummary(sum);
   },
   summaryCat(line, inc) {
-    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース']]
-      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設']];
+    const cats = inc ? [['出荷', '🚚', '出荷'], ['搾乳', '🥛', '搾乳'], ['畑', '🌾', '畑'], ['レース', '🏇', 'レース'], ['売却', '🏷', '売却'], ['飼料 売却', '🌱', '飼料 売却'], ['出走取消', '🏇', 'レース'], ['手伝い', '🧺', '手伝い'], ['木材 売却', '🪵', '木材'], ['副産物', '🦴', '副産物']]
+      : [['飼料費', '🌾', '飼料'], ['施設維持費', '🏡', '施設維持費'], ['人件費', '🧑‍🌾', '人件費'], ['去勢', '✂', '去勢'], ['感染症', '🩹', '治療'], ['精液ストロー', '💞', '繁殖'], ['種付け料', '💞', '繁殖'], ['購入', '🐮', '購入'], ['出走登録', '🏇', 'レース'], ['開拓', '⛏', '開拓・増設'], ['放牧地 開拓', '⛏', '開拓・増設'], ['畑 開拓', '⛏', '開拓・増設'], ['搾乳施設 増設', '⛏', '開拓・増設'], ['倉庫 増設', '⛏', '開拓・増設'], ['けがの治療', '🩹', '治療'], ['木材 購入', '🪵', '木材'], ['埋葬費', '🕯', '埋葬費']];
     let best = null;
     for (const c of cats) if (line.startsWith(c[0]) && (!best || c[0].length > best[0].length)) best = c;
     return best ? { icon: best[1], name: best[2] } : { icon: '📒', name: 'その他' };
@@ -769,21 +987,41 @@ G.ui = {
     ov.className = 's' + season;
     ov.innerHTML = `<div class="season-card"><div class="season-emoji">${['🌸', '🌻', '🍁', '⛄'][season]}</div><div class="season-text">${G.dateText(S.turn)}</div></div>`;
     G.audio.sfx('season');
-    setTimeout(() => { ov.className = 'hidden'; this.holdNotices = false; this.noticeQueue = S.notices.filter((n) => !n.done && n.turn === S.turn); this.flushNotices(); this.dailyEvent(); }, 2200);
+    setTimeout(() => { ov.className = 'hidden'; this.holdNotices = false; this.buildNoticeQueue(); this.dailyEvent(); }, 2200);
   },
   dailyEvent() {
     const list = G.alive();
     if (!list.length) return;
     const a = G.pick(list);
+    if (G.isRouteB() && G.chance(G.C.bBehaviorRate) && this.behaviorEvent(a)) return;
     const id = G.text.pick('daily.animal_', { personality: a.personality });
     if (!id) return;
     G.S.readTexts[id] = true;
+    const vid = G.pickStep(G.voiceStep(a, 'daily.voice', ''));
+    if (vid) G.S.readTexts[vid] = true;
     const el = document.createElement('div');
     el.className = 'daily';
-    el.innerHTML = `<b>🐮 ${G.esc(a.name)}</b><span>${G.esc(G.text.fill(G.text.get(id).text, G.textVars(a)))}</span>${G.S.devMode ? `<code>${id}</code>` : ''}`;
+    el.innerHTML = `<b>${G.spIcon(a)} ${G.esc(a.name)}</b><span>${G.esc(G.text.fill(G.text.get(id).text, G.textVars(a)))}</span>${G.S.devMode ? `<code>${id}</code>` : ''}${vid ? `<span class="voice">${G.esc(G.text.fill(G.text.get(vid).text, G.textVars(a)))}</span>${G.S.devMode ? `<code>${vid}</code>` : ''}` : ''}`;
     $('#toasts').appendChild(el);
     setTimeout(() => el.classList.add('out'), 5000);
     setTimeout(() => el.remove(), 5500);
+  },
+
+  // B：家畜の行動と、厩務員の反応（日常イベントの吹き出しで出す）
+  behaviorEvent(a) {
+    const b = G.behavior(a);
+    if (!b) return false;
+    const dev = G.S.devMode;
+    G.S.readTexts[b.id] = true;
+    if (b.rid) G.S.readTexts[b.rid] = true;
+    const el = document.createElement('div');
+    el.className = 'daily';
+    el.innerHTML = `<b>${G.spIcon(a)} ${G.esc(a.name)}</b><span>${G.esc(G.text.fill(G.text.get(b.id).text, b.vars))}</span>${dev ? `<code>${b.id}</code>` : ''}`
+      + (b.rid ? `<span class="voice"><b>${G.esc(b.staffName)}</b>　${G.esc(G.text.fill(G.text.get(b.rid).text, b.vars))}</span>${dev ? `<code>${b.rid}</code>` : ''}` : '');
+    $('#toasts').appendChild(el);
+    setTimeout(() => el.classList.add('out'), 6000);
+    setTimeout(() => el.remove(), 6500);
+    return true;
   },
 
   // ---------- ツールチップ ----------

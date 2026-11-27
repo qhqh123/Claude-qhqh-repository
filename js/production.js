@@ -12,8 +12,7 @@ G.milk = {
   // 出産予定の直前1ターンは乾乳
   isDry(a) { return !!(a.pregnancy && a.pregnancy.due === G.S.turn + 1); },
   ageMult(a) {
-    if (a.age <= G.C.milkAgeStart) return 1;
-    return Math.max(G.C.milkAgeMin, 1 - (a.age - G.C.milkAgeStart) * G.C.milkAgePerTurn);
+    return Math.max(0, 1 - G.C.milkDeclinePerRank * G.acqRank(a, 'milkDecline'));
   },
   depthMult(a) { return 1 + (a.genes.depth | 0) * G.C.milkDepthPerRank; },
   calc(a) {
@@ -68,6 +67,7 @@ G.removeFromSlots = (a) => {
 // ---------- 畑 ----------
 G.field = {
   label(i) { return G.FIELD_KEYS[i] || String(i + 1); },
+  openCost() { return G.woodCost(G.C.fieldOpenCost, 'field'); },
   // 担当馬の能力（フェーズ3で馬が入る。いまは常に未配置）
   horseKey(f) {
     const h = f.horse && G.S.animals[f.horse];
@@ -90,9 +90,10 @@ G.field = {
   },
   open(i) {
     const S = G.S, f = S.fields[i];
-    if (!f || f.open || S.money < G.C.fieldOpenCost) return false;
+    const cost = this.openCost();
+    if (!f || f.open || !G.canPayCost(cost)) return false;
     f.open = true;
-    G.pay(G.C.fieldOpenCost, `畑 開拓　区画${this.label(i)}　${G.yen(G.C.fieldOpenCost)}`);
+    G.payCost(cost, `畑 開拓　区画${this.label(i)}`);
     return true;
   },
   setUse(i, use) {
@@ -109,6 +110,8 @@ G.fieldHorseAbility = (h) => {
   let k = st <= 1 ? 0 : st === 2 ? 1 : st <= 4 ? 2 : 3;
   if ((h.trained || 0) >= 60) k++;
   if (G.condition(h) < 0.85) k--;
+  const wd = G.acqRank(h, 'workDecline');
+  if (wd) k -= wd >= 3 ? 2 : 1;
   return G.clamp(k, 0, 3);
 };
 G.FIELD_ABILITY_NAMES = { none: '未配置', 0: '平凡', 1: 'やや優秀', 2: '優秀', 3: '最高水準' };
@@ -134,7 +137,7 @@ G.feedBalance = () => {
   const herd = G.alive();
   const adults = herd.filter((a) => G.isMature(a)).length;
   const young = herd.length - adults;
-  const need = adults * G.C.feedUnitsAdult + young * G.C.feedUnitsYoung;
+  const need = herd.reduce((s, a) => s + (G.isMature(a) ? G.C.feedUnitsAdult : G.C.feedUnitsYoung) * G.formOf(a).upkeep, 0);
   const self = G.S.fields.reduce((s, f) => s + G.field.produce(f).units, 0);
   const season = (G.S.turn - 1) % 4;
   const buy = Math.max(0, need - self);
@@ -147,7 +150,8 @@ G.upkeepBreakdown = () => {
   const pastures = Object.values(S.pastures).filter((p) => p.open).length;
   const milk = S.milkSlots.length;
   const fields = S.fields.filter((f) => f.open).length;
-  return { pastures, milk, fields, total: pastures * G.C.pastureUpkeep + milk * G.C.milkSlotUpkeep + fields * G.C.fieldUpkeep };
+  const stages = Object.keys(S.pastures).filter((p) => S.pastures[p].open).reduce((s, p) => s + G.pastureStage(p), 0);
+  return { pastures, milk, fields, total: pastures * G.C.pastureUpkeep + stages * G.C.pastureUpkeepPerStage + milk * G.C.milkSlotUpkeep + fields * G.C.fieldUpkeep };
 };
 
 // ターン終了時の生産（年齢更新の前に、今季の状態で計算）

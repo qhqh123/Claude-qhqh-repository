@@ -5,7 +5,17 @@
  },
  "breed.ai.estrus_01": {
   "text": "［breed.ai.estrus_01｜発情の確認］",
-  "speaker": "narration"
+  "speaker": "narration",
+  "cond": {
+   "locomotion": "quad"
+  }
+ },
+ "breed.ai.estrus_biped_01": {
+  "text": "［breed.ai.estrus_biped_01｜発情の確認（二足）］",
+  "speaker": "narration",
+  "cond": {
+   "locomotion": "biped"
+  }
  },
  "breed.ai.partner_near_01": {
   "text": "［breed.ai.partner_near_01｜仲の良い雄］",
@@ -23,7 +33,17 @@
  },
  "breed.ai.act": {
   "text": "［breed.ai.act｜人工授精の実施］",
-  "speaker": "narration"
+  "speaker": "narration",
+  "cond": {
+   "locomotion": "quad"
+  }
+ },
+ "breed.ai.act.biped": {
+  "text": "［breed.ai.act.biped｜人工授精の実施（二足）］",
+  "speaker": "narration",
+  "cond": {
+   "locomotion": "biped"
+  }
  },
  "breed.ai.after_partner_01": {
   "text": "［breed.ai.after_partner_01｜直後（仲の良い雄）］",
@@ -40,14 +60,32 @@
   "text": "［breed.natural.act_01｜自然交配（仲の良い相手）］",
   "speaker": "narration",
   "cond": {
-   "partner_liked": true
+   "partner_liked": true,
+   "locomotion": "quad"
+  }
+ },
+ "breed.natural.act_biped_01": {
+  "text": "［breed.natural.act_biped_01｜自然交配（仲の良い相手）（二足）］",
+  "speaker": "narration",
+  "cond": {
+   "partner_liked": true,
+   "locomotion": "biped"
   }
  },
  "breed.natural.act_02": {
   "text": "［breed.natural.act_02｜自然交配（それ以外）］",
   "speaker": "narration",
   "cond": {
-   "partner_liked": false
+   "partner_liked": false,
+   "locomotion": "quad"
+  }
+ },
+ "breed.natural.act_biped_02": {
+  "text": "［breed.natural.act_biped_02｜自然交配（それ以外）（二足）］",
+  "speaker": "narration",
+  "cond": {
+   "partner_liked": false,
+   "locomotion": "biped"
   }
  },
  "breed.natural.after_01": {
@@ -58,7 +96,16 @@
   "text": "［breed.teaser.act_01｜当て馬］",
   "speaker": "narration",
   "cond": {
-   "species": "horse"
+   "species": "horse",
+   "locomotion": "quad"
+  }
+ },
+ "breed.teaser.act_biped_01": {
+  "text": "［breed.teaser.act_biped_01｜当て馬（二足）］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse",
+   "locomotion": "biped"
   }
  },
  "breed.teaser.after_01": {
@@ -76,7 +123,16 @@
   "text": "［breed.stallion.act_01｜外部種牡馬との交配］",
   "speaker": "narration",
   "cond": {
-   "species": "horse"
+   "species": "horse",
+   "locomotion": "quad"
+  }
+ },
+ "breed.stallion.act_biped_01": {
+  "text": "［breed.stallion.act_biped_01｜外部種牡馬との交配（二足）］",
+  "speaker": "narration",
+  "cond": {
+   "species": "horse",
+   "locomotion": "biped"
   }
  },
  "breed.stallion.after_01": {
@@ -85,5 +141,77 @@
   "cond": {
    "species": "horse"
   }
+ },
+ "breed.voice.pre.calm_01": {
+  "text": "［breed.voice.pre.calm_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.sweet_01": {
+  "text": "［breed.voice.pre.sweet_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.lively_01": {
+  "text": "［breed.voice.pre.lively_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.curious_01": {
+  "text": "［breed.voice.pre.curious_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.easy_01": {
+  "text": "［breed.voice.pre.easy_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.pre.stubborn_01": {
+  "text": "［breed.voice.pre.stubborn_01｜声・交配前］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.calm_01": {
+  "text": "［breed.voice.act.calm_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.sweet_01": {
+  "text": "［breed.voice.act.sweet_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.lively_01": {
+  "text": "［breed.voice.act.lively_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.curious_01": {
+  "text": "［breed.voice.act.curious_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.easy_01": {
+  "text": "［breed.voice.act.easy_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.act.stubborn_01": {
+  "text": "［breed.voice.act.stubborn_01｜声・交配］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.calm_01": {
+  "text": "［breed.voice.after.calm_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.sweet_01": {
+  "text": "［breed.voice.after.sweet_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.lively_01": {
+  "text": "［breed.voice.after.lively_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.curious_01": {
+  "text": "［breed.voice.after.curious_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.easy_01": {
+  "text": "［breed.voice.after.easy_01｜声・交配後］",
+  "speaker": "animal"
+ },
+ "breed.voice.after.stubborn_01": {
+  "text": "［breed.voice.after.stubborn_01｜声・交配後］",
+  "speaker": "animal"
  }
 }

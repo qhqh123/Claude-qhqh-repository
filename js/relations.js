@@ -59,3 +59,30 @@ G.rel = {
     return '雄';
   },
 };
+
+// ---------- B（No.25）：日常イベントの行動（文章だけ。数値・経済には影響しない） ----------
+G.B_BEHAVIORS = { arms: ['flower_crown', 'flower_give'], noArms: ['flower_carry'], common: ['sing', 'nestle', 'greet_staff'] };
+// 好きな相手：個体関係（好き・母子）と、なつき度の高い厩務員から重みを付けて選ぶ
+G.behaviorPartner = (a) => {
+  const S = G.S, c = [];
+  for (const l of a.likes || []) { const o = S.animals[l.id]; if (o && o.status === 'alive') c.push({ name: o.name, w: l.v || 1 }); }
+  if (a.motherBond) { const o = S.animals[a.motherBond.id]; if (o && o.status === 'alive') c.push({ name: o.name, w: a.motherBond.v || 1 }); }
+  for (const k of ['girl', 'boy']) if ((a.affinity[k] || 0) >= G.C.bAffinityMin) c.push({ name: S.staff[k].name, staff: k, w: a.affinity[k] / 25 });
+  if (!c.length) return null;
+  let r = Math.random() * c.reduce((s, x) => s + x.w, 0);
+  for (const x of c) { r -= x.w; if (r <= 0) return x; }
+  return c[c.length - 1];
+};
+// 行動を1つ選ぶ。戻り値 { id, rid, vars }：行動の文と、厩務員の反応
+G.behavior = (a) => {
+  const S = G.S, B = G.B_BEHAVIORS;
+  let kind = G.pick((G.formOf(a).arms ? B.arms : B.noArms).concat(B.common));
+  let partner = null;
+  if (kind === 'greet_staff') { const k = G.staffFor(a); partner = { name: S.staff[k].name, staff: k }; }
+  else if (kind === 'flower_give' || kind === 'flower_carry' || kind === 'nestle') { partner = G.behaviorPartner(a); if (!partner) kind = 'sing'; }
+  const id = G.text.pick(`b.behavior.${kind}_`, {});
+  if (!id) return null;
+  const who = partner && partner.staff ? partner.staff : G.staffFor(a);
+  const rid = G.text.pick(`b.npc_on_behavior.staff_${who}_`, {});
+  return { id, rid, vars: G.textVars(a, { partner: partner ? partner.name : '', staff: S.staff[who].name }), staffName: S.staff[who].name };
+};

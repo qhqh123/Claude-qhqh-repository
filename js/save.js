@@ -50,11 +50,12 @@ G.save = {
   },
   // 旧データの補完
   migrate(obj) {
-    const def = { careLeft: G.C.carePerTurn, cattleSlots: G.C.startCattleSlots, ledger: [], records: {}, readTexts: {}, notices: [], nextNotice: 1, market: [], straws: [], strawCatalog: [], tools: { burdizzo: false }, pendingCourses: [], yearSales: 0, devMode: false, player: { x: 1000, y: 880 }, nextSeq: 1 };
+    const def = { careLeft: G.C.carePerTurn, cattleSlots: G.C.startCattleSlots, ledger: [], records: {}, readTexts: {}, notices: [], nextNotice: 1, market: [], straws: [], strawCatalog: [], tools: { burdizzo: false }, pendingCourses: [], yearSales: 0, devMode: false, player: { x: 1000, y: 880 }, nextSeq: 1, wood: 0, formsIn: [], route: 'A' };
     for (const k of Object.keys(def)) if (obj[k] === undefined) obj[k] = def[k];
     if (!obj.pastures) obj.pastures = {};
     for (const pid of Object.keys(G.MAP.pastures)) if (!obj.pastures[pid]) obj.pastures[pid] = { open: pid === 'p1' };
     if (typeof obj.horseSlots !== 'number') obj.horseSlots = 0;
+    for (const p of Object.values(obj.pastures)) if (typeof p.stage !== 'number') p.stage = 0;
     for (const k of ['stallions', 'raceCard', 'raceEntries']) if (!Array.isArray(obj[k])) obj[k] = [];
     if (!Array.isArray(obj.milkSlots)) obj.milkSlots = Array.from({ length: G.C.startMilkSlots }, () => ({ aid: null }));
     if (!Array.isArray(obj.fields)) obj.fields = [];
@@ -69,9 +70,12 @@ G.save = {
       for (const k of ['history', 'diaries', 'likes', 'dislikes', 'children']) if (!Array.isArray(a[k])) a[k] = [];
       if (!a.flags) a.flags = {};
       if (!a.species) a.species = 'cattle';
+      if (typeof a.coat !== 'number') a.coat = G.defaultCoat(a);
+      if (!a.form) a.form = 'normal';
       if (typeof a.trained !== 'number') a.trained = 0;
       if (!Array.isArray(a.races)) a.races = [];
       if (!a.affinity) a.affinity = { player: 10, girl: 20, boy: 20 };
+      if (!a.form) a.form = 'normal';
       if (!a.genes) a.genes = { length: 0, depth: 0, traits: [] };
       if (!a.genes.traits) a.genes.traits = [];
     }
